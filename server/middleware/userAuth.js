@@ -3,9 +3,17 @@ import userModel from "../models/userModel.js";
 
 const userAuth = async (req, res, next) => {
   try {
-    // ✅ 1. Try to get token from cookies or header
+    console.log("=================================");
+    console.log("Origin:", req.headers.origin);
+    console.log("Cookies:", req.cookies);
+    console.log("Authorization:", req.headers.authorization);
+    console.log("=================================");
+
     const token =
-      req.cookies?.token || req.header("Authorization")?.replace("Bearer ", "");
+      req.cookies?.token ||
+      req.header("Authorization")?.replace("Bearer ", "");
+
+    console.log("Token Found:", token ? "YES" : "NO");
 
     if (!token) {
       return res.status(401).json({
@@ -14,10 +22,10 @@ const userAuth = async (req, res, next) => {
       });
     }
 
-    // ✅ 2. Verify JWT
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // ✅ 3. Fetch full user document
+    console.log("Decoded JWT:", decoded);
+
     const user = await userModel.findById(decoded.id).select("-password");
 
     if (!user) {
@@ -27,12 +35,12 @@ const userAuth = async (req, res, next) => {
       });
     }
 
-    // ✅ 4. Attach full user to request
     req.user = user;
 
     next();
   } catch (error) {
-    console.error("Auth middleware error:", error.message);
+    console.error("Auth middleware error:", error);
+
     return res.status(401).json({
       success: false,
       message: "Unauthorized or token expired. Please login again.",
