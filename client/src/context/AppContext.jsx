@@ -1,125 +1,127 @@
-// client/src/context/AppContext.jsx
 import axios from "axios";
-import React, { createContext, useEffect, useState } from "react";
+import React, {useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import AppContent from "./AppContent";
 
-export const AppContent = createContext();
 
-export const AppContextProvider = (props) => {
-  axios.defaults.withCredentials = true;
+axios.defaults.withCredentials = true;
 
-  const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
-  const [isLoggedin, setIsLoggedin] = useState(false);
-  const [userData, setUserData] = useState(null);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [loading, setLoading] = useState(true);
+export const AppContextProvider = ({ children }) => {
+const backendUrl =
+import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
 
-  // ✅ Restore userData from localStorage on startup
-  useEffect(() => {
-    const stored = localStorage.getItem("userData");
-    if (stored && stored !== "undefined" && stored !== "null") {
-      try {
-        setUserData(JSON.parse(stored));
-        setIsLoggedin(true);
-      } catch {
-        localStorage.removeItem("userData");
-      }
+const [isLoggedin, setIsLoggedin] = useState(false);
+const [userData, setUserData] = useState(null);
+const [loading, setLoading] = useState(true);
+const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+const getUserData = useCallback(async () => {
+try {
+const { data } = await axios.get(
+`${backendUrl}/api/auth/user-data`,
+{
+withCredentials: true,
+}
+);
+
+
+  if (data.success && data.user) {
+    setUserData(data.user);
+    localStorage.setItem("userData", JSON.stringify(data.user));
+    return data.user;
+  }
+
+  setUserData(null);
+  localStorage.removeItem("userData");
+  return null;
+} catch (err) {
+  console.error("User data error:", err);
+  setUserData(null);
+  localStorage.removeItem("userData");
+  return null;
+}
+
+
+}, [backendUrl]);
+
+const getAuthState = useCallback(async () => {
+try {
+const { data } = await axios.get(
+`${backendUrl}/api/auth/is-auth`,
+{
+withCredentials: true,
+}
+);
+
+
+  if (data.success) {
+    setIsLoggedin(true);
+    await getUserData();
+  } else {
+    setIsLoggedin(false);
+    setUserData(null);
+    localStorage.removeItem("userData");
+  }
+} catch {
+  setIsLoggedin(false);
+  setUserData(null);
+  localStorage.removeItem("userData");
+
+  if (!isLoggingOut) {
+    console.log("User not authenticated");
+  }
+} finally {
+  setLoading(false);
+}
+
+
+}, [backendUrl, getUserData, isLoggingOut]);
+
+useEffect(() => {
+getAuthState();
+}, [getAuthState]);
+
+const logoutUser = async () => {
+try {
+setIsLoggingOut(true);
+
+
+  await axios.post(
+    `${backendUrl}/api/auth/logout`,
+    {},
+    {
+      withCredentials: true,
     }
-  }, []);
-
-  // ✅ Save userData whenever it changes
-  useEffect(() => {
-    if (userData) {
-      localStorage.setItem("userData", JSON.stringify(userData));
-    } else {
-      localStorage.removeItem("userData");
-    }
-  }, [userData]);
-
-  // ✅ Fetch authentication state
-  const getAuthState = async () => {
-    try {
-      const { data } = await axios.get(`${backendUrl}/api/auth/is-auth`);
-      if (data.success) {
-        setIsLoggedin(true);
-        await getUserData();
-      } else {
-        setIsLoggedin(false);
-      }
-    } catch (error) {
-      if (!isLoggingOut) toast.error("Not Authorized. Please login again.");
-      setIsLoggedin(false);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ✅ Fetch user data from backend
-  const getUserData = async () => {
-    try {
-      const { data } = await axios.get(`${backendUrl}/api/auth/user-data`, {
-        withCredentials: true,
-      });
-
-      if (data.success && data.user) {
-        setUserData(data.user); // user should include { name, email, role, organization }
-        localStorage.setItem("userData", JSON.stringify(data.user));
-        return data.user; // ✅ return user so Login.jsx can use it immediately
-      } else {
-        console.warn("No user data received from backend:", data.message);
-        setUserData(null);
-        return null;
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-      setUserData(null);
-      return null; // ✅ ensure consistent return type
-    }
-  };
-
-
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem("userData");
-    if (storedUser) {
-      setUserData(JSON.parse(storedUser));
-      setIsLoggedin(true);
-    } else {
-      getAuthState();
-    }
-  }, []);
-
-
-  // ✅ Logout function
-  const logoutUser = async () => {
-    setIsLoggingOut(true);
-    try {
-      await axios.post(`${backendUrl}/api/auth/logout`);
-      setUserData(null);
-      setIsLoggedin(false);
-      localStorage.removeItem("userData");
-    } catch (err) {
-      toast.error("Failed to logout");
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
-
-  const value = {
-    backendUrl,
-    isLoggedin,
-    setIsLoggedin,
-    userData,
-    setUserData,
-    getUserData,
-    setIsLoggingOut,
-    logoutUser,
-    loading,
-  };
-
-  return (
-    <AppContent.Provider value={value}>
-      {props.children}
-    </AppContent.Provider>
   );
+
+  setIsLoggedin(false);
+  setUserData(null);
+  localStorage.removeItem("userData");
+
+  toast.success("Logged out successfully");
+} catch {
+  toast.error("Failed to logout");
+} finally {
+  setIsLoggingOut(false);
+}
+
+
+};
+
+const value = {
+backendUrl,
+isLoggedin,
+setIsLoggedin,
+userData,
+setUserData,
+getUserData,
+logoutUser,
+loading,
+};
+
+return (
+<AppContent.Provider value={value}>
+{children}
+</AppContent.Provider>
+);
 };
