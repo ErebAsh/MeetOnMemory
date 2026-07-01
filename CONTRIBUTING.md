@@ -1,18 +1,92 @@
-# Contributing to MeetOnMemory
+# 🤝 Contributing to MeetOnMemory
 
-First of all, thank you for considering contributing to MeetOnMemory. 🎉
+First of all, thank you for considering contributing to **MeetOnMemory**! 🎉
 
-Contributions help improve the project and make it more useful for everyone.
+Every contribution—whether it's fixing a bug, improving documentation, enhancing the UI, or implementing a new feature—helps make the project better for everyone.
+
+Please read this guide before contributing.
 
 ---
 
-## Getting Started
+# 📋 Contribution Workflow
 
-### 1. Fork the Repository
+Please follow this workflow for every contribution.
 
-Click the **Fork** button on GitHub and create your own copy of the repository.
+1. 🍴 Fork the repository.
+2. 📌 Open an Issue (or claim an existing one).
+3. ⏳ Wait until the issue is assigned to you.
+4. 🌿 Create a new branch.
+5. 💻 Make your changes.
+6. 🧪 Test everything locally.
+7. 📦 Commit your changes.
+8. 🚀 Push your branch.
+9. 🔁 Open a Pull Request.
 
-### 2. Clone Your Fork
+---
+
+# 📌 Issue First Policy
+
+Before writing any code:
+
+- ✅ Search existing Issues first.
+- ✅ If the issue already exists, comment:
+
+```text
+/claim
+```
+
+- ✅ Wait until the issue is assigned to you.
+- ✅ Start working only after assignment.
+
+If no suitable issue exists:
+
+- Create a new Issue.
+- Wait for maintainer approval before starting implementation.
+
+---
+
+# 🔓 Releasing an Issue
+
+If you're unable to continue working on an assigned issue, simply comment:
+
+```text
+/unclaim
+```
+
+This allows another contributor to work on it.
+
+---
+
+# 🚫 Important Contribution Rules
+
+Please follow these rules carefully.
+
+### ✅ Do
+
+- Open or claim an Issue first.
+- Wait for assignment (`/claim`).
+- Keep one Pull Request focused on one Issue.
+- Write clean, readable code.
+- Follow the existing project structure.
+- Test your changes locally.
+- Update documentation when required.
+
+### ❌ Don't
+
+- Work on an Issue without claiming it.
+- Submit multiple unrelated changes in one PR.
+- Rename the project, logo, branding, package names, or repository references unless the Issue explicitly requests it or a maintainer approves it.
+- Submit AI-generated code without reviewing and understanding it.
+- Copy code from other repositories without proper attribution.
+- Force push after review without explanation.
+
+---
+
+# 🍴 Fork the Repository
+
+Click **Fork** on GitHub to create your own copy.
+
+Clone your fork:
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/MeetOnMemory.git
@@ -20,29 +94,31 @@ git clone https://github.com/YOUR_USERNAME/MeetOnMemory.git
 cd MeetOnMemory
 ```
 
-### 3. Create a New Branch
+---
+
+# 🌿 Create a Branch
+
+Always create a new branch.
 
 ```bash
 git checkout -b feature/your-feature-name
 ```
 
-Example:
+Examples:
 
 ```bash
-git checkout -b feature/semantic-search-improvements
+git checkout -b feature/semantic-search
 ```
 
-or
-
 ```bash
-git checkout -b fix/login-validation-bug
+git checkout -b fix/login-validation
 ```
 
 ---
 
-## Setup Project Locally
+# ⚙️ Local Setup
 
-### Backend
+## Backend
 
 ```bash
 cd server
@@ -50,15 +126,17 @@ cd server
 npm install
 ```
 
-Create a `.env` file and configure the required environment variables.
+Create a `.env` file.
 
-Start the backend:
+Run:
 
 ```bash
 npm run server
 ```
 
-### Frontend
+---
+
+## Frontend
 
 ```bash
 cd client
@@ -70,52 +148,63 @@ npm run dev
 
 ---
 
-## Contribution Guidelines
+# ✨ Coding Standards
 
-### Good Contributions
+## Frontend
 
-Examples of useful contributions:
+- React Functional Components
+- Reusable Components
+- Keep Components Small
+- Follow Existing Folder Structure
 
-* Bug fixes
-* Performance improvements
-* UI/UX improvements
-* Code refactoring
-* Documentation updates
-* New features
-* Security improvements
-* Accessibility improvements
-* Test coverage improvements
+## Backend
 
----
+- Keep Controllers Modular
+- Validate Request Data
+- Handle Errors Properly
+- Follow Existing API Structure
 
-## Coding Standards
+## General
 
-### Frontend
-
-* Use React functional components
-* Keep components reusable
-* Follow existing project structure
-* Avoid unnecessary complexity
-
-### Backend
-
-* Follow existing Express.js patterns
-* Keep controllers clean and modular
-* Validate request inputs
-* Handle errors properly
-
-### General
-
-* Use meaningful variable names
-* Write readable code
-* Remove unused code
-* Keep pull requests focused on a single change
+- Use meaningful variable names.
+- Remove unused code.
+- Avoid unnecessary complexity.
+- Keep code readable.
+- Keep PRs focused on one feature or bug.
 
 ---
 
-## Commit Message Convention
+# 🧹 Before You Commit
 
-Use clear commit messages.
+Format your code:
+
+```bash
+npx prettier --write .
+```
+
+Build the frontend to verify there are no production build errors:
+
+```bash
+cd client
+
+npm run build
+```
+
+If your changes affect the backend, make sure it starts correctly:
+
+```bash
+cd ../server
+
+npm run server
+```
+
+Resolve all linting, formatting, and build issues before committing.
+
+---
+
+# 💬 Commit Message Convention
+
+Use meaningful commit messages.
 
 Examples:
 
@@ -128,112 +217,143 @@ git commit -m "fix: resolve login validation issue"
 ```
 
 ```bash
-git commit -m "docs: update installation guide"
+git commit -m "docs: update README"
 ```
 
 ```bash
-git commit -m "refactor: improve meeting controller structure"
+git commit -m "refactor: simplify meeting controller"
 ```
 
 Common prefixes:
 
-* feat
-* fix
-* docs
-* refactor
-* style
-* test
-* chore
+- feat
+- fix
+- docs
+- refactor
+- style
+- test
+- chore
 
 ---
 
-## Pull Request Process
+# 🚀 Pull Request Process
 
-1. Fork the repository.
+1. Sync your fork with the latest changes.
 2. Create a feature branch.
-3. Make your changes.
-4. Test the changes locally.
-5. Commit your changes.
-6. Push your branch.
-7. Open a Pull Request.
+3. Implement your changes.
+4. Test locally.
+5. Format your code.
+6. Commit.
+7. Push your branch.
+8. Open a Pull Request.
 
 Example:
 
 ```bash
 git add .
 
-git commit -m "feat: add policy search functionality"
+git commit -m "feat: improve semantic search"
 
-git push origin feature/policy-search
+git push origin feature/semantic-search
 ```
 
 ---
 
-## Pull Request Checklist
+# ✅ Pull Request Checklist
 
-Before submitting a Pull Request, make sure:
+Before opening a Pull Request, ensure:
 
-* Code builds successfully
-* No unnecessary files are included
-* Documentation is updated if required
-* Existing functionality is not broken
-* Code follows project structure
-
----
-
-## Reporting Bugs
-
-If you find a bug:
-
-1. Search existing issues first.
-2. Create a new issue if it doesn't exist.
-3. Include:
-
-   * Steps to reproduce
-   * Expected behavior
-   * Actual behavior
-   * Screenshots (if applicable)
+- [ ] Related Issue is linked.
+- [ ] Issue was assigned before starting work.
+- [ ] Project builds successfully (`npm run build`).
+- [ ] Code is formatted (`npx prettier --write .`).
+- [ ] Documentation updated (if needed).
+- [ ] No unnecessary files included.
+- [ ] No merge conflicts.
+- [ ] PR addresses only one Issue.
+- [ ] Existing functionality is not broken.
 
 ---
 
-## Feature Requests
+# 🐞 Reporting Bugs
 
-Feature requests are welcome.
+Please include:
 
-Please provide:
-
-* Clear description
-* Use case
-* Expected benefit
-* Possible implementation approach
-
----
-
-## Areas Where Contributions Are Welcome
-
-* AI Search Improvements
-* Meeting Management Features
-* Policy Repository Enhancements
-* Analytics Dashboard
-* Performance Optimization
-* Security Improvements
-* Documentation
-* Testing
-* Accessibility
-* Mobile Responsiveness
+- Steps to reproduce
+- Expected behavior
+- Actual behavior
+- Screenshots (if applicable)
+- Browser / OS information
 
 ---
 
-## Code of Conduct
+# 💡 Feature Requests
 
-Please be respectful and professional.
+Please include:
 
-We aim to maintain a welcoming and inclusive environment for everyone.
+- Clear description
+- Use case
+- Expected benefit
+- Possible implementation
 
 ---
 
-## Questions
+# 🎯 Areas Open for Contribution
 
-If you have questions about contributing, feel free to open an issue or start a discussion.
+- AI Search Improvements
+- Meeting Management
+- Policy Repository
+- Reports & Analytics
+- UI/UX Improvements
+- Accessibility
+- Documentation
+- Testing
+- Performance Optimization
+- Security Improvements
+- Mobile Responsiveness
 
-Thank you for helping improve MeetOnMemory 🚀
+---
+
+# 👀 Review Process
+
+Every Pull Request is reviewed by the maintainers.
+
+During review you may be asked to:
+
+- Fix bugs
+- Improve code quality
+- Resolve review comments
+- Update documentation
+- Re-test your implementation
+
+Please be patient while waiting for review.
+
+---
+
+# 📜 Code of Conduct
+
+Be respectful, professional, and welcoming.
+
+We aim to maintain a positive and inclusive open-source community.
+
+---
+
+# ❓ Questions
+
+If you have any questions:
+
+- Open a Discussion
+- Open an Issue
+- Contact a Maintainer
+
+We're happy to help.
+
+---
+
+# ❤️ Thank You
+
+Thank you for contributing to **MeetOnMemory**!
+
+Your contributions help make the project better for everyone.
+
+Happy Coding! 🚀  
