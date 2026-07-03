@@ -4,6 +4,7 @@ import Header from "../components/Header";
 import HowItWorks from "../components/HowItWorks";
 import About from "../components/About";
 import FAQ from "../components/FAQ";
+import Features from '../components/Features';
 
 const Home = () => {
   return (
@@ -12,9 +13,11 @@ const Home = () => {
       <Navbar />
 
       {/* Main content (Header + Hero) */}
-      <div className="flex flex-col items-center justify-center pt-32 pb-20 text-center">
+      <div className="flex flex-col items-center justify-center min-h-screen pt-32 pb-20 text-center">
         <Header />
       </div>
+
+      <Features />
 
       {/* How It Works Section */}
       <HowItWorks />
