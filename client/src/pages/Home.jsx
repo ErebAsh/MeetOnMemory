@@ -1,6 +1,6 @@
 import React from "react";
 import Navbar from "../components/Navbar";
-import Header from "../components/Header";
+import Hero from "../components/Hero";
 import HowItWorks from "../components/HowItWorks";
 import About from "../components/About";
 import FAQ from "../components/FAQ";
@@ -8,13 +8,13 @@ import Features from '../components/Features';
 
 const Home = () => {
   return (
-    <div className="relative min-h-screen bg-[url('/bg_img.png')] bg-cover bg-center flex flex-col">
+    <div className="relative min-h-screen flex flex-col">
       {/* Fixed Navbar */}
       <Navbar />
 
-      {/* Main content (Header + Hero) */}
+      {/* Main content (Hero) */}
       <div className="flex flex-col items-center justify-center min-h-screen pt-32 pb-20 text-center">
-        <Header />
+          <Hero />
       </div>
 
       <Features />
