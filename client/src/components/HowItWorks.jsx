@@ -259,7 +259,7 @@ const HowItWorks = () => {
   return (
     <section
       id="how-it-works"
-      className="py-24 bg-gradient-to-b from-slate-50 to-white overflow-hidden"
+      className="pt-24 pb-8 bg-gradient-to-b from-slate-50 to-white overflow-hidden"
     >
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
         {/* Section Header */}
