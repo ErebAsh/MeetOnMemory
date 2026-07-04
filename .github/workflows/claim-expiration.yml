@@ -26,8 +26,13 @@ jobs:
               per_page: 100
             });
 
-            const REMINDER_TEXT = "your claim has been inactive for 24 hours. Please provide an update within the next 24 hours, otherwise your claim will expire.";
+const BOT_MESSAGES = {
+  reminder: (user) =>
+    `⏰ @${user}, your claim has been inactive for 24 hours. Please provide an update within the next 24 hours, otherwise your claim will expire.`,
 
+  expired: () =>
+    `❌ This claim has expired after 48 hours of inactivity. The issue is now available for anyone to claim.`
+};
             for (const issue of issues) {
               if (!issue.assignees || issue.assignees.length === 0 || issue.pull_request) continue;
               
@@ -61,8 +66,7 @@ jobs:
                   owner,
                   repo,
                   issue_number: issue.number,
-                  body: `❌ This claim has expired after 48 hours of inactivity. The issue is now available for anyone to claim.`
-                });
+body: BOT_MESSAGES.expired()                });
               } else if (hoursInactive >= 24) {
                 // Fetch comments to verify if we already posted the exact reminder
                 const comments = await github.rest.issues.listComments({
@@ -72,15 +76,15 @@ jobs:
                 });
 
                 // 3. Match text verification cleanly to prevent hourly duplication
-                const alreadyWarned = comments.data.some(c => c.body.includes(REMINDER_TEXT));
-
+const alreadyWarned = comments.data.some(
+  c => c.body.includes("your claim has been inactive for 24 hours")
+);
                 if (!alreadyWarned) {
                   await github.rest.issues.createComment({
                     owner,
                     repo,
                     issue_number: issue.number,
-                    body: `⏰ @${currentAssignee}, ${REMINDER_TEXT}`
-                  });
+body: BOT_MESSAGES.reminder(currentAssignee)                  });
                 }
               }
             }

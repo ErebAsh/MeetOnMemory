@@ -40,39 +40,115 @@ jobs:
             // ========================================================
             if (context.eventName === 'issue_comment' && !context.payload.issue.pull_request) {
               const commentBody = context.payload.comment.body.trim();
-              const commenter = context.payload.comment.user.login;
-              const issueNumber = context.issue.number;
-              const issueState = context.payload.issue.state;
-              const assignees = context.payload.issue.assignees || [];
-              const isAssigned = assignees.length > 0;
+const commenter = context.payload.comment.user.login;
+const issueNumber = context.issue.number;
+const issueState = context.payload.issue.state;
+const assignees = context.payload.issue.assignees || [];
+const isAssigned = assignees.length > 0;
+const issueAuthor = context.payload.issue.user.login;
+const isIssueAuthor = commenter === issueAuthor;
+ const authorAssociation = context.payload.issue.author_association;
+
+const isMaintainerIssue = [
+  "OWNER",
+  "MEMBER",
+  "COLLABORATOR"
+].includes(authorAssociation);
+const CLAIM_COMMAND = "/claim";
+const UNCLAIM_COMMAND = "/unclaim";
+
+const BOT_MESSAGES = {
+  invalidClaim: (user) => `👋 Thanks for your interest, @${user}!
+
+To claim this issue, please comment:
+
+\`${CLAIM_COMMAND}\`
+
+Only the first valid \`${CLAIM_COMMAND}\` comment is eligible for automatic assignment.`,
+
+  assigned: (user) => `🎉 Issue Assigned
+
+Welcome @${user}!
+
+This issue has been assigned to you following our first-come, first-served policy.
+
+Please submit a Pull Request within 24 hours.
+
+If you need more time, please update the issue before the deadline.
+
+Happy coding! 🚀`,
+
+ alreadyAssigned: (user) => `⚠️ This issue is currently assigned to @${user}.
+
+If the issue becomes available again, feel free to claim it.`,
+
+claimRejected: (author) => `❌ This issue was opened by another contributor.
+
+Only the issue author (@${author}) may claim this issue automatically.
+
+Repository maintainers may still assign contributors manually if required.`,
+alreadyClaimed: (user) => `⚠️ @${user}, you are already assigned to this issue!`,
+closedIssue: (user) => `❌ Request denied. You cannot claim a closed issue, @${user}.`
+};
+
+const invalidClaimMessages = [
+  "can i work on this?",
+  "please assign me",
+  "interested",
+  "i would like to contribute.",
+  "i would like to contribute"
+];
+
+if (
+  commentBody !== CLAIM_COMMAND &&
+  commentBody !== UNCLAIM_COMMAND &&
+  invalidClaimMessages.includes(commentBody.toLowerCase())
+){
+  await github.rest.issues.createComment({
+    owner: context.repo.owner,
+    repo: context.repo.repo,
+    issue_number: issueNumber,
+    body: BOT_MESSAGES.invalidClaim(commenter)
+  });
+  return;
+}
 
               // --- SUB-FEATURE: /claim ---
-              if (commentBody === '/claim') {
+             if (commentBody === CLAIM_COMMAND) {
                 // Reject claim if the issue is already closed
                 if (issueState === 'closed') {
                   await github.rest.issues.createComment({
                     owner: context.repo.owner,
                     repo: context.repo.repo,
                     issue_number: issueNumber,
-                    body: `❌ Request denied. You cannot claim a closed issue, @${commenter}.`
-                  });
+body: BOT_MESSAGES.closedIssue(commenter)                  });
                   return;
                 }
-
-                if (isAssigned) {
+                 if (isAssigned) {
                   const currentAssignee = assignees[0].login;
-                  const warningMsg = currentAssignee === commenter 
-                    ? `⚠️ @${commenter}, you are already assigned to this issue!`
-                    : `❌ Request denied. This issue is already claimed by @${currentAssignee}.`;
+                 
                   
                   await github.rest.issues.createComment({
                     owner: context.repo.owner,
                     repo: context.repo.repo,
-                    issue_number: issueNumber,
-                    body: warningMsg
+                      issue_number: issueNumber,
+
+                   body: currentAssignee === commenter
+  ? BOT_MESSAGES.alreadyClaimed(commenter)
+  : BOT_MESSAGES.alreadyAssigned(currentAssignee)
                   });
                   return;
                 }
+                 if (!isMaintainerIssue && !isIssueAuthor) {
+                 
+  await github.rest.issues.createComment({
+    owner: context.repo.owner,
+    repo: context.repo.repo,
+    issue_number: issueNumber,
+body: BOT_MESSAGES.claimRejected(issueAuthor)  });
+  return;
+}
+          
 
                 await github.rest.issues.addAssignees({
                   owner: context.repo.owner,
@@ -85,12 +161,12 @@ jobs:
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: issueNumber,
-                  body: `✅ Issue successfully claimed by @${commenter}. Happy coding!`
+                  body: BOT_MESSAGES.assigned(commenter)
                 });
               }
 
               // --- SUB-FEATURE: /unclaim ---
-              if (commentBody === '/unclaim') {
+          if (commentBody === UNCLAIM_COMMAND) {
                 if (!isAssigned) {
                   await github.rest.issues.createComment({
                     owner: context.repo.owner,
