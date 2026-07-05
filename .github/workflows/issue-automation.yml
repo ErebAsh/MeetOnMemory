@@ -40,25 +40,25 @@ jobs:
             // ========================================================
             if (context.eventName === 'issue_comment' && !context.payload.issue.pull_request) {
               const commentBody = context.payload.comment.body.trim();
-const commenter = context.payload.comment.user.login;
-const issueNumber = context.issue.number;
-const issueState = context.payload.issue.state;
-const assignees = context.payload.issue.assignees || [];
-const isAssigned = assignees.length > 0;
-const issueAuthor = context.payload.issue.user.login;
-const isIssueAuthor = commenter === issueAuthor;
- const authorAssociation = context.payload.issue.author_association;
+              const commenter = context.payload.comment.user.login;
+              const issueNumber = context.issue.number;
+              const issueState = context.payload.issue.state;
+              const assignees = context.payload.issue.assignees || [];
+              const isAssigned = assignees.length > 0;
+              const issueAuthor = context.payload.issue.user.login;
+              const isIssueAuthor = commenter === issueAuthor;
+              const authorAssociation = context.payload.issue.author_association;
 
-const isMaintainerIssue = [
-  "OWNER",
-  "MEMBER",
-  "COLLABORATOR"
-].includes(authorAssociation);
-const CLAIM_COMMAND = "/claim";
-const UNCLAIM_COMMAND = "/unclaim";
+              const isMaintainerIssue = [
+                "OWNER",
+                "MEMBER",
+                "COLLABORATOR"
+              ].includes(authorAssociation);
+              const CLAIM_COMMAND = "/claim";
+              const UNCLAIM_COMMAND = "/unclaim";
 
-const BOT_MESSAGES = {
-  invalidClaim: (user) => `👋 Thanks for your interest, @${user}!
+              const BOT_MESSAGES = {
+                invalidClaim: (user) => `👋 Thanks for your interest, @${user}!
 
 To claim this issue, please comment:
 
@@ -66,7 +66,7 @@ To claim this issue, please comment:
 
 Only the first valid \`${CLAIM_COMMAND}\` comment is eligible for automatic assignment.`,
 
-  assigned: (user) => `🎉 Issue Assigned
+                assigned: (user) => `🎉 Issue Assigned
 
 Welcome @${user}!
 
@@ -78,77 +78,128 @@ If you need more time, please update the issue before the deadline.
 
 Happy coding! 🚀`,
 
- alreadyAssigned: (user) => `⚠️ This issue is currently assigned to @${user}.
+                alreadyAssigned: (user) => `❌ Issue Already Assigned
 
-If the issue becomes available again, feel free to claim it.`,
+This issue is currently assigned to @${user}.
 
-claimRejected: (author) => `❌ This issue was opened by another contributor.
+Please explore other available unassigned issues while waiting for this issue to become available.
+
+If the current assignee becomes inactive, the issue may be automatically reopened according to the repository's assignment policy.
+
+Thank you for your interest in contributing! 💙`,
+
+                claimRejected: (author) => `❌ This issue was opened by another contributor.
 
 Only the issue author (@${author}) may claim this issue automatically.
 
 Repository maintainers may still assign contributors manually if required.`,
-alreadyClaimed: (user) => `⚠️ @${user}, you are already assigned to this issue!`,
-closedIssue: (user) => `❌ Request denied. You cannot claim a closed issue, @${user}.`
-};
+                alreadyClaimed: (user) => `⚠️ @${user}, you are already assigned to this issue!`,
+                closedIssue: (user) => `❌ Request denied. You cannot claim a closed issue, @${user}.`,
+                limitReached: (user, issuesList) => {
+                  let listStr = "";
+                  if (issuesList && issuesList.length > 0) {
+                    listStr = "\n\n**Your currently assigned issues:**\n" +
+                      issuesList.map(i => `- #${i.number} ${i.title}`).join("\n");
+                  }
+                  return `❌ Assignment Limit Reached\n\n` +
+                    `Hi @${user},\n\n` +
+                    `You currently have 4 active assigned issues, which is the maximum allowed.${listStr}\n\n` +
+                    `Please complete, merge, or /unclaim one of your existing issues before claiming another.\n\n` +
+                    `This policy helps ensure fair participation and prevents issue hoarding.\n\n` +
+                    `Thank you for contributing to MeetOnMemory! 🚀`;
+                }
+              };
 
-const invalidClaimMessages = [
-  "can i work on this?",
-  "please assign me",
-  "interested",
-  "i would like to contribute.",
-  "i would like to contribute"
-];
+              const invalidClaimMessages = [
+                "can i work on this?",
+                "please assign me",
+                "interested",
+                "i would like to contribute.",
+                "i would like to contribute"
+              ];
 
-if (
-  commentBody !== CLAIM_COMMAND &&
-  commentBody !== UNCLAIM_COMMAND &&
-  invalidClaimMessages.includes(commentBody.toLowerCase())
-){
-  await github.rest.issues.createComment({
-    owner: context.repo.owner,
-    repo: context.repo.repo,
-    issue_number: issueNumber,
-    body: BOT_MESSAGES.invalidClaim(commenter)
-  });
-  return;
-}
+              const isClaimCommand = commentBody === CLAIM_COMMAND;
+              const isInvalidClaim = invalidClaimMessages.includes(commentBody.toLowerCase());
+              const isAssignmentRequest = isClaimCommand || isInvalidClaim;
+
+              if (isAssignmentRequest && isAssigned && commenter !== assignees[0].login) {
+                const currentAssignee = assignees[0].login;
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  body: BOT_MESSAGES.alreadyAssigned(currentAssignee)
+                });
+                return;
+              }
+
+              if (
+                commentBody !== CLAIM_COMMAND &&
+                commentBody !== UNCLAIM_COMMAND &&
+                invalidClaimMessages.includes(commentBody.toLowerCase())
+              ) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  body: BOT_MESSAGES.invalidClaim(commenter)
+                });
+                return;
+              }
 
               // --- SUB-FEATURE: /claim ---
-             if (commentBody === CLAIM_COMMAND) {
+              if (commentBody === CLAIM_COMMAND) {
                 // Reject claim if the issue is already closed
                 if (issueState === 'closed') {
                   await github.rest.issues.createComment({
                     owner: context.repo.owner,
                     repo: context.repo.repo,
                     issue_number: issueNumber,
-body: BOT_MESSAGES.closedIssue(commenter)                  });
-                  return;
-                }
-                 if (isAssigned) {
-                  const currentAssignee = assignees[0].login;
-                 
-                  
-                  await github.rest.issues.createComment({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                      issue_number: issueNumber,
-
-                   body: currentAssignee === commenter
-  ? BOT_MESSAGES.alreadyClaimed(commenter)
-  : BOT_MESSAGES.alreadyAssigned(currentAssignee)
+                    body: BOT_MESSAGES.closedIssue(commenter)
                   });
                   return;
                 }
-                 if (!isMaintainerIssue && !isIssueAuthor) {
-                 
-  await github.rest.issues.createComment({
-    owner: context.repo.owner,
-    repo: context.repo.repo,
-    issue_number: issueNumber,
-body: BOT_MESSAGES.claimRejected(issueAuthor)  });
-  return;
-}
-          
+                if (isAssigned) {
+                  const currentAssignee = assignees[0].login;
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber,
+                    body: currentAssignee === commenter
+                      ? BOT_MESSAGES.alreadyClaimed(commenter)
+                      : BOT_MESSAGES.alreadyAssigned(currentAssignee)
+                  });
+                  return;
+                }
+
+                // Count active assigned issues before claiming
+                const assignedIssues = await github.paginate(github.rest.issues.listForRepo, {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  state: 'open',
+                  assignee: commenter,
+                  per_page: 100
+                });
+                const activeIssues = assignedIssues.filter(i => !i.pull_request);
+                if (activeIssues.length >= 4) {
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber,
+                    body: BOT_MESSAGES.limitReached(commenter, activeIssues)
+                  });
+                  return;
+                }
+
+                if (!isMaintainerIssue && !isIssueAuthor) {
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber,
+                    body: BOT_MESSAGES.claimRejected(issueAuthor)
+                  });
+                  return;
+                }
 
                 await github.rest.issues.addAssignees({
                   owner: context.repo.owner,
@@ -166,7 +217,7 @@ body: BOT_MESSAGES.claimRejected(issueAuthor)  });
               }
 
               // --- SUB-FEATURE: /unclaim ---
-          if (commentBody === UNCLAIM_COMMAND) {
+              if (commentBody === UNCLAIM_COMMAND) {
                 if (!isAssigned) {
                   await github.rest.issues.createComment({
                     owner: context.repo.owner,
@@ -178,7 +229,7 @@ body: BOT_MESSAGES.claimRejected(issueAuthor)  });
                 }
 
                 const currentAssignee = assignees[0].login;
-                
+
                 // Call real GitHub API to resolve official repo access levels
                 let hasMaintainerRights = false;
                 try {
