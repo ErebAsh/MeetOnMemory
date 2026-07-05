@@ -1,6 +1,8 @@
 import express from "express";
 import multer from "multer";
 import path from "path";
+import crypto from "crypto";
+import rateLimit from "express-rate-limit";
 import userAuth from "../middleware/userAuth.js";
 import {
   uploadPolicy,
@@ -11,6 +13,54 @@ import {
 } from "../controllers/policyController.js";
 
 const router = express.Router();
+
+// ──────────────────────────────────────────────
+// Rate Limiters
+// ──────────────────────────────────────────────
+const uploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  message: {
+    success: false,
+    message: "Too many upload requests, please try again after 15 minutes.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const analyzeLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20,
+  message: {
+    success: false,
+    message:
+      "Too many re-analysis requests, please try again after 15 minutes.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const downloadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 60,
+  message: {
+    success: false,
+    message: "Too many download requests, please try again after 15 minutes.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const deleteLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  message: {
+    success: false,
+    message: "Too many delete requests, please try again after 15 minutes.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // ──────────────────────────────────────────────
 // Multer Config — disk storage with validation
@@ -24,8 +74,11 @@ const ALLOWED_MIME_TYPES = [
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/policies/"),
-  filename: (req, file, cb) =>
-    cb(null, Date.now() + "-" + file.originalname.replace(/\s+/g, "_")),
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + crypto.randomUUID();
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, uniqueSuffix + ext);
+  },
 });
 
 const fileFilter = (req, file, cb) => {
@@ -77,10 +130,16 @@ const handleMulterUpload = (req, res, next) => {
 // Public (read-only)
 router.get("/", getPolicies);
 
-// Protected — require authentication
-router.post("/upload", userAuth, handleMulterUpload, uploadPolicy);
-router.post("/:id/analyze", userAuth, analyzePolicy);
-router.get("/download/:id", userAuth, downloadPolicy);
-router.delete("/:id", userAuth, deletePolicy);
+// Protected — require authentication & rate limiting
+router.post(
+  "/upload",
+  uploadLimiter,
+  userAuth,
+  handleMulterUpload,
+  uploadPolicy,
+);
+router.post("/:id/analyze", analyzeLimiter, userAuth, analyzePolicy);
+router.get("/download/:id", downloadLimiter, userAuth, downloadPolicy);
+router.delete("/:id", deleteLimiter, userAuth, deletePolicy);
 
 export default router;

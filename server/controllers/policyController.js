@@ -11,7 +11,30 @@ const pdf = require("pdf-parse");
 dotenv.config();
 
 const UPLOAD_DIR = path.resolve("uploads/policies");
-if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+const UPLOAD_ROOT = UPLOAD_DIR;
+
+if (!fs.existsSync(UPLOAD_DIR)) {
+  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+}
+
+/**
+ * Validates a file path to prevent directory traversal attacks (CWE-22).
+ * Ensures that the resolved path is strictly within UPLOAD_ROOT.
+ *
+ * @param {string} filePath - Path to be validated
+ * @returns {string} Fully resolved safe absolute path
+ */
+function validateUploadPath(filePath) {
+  if (!filePath) {
+    throw new Error("Path is empty or undefined");
+  }
+  const resolvedPath = path.resolve(filePath);
+  const relative = path.relative(UPLOAD_ROOT, resolvedPath);
+  if (relative.startsWith("..") || path.isAbsolute(relative)) {
+    throw new Error("Path traversal detected: Access denied");
+  }
+  return resolvedPath;
+}
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.0-flash";
@@ -100,16 +123,17 @@ Return ONLY valid JSON (no commentary, no markdown fences). Use a professional, 
 // ─────────────────────────────────────────────────────────────
 const extractTextFromFile = async (filePath, mimetype) => {
   try {
+    const safePath = validateUploadPath(filePath);
     if (
       mimetype === "application/pdf" ||
-      filePath.toLowerCase().endsWith(".pdf")
+      safePath.toLowerCase().endsWith(".pdf")
     ) {
-      const pdfBuffer = fs.readFileSync(filePath);
+      const pdfBuffer = fs.readFileSync(safePath);
       const data = await pdf(pdfBuffer);
       return data.text || "";
     }
     // For DOCX/TXT — fallback to raw read
-    return fs.readFileSync(filePath, "utf8").toString();
+    return fs.readFileSync(safePath, "utf8").toString();
   } catch (err) {
     console.warn("⚠️ Text extraction failed:", err.message);
     return "";
@@ -131,13 +155,17 @@ export const uploadPolicy = async (req, res) => {
 
     const fileName = req.file.originalname;
     const fileUrl = path.join(UPLOAD_DIR, req.file.filename);
+    const safeFileUrl = validateUploadPath(fileUrl);
     const commitMsg = req.body.commitMsg?.trim() || "";
     const uploaderId = req.user._id; // guaranteed by userAuth middleware
 
-    savedFilePath = fileUrl;
+    savedFilePath = safeFileUrl;
 
     // 1️⃣ Extract text
-    const textContent = await extractTextFromFile(fileUrl, req.file.mimetype);
+    const textContent = await extractTextFromFile(
+      safeFileUrl,
+      req.file.mimetype,
+    );
 
     // 2️⃣ Generate AI summary + metadata
     console.log(`📡 Calling Gemini for AI summary — "${fileName}"...`);
@@ -163,7 +191,7 @@ export const uploadPolicy = async (req, res) => {
 
       const nextVersion = (parseFloat(existing.version) + 0.1).toFixed(1);
       existing.version = nextVersion;
-      existing.fileUrl = fileUrl;
+      existing.fileUrl = safeFileUrl;
       existing.summary = aiData.summary;
       existing.key_changes = aiData.key_changes;
       existing.keywords = aiData.keywords;
@@ -188,7 +216,7 @@ export const uploadPolicy = async (req, res) => {
     const policy = await Policy.create({
       name: fileName,
       version: "1.0",
-      fileUrl,
+      fileUrl: safeFileUrl,
       summary: aiData.summary,
       key_changes: aiData.key_changes,
       keywords: aiData.keywords,
@@ -211,9 +239,12 @@ export const uploadPolicy = async (req, res) => {
     console.error("❌ Upload error:", error);
 
     // Clean up the uploaded file if DB operation failed
-    if (savedFilePath && fs.existsSync(savedFilePath)) {
+    if (savedFilePath) {
       try {
-        fs.unlinkSync(savedFilePath);
+        const safePath = validateUploadPath(savedFilePath);
+        if (fs.existsSync(safePath)) {
+          fs.unlinkSync(safePath);
+        }
       } catch (_) {
         // ignore cleanup errors
       }
@@ -245,7 +276,9 @@ export const analyzePolicy = async (req, res) => {
         .json({ success: false, message: "Policy not found." });
     }
 
-    if (!fs.existsSync(policy.fileUrl)) {
+    const safeFileUrl = validateUploadPath(policy.fileUrl);
+
+    if (!fs.existsSync(safeFileUrl)) {
       return res.status(404).json({
         success: false,
         message: "Policy file not found on disk. Cannot re-analyze.",
@@ -257,7 +290,7 @@ export const analyzePolicy = async (req, res) => {
     await policy.save();
 
     // Extract text and analyze (non-blocking response pattern)
-    const textContent = await extractTextFromFile(policy.fileUrl, null);
+    const textContent = await extractTextFromFile(safeFileUrl, null);
     const aiData = await generatePolicySummary(policy.name, textContent);
 
     policy.summary = aiData.summary;
@@ -321,14 +354,16 @@ export const downloadPolicy = async (req, res) => {
         .json({ success: false, message: "Policy not found." });
     }
 
-    if (!fs.existsSync(policy.fileUrl)) {
+    const safeFileUrl = validateUploadPath(policy.fileUrl);
+
+    if (!fs.existsSync(safeFileUrl)) {
       return res.status(404).json({
         success: false,
         message: "Policy file is no longer available on the server.",
       });
     }
 
-    return res.download(policy.fileUrl, policy.name);
+    return res.download(safeFileUrl, policy.name);
   } catch (error) {
     console.error("❌ Download error:", error);
     return res.status(500).json({
@@ -351,19 +386,23 @@ export const deletePolicy = async (req, res) => {
     }
 
     // Delete current file from disk
-    if (fs.existsSync(policy.fileUrl)) {
-      try {
-        fs.unlinkSync(policy.fileUrl);
-      } catch (fsErr) {
-        console.warn("⚠️ Could not delete policy file:", fsErr.message);
+    try {
+      const safeFileUrl = validateUploadPath(policy.fileUrl);
+      if (fs.existsSync(safeFileUrl)) {
+        fs.unlinkSync(safeFileUrl);
       }
+    } catch (fsErr) {
+      console.warn("⚠️ Could not delete policy file:", fsErr.message);
     }
 
     // Also remove previous version files from disk
     for (const v of policy.previousVersions || []) {
-      if (v.fileUrl && fs.existsSync(v.fileUrl)) {
+      if (v.fileUrl) {
         try {
-          fs.unlinkSync(v.fileUrl);
+          const safeVersionUrl = validateUploadPath(v.fileUrl);
+          if (fs.existsSync(safeVersionUrl)) {
+            fs.unlinkSync(safeVersionUrl);
+          }
         } catch (_) {
           // non-fatal
         }
