@@ -1,10 +1,9 @@
 ---
-
-name: Feature Request
-about: Suggest a new feature or enhancement
-title: "[FEATURE] "
-labels: enhancement
--------------------
+name: "✨ Feature Request"
+about: "Suggest a new idea or feature for this project."
+title: "[FEATURE]: "
+labels: ["enhancement"]
+---
 
 # Feature Request
 

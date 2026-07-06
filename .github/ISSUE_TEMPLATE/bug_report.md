@@ -1,10 +1,9 @@
 ---
-
-name: Bug Report
-about: Report a bug to help improve MeetOnMemory
-title: "[BUG] "
-labels: bug
------------
+name: "🐞 Bug Report"
+about: "Report a bug or unexpected behavior to help us improve."
+title: "[BUG]: "
+labels: ["bug"]
+---
 
 # Bug Report
 
