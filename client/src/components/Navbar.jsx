@@ -212,7 +212,7 @@ const Navbar = () => {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
+        {/* Logo */}
           <div
             className="flex items-center gap-3 cursor-pointer group focus-visible:outline-none"
             onClick={() => navigate("/")}
@@ -221,20 +221,26 @@ const Navbar = () => {
             tabIndex={0}
             onKeyDown={(e) => e.key === "Enter" && navigate("/")}
           >
-            <div className="relative">
-              <div className="absolute -inset-1 rounded-lg bg-linear-to-r from-blue-600 to-violet-600 opacity-20 blur-sm group-hover:opacity-40 transition duration-300"></div>
-              <img
-                src="/favicon.svg"
-                alt=""
-                aria-hidden="true"
-                className="relative w-8.5 h-8.5 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6"
-              />
+            <div className="flex items-center justify-center">
+              {/* Clean Extra Large Native Option A Infinity Symbol with scale only */}
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" className="relative w-16 h-16 transition-transform duration-300 group-hover:scale-105">
+                <defs>
+                  <linearGradient id="navInfinityGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#2563eb" />
+                    <stop offset="100%" stop-color="#7c3aed" />
+                  </linearGradient>
+                </defs>
+                <path d="M25,50 C25,35 38,30 50,50 C62,70 75,65 75,50 C75,35 62,30 50,50 C38,70 25,65 25,50 Z" 
+                      fill="none" stroke="url(#navInfinityGrad)" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="25" cy="50" r="6.5" fill="#2563eb" />
+                <circle cx="75" cy="50" r="6.5" fill="#7c3aed" />
+              </svg>
             </div>
-            <span className="font-bold text-xl text-gray-900 tracking-tight bg-linear-to-r from-blue-700 to-indigo-900 bg-clip-text text-transparent group-hover:from-blue-600 group-hover:to-violet-600 transition-all duration-300">
-              MeetOnMemory
+            {/* Clean, Consistent Text Layout (Hover effects removed) */}
+            <span className="font-bold text-2xl text-gray-900 tracking-tight">
+              MeetOn<span className="text-blue-600">Memory</span>
             </span>
           </div>
-
           {/* Desktop Navigation */}
           {userData ? (
             /* Logged In Desktop App Nav */

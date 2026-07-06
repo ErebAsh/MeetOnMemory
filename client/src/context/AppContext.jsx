@@ -1,7 +1,7 @@
 import axios from "axios";
 import React, {useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import AppContent from "./AppContent";
+import AppContent from "./AppContent.js";
 
 
 axios.defaults.withCredentials = true;

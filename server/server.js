@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
+import csrf from "csurf";
 import { Server } from "socket.io";
 
 import connectDB from "./config/mongodb.js";
@@ -36,6 +37,38 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // ================================
+// CSRF PROTECTION (CodeQL Fix)
+// ================================
+const csrfProtection = csrf({
+  cookie: {
+    key: "_csrf",
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    httpOnly: true,
+  },
+});
+
+app.use((req, res, next) => {
+  if (req.method === "GET") {
+    csrfProtection(req, res, (err) => {
+      if (err) return next(err);
+      res.cookie("XSRF-TOKEN", req.csrfToken(), {
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        httpOnly: false, // JS-readable for Axios auto-pickup
+      });
+      next();
+    });
+  } else {
+    // Only check CSRF if session cookie is present
+    if (!req.cookies?.token) {
+      return next();
+    }
+    csrfProtection(req, res, next);
+  }
+});
+
+// ================================
 // CORS
 // ================================
 const allowedOrigins = [
@@ -57,12 +90,8 @@ app.use(
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "X-Requested-With",
-    ],
-  })
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  }),
 );
 
 // ================================
@@ -136,6 +165,13 @@ meetingSocket(io);
 // ================================
 app.use((err, req, res, next) => {
   console.error(err);
+
+  if (err.code === "EBADCSRFTOKEN") {
+    return res.status(403).json({
+      success: false,
+      message: "CSRF token validation failed.",
+    });
+  }
 
   res.status(500).json({
     success: false,

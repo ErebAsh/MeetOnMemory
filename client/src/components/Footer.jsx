@@ -21,17 +21,26 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-14">
 
-          {/* Column 1: Project Info */}
+         {/* Column 1: Project Info */}
           <div className="flex flex-col gap-4 lg:col-span-1">
             <div className="flex items-center gap-2.5">
-              <img
-                src="/favicon.svg"
-                alt=""
-                aria-hidden="true"
-                className="w-8 h-8"
-              />
-              <span className="font-bold text-xl text-gray-800 tracking-tight">
-                MeetOnMemory
+              <div className="flex items-center justify-center">
+                {/* Clean Native Option A Infinity Symbol tuned for Footer Sizing */}
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" className="w-10 h-10 transition-transform duration-300">
+                  <defs>
+                    <linearGradient id="footerInfinityGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#2563eb" />
+                      <stop offset="100%" stop-color="#7c3aed" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M25,50 C25,35 38,30 50,50 C62,70 75,65 75,50 C75,35 62,30 50,50 C38,70 25,65 25,50 Z" 
+                        fill="none" stroke="url(#footerInfinityGrad)" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+                  <circle cx="25" cy="50" r="6.5" fill="#2563eb" />
+                  <circle cx="75" cy="50" r="6.5" fill="#7c3aed" />
+                </svg>
+              </div>
+              <span className="font-bold text-xl text-gray-900 tracking-tight">
+                MeetOn<span className="text-blue-600">Memory</span>
               </span>
             </div>
             <p className="text-gray-600 text-sm font-medium leading-snug">
