@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -30,6 +30,11 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Footer from "./components/Footer.jsx";
 
 const App = () => {
+  const location = useLocation();
+
+const hideFooterRoutes = ["/login"];
+
+const shouldShowFooter = !hideFooterRoutes.includes(location.pathname);
   return (
     <div className="flex flex-col min-h-screen">
       {/* Toast Notifications */}
@@ -142,7 +147,7 @@ const App = () => {
       </Routes>
       
       {/* Global Footer */}
-      <Footer />
+    {shouldShowFooter && <Footer />}
     </div>
   );
 };
