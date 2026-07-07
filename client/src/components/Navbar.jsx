@@ -395,10 +395,23 @@ const Navbar = () => {
                     aria-haspopup="true"
                     aria-label="Open user menu"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-linear-to-br from-blue-600 to-violet-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
-                      {userData?.name
-                        ? userData.name.charAt(0).toUpperCase()
-                        : "U"}
+                    <div className="relative w-8 h-8 rounded-lg overflow-hidden shrink-0">
+                      <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-violet-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
+                        {userData?.name
+                          ? userData.name.charAt(0).toUpperCase()
+                          : "U"}
+                      </div>
+                      {userData?.profilePic && (
+                        <img
+                          src={userData.profilePic}
+                          alt={userData.name}
+                          className="absolute inset-0 w-full h-full object-cover border border-gray-200/40"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.style.display = "none";
+                          }}
+                        />
+                      )}
                     </div>
                     <ChevronDown
                       className={`w-3.5 h-3.5 text-gray-500 transition-transform duration-200 ${
@@ -546,8 +559,23 @@ const Navbar = () => {
             /* Logged In Mobile Nav List */
             <>
               <div className="px-3.5 py-3 bg-gray-50 border border-gray-100/60 flex items-center gap-3 rounded-2xl mb-2">
-                <div className="w-10 h-10 rounded-xl bg-linear-to-br from-blue-600 to-violet-600 text-white flex items-center justify-center font-bold text-base shadow-sm shrink-0">
-                  {userData?.name ? userData.name.charAt(0).toUpperCase() : "U"}
+                <div className="relative w-10 h-10 rounded-xl overflow-hidden shrink-0">
+                  <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-violet-600 text-white flex items-center justify-center font-bold text-base shadow-xs">
+                    {userData?.name
+                      ? userData.name.charAt(0).toUpperCase()
+                      : "U"}
+                  </div>
+                  {userData?.profilePic && (
+                    <img
+                      src={userData.profilePic}
+                      alt={userData.name}
+                      className="absolute inset-0 w-full h-full object-cover border border-gray-200/40"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.style.display = "none";
+                      }}
+                    />
+                  )}
                 </div>
                 <div className="overflow-hidden">
                   <p className="text-sm font-bold text-gray-800 truncate">

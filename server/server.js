@@ -15,6 +15,7 @@ import aiRoutes from "./routes/aiRoutes.js";
 import policyRoutes from "./routes/policyRoutes.js";
 import analyticsRoutes from "./routes/analyticsRoutes.js";
 import geminiRoutes from "./routes/geminiRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 
 import { initVectorStore } from "./utils/embeddingUtils.js";
 import meetingSocket from "./socket/meetingSocket.js";
@@ -128,6 +129,7 @@ app.use("/api/ai-search", aiRoutes);
 app.use("/api/policies", policyRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/gemini", geminiRoutes);
+app.use("/api/user", userRoutes);
 
 // ================================
 // VECTOR STORE INIT
