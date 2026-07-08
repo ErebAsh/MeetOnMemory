@@ -11,7 +11,10 @@ import {
   MoreVertical,
 } from "lucide-react";
 
-const MeetingCard = ({ meeting, onDelete, onRename, onExport, onView }) => {
+import useExport from "../../hooks/useExport.js";
+
+const MeetingCard = ({ meeting, onDelete, onRename, onView }) => {
+  const { exportMeeting, isExporting } = useExport();
   const [showMenu, setShowMenu] = useState(false);
   const [showExportSubMenu, setShowExportSubMenu] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
@@ -100,7 +103,8 @@ const MeetingCard = ({ meeting, onDelete, onRename, onExport, onView }) => {
                   onMouseLeave={() => setShowExportSubMenu(false)}
                 >
                   <button
-                    className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center justify-between gap-2 text-sm"
+                    className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center justify-between gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isExporting}
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowExportSubMenu(!showExportSubMenu);
@@ -108,18 +112,20 @@ const MeetingCard = ({ meeting, onDelete, onRename, onExport, onView }) => {
                   >
                     <div className="flex items-center gap-2">
                       <Download size={16} className="text-gray-500" />
-                      Export
+                      {isExporting ? "Exporting..." : "Export"}
                     </div>
-                    <svg className={`w-4 h-4 text-gray-400 transition-transform ${showExportSubMenu ? "rotate-90" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
+                    {!isExporting && (
+                      <svg className={`w-4 h-4 text-gray-400 transition-transform ${showExportSubMenu ? "rotate-90" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    )}
                   </button>
                   
                   {showExportSubMenu && (
                     <div className="absolute right-full top-0 mr-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[140px]">
                       <button
                         onClick={() => {
-                          onExport(meeting, "pdf");
+                          exportMeeting(meeting, "pdf");
                           setShowMenu(false);
                         }}
                         className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2 text-sm"
@@ -128,7 +134,7 @@ const MeetingCard = ({ meeting, onDelete, onRename, onExport, onView }) => {
                       </button>
                       <button
                         onClick={() => {
-                          onExport(meeting, "docx");
+                          exportMeeting(meeting, "docx");
                           setShowMenu(false);
                         }}
                         className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2 text-sm"
@@ -137,7 +143,7 @@ const MeetingCard = ({ meeting, onDelete, onRename, onExport, onView }) => {
                       </button>
                       <button
                         onClick={() => {
-                          onExport(meeting, "md");
+                          exportMeeting(meeting, "md");
                           setShowMenu(false);
                         }}
                         className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2 text-sm"

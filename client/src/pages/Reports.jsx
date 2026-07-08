@@ -16,39 +16,45 @@ const Reports = () => {
   const [aiInsights, setAiInsights] = useState("");
 
   useEffect(() => {
+    // 🧠 Generate Gemini-based insights
+    const fetchAIInsights = async (summary) => {
+      try {
+        const prompt = `Based on these platform stats, provide 2 actionable insights for productivity: ${JSON.stringify(summary)}`;
+        const aiRes = await axios.post(
+          `${backendUrl}/api/chat/ask`,
+          { message: prompt },
+          { withCredentials: true },
+        );
+        if (aiRes.data.success) {
+          setAiInsights(aiRes.data.reply);
+        }
+      } catch (err) {
+        console.error("AI Insights error:", err);
+        setAiInsights("AI insights unavailable — please try again later.");
+      }
+    };
+
+    const fetchAnalytics = async () => {
+      try {
+        const res = await axios.get(`${backendUrl}/api/analytics`, {
+          withCredentials: true,
+        });
+
+        if (res.data.success) {
+          setData(res.data);
+          await fetchAIInsights(res.data.summary);
+        } else {
+          toast.error("Failed to load analytics");
+        }
+      } catch (error) {
+        console.error("Error loading analytics:", error);
+        toast.error("Error loading analytics");
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchAnalytics();
-  }, []);
-
-  // 🔹 Fetch summary stats + trends
-  const fetchAnalytics = async () => {
-    try {
-      const res = await axios.get(`${backendUrl}/api/analytics`, {
-        withCredentials: true,
-      });
-
-      if (res.data.success) {
-        setData(res.data);
-        await fetchAIInsights(res.data.summary);
-      } else toast.error("Failed to load analytics.");
-    } catch (err) {
-      console.error("Analytics fetch error:", err);
-      toast.error("Server error while fetching analytics.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 🧠 Generate Gemini-based insights
-  const fetchAIInsights = async (summary) => {
-    try {
-      const res = await axios.post(`${backendUrl}/api/gemini/insights`, {
-        summary,
-      });
-      setAiInsights(res.data.insight || "AI analysis unavailable.");
-    } catch {
-      setAiInsights("AI insights unavailable — please try again later.");
-    }
-  };
+  }, [backendUrl]);
 
   if (loading)
     return (

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import AppContent from "../../context/AppContent.js";
+import useExport from "../../hooks/useExport.js";
 
 const MeetingActions = ({ meeting, onDelete, onRename }) => {
   const navigate = useNavigate();
@@ -9,9 +9,7 @@ const MeetingActions = ({ meeting, onDelete, onRename }) => {
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [showExportMenu, setShowExportMenu] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
-  
-  const { backendUrl } = React.useContext(AppContent);
+  const { exportMeeting, isExporting } = useExport();
 
   if (!meeting) return null;
 
@@ -32,46 +30,9 @@ const MeetingActions = ({ meeting, onDelete, onRename }) => {
     URL.revokeObjectURL(url);
   };
 
-  const handleExport = async (format) => {
-    try {
-      setIsExporting(true);
-      setShowExportMenu(false);
-      
-      const response = await axios.get(
-        `${backendUrl}/api/meetings/${meeting._id}/export?format=${format}`,
-        {
-          withCredentials: true,
-          responseType: "blob",
-        }
-      );
-      
-      const blob = new Blob([response.data], { type: response.headers['content-type'] });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      
-      // Extract filename from Content-Disposition header if possible
-      let filename = `${meeting.title || "meeting"}_mom.${format}`;
-      const disposition = response.headers['content-disposition'];
-      if (disposition && disposition.indexOf('filename=') !== -1) {
-        const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-        const matches = filenameRegex.exec(disposition);
-        if (matches != null && matches[1]) { 
-          filename = matches[1].replace(/['"]/g, '');
-        }
-      }
-      
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error(`Error exporting meeting to ${format}:`, err);
-      alert(`Failed to export meeting to ${format}`);
-    } finally {
-      setIsExporting(false);
-    }
+  const handleExport = (format) => {
+    setShowExportMenu(false);
+    exportMeeting(meeting, format);
   };
 
   const handleRename = () => {

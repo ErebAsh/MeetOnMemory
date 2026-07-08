@@ -24,7 +24,7 @@ const JoinOrganizationPage = () => {
       }
     };
     fetchOrgs();
-  }, []);
+  }, [backendUrl]);
 
   const handleJoin = async (orgId) => {
     try {

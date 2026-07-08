@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import Navbar from "../components/Navbar.jsx";
 import AppContent from "../context/AppContent";
+import useExport from "../hooks/useExport.js";
 
 const UploadMeeting = () => {
   const { backendUrl, userData } = useContext(AppContent);
@@ -32,8 +33,8 @@ const UploadMeeting = () => {
   const [meetingId, setMeetingId] = useState(null);
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [summary, setSummary] = useState("");
-  const [isExporting, setIsExporting] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const { exportMeeting, isExporting } = useExport();
 
   const fileInputRef = useRef(null);
 
@@ -227,49 +228,15 @@ const UploadMeeting = () => {
     }
   };
 
-  const handleExport = async (format) => {
-    if (!meetingId) {
-      toast.error("No meeting generated yet.");
-      return;
-    }
-    try {
-      setIsExporting(true);
-      setShowExportMenu(false);
-      
-      const response = await axios.get(
-        `${backendUrl}/api/meetings/${meetingId}/export?format=${format}`,
-        {
-          withCredentials: true,
-          responseType: "blob",
-        }
-      );
-      
-      const blob = new Blob([response.data], { type: response.headers['content-type'] });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      
-      let filename = `${title || "meeting"}_mom.${format}`;
-      const disposition = response.headers['content-disposition'];
-      if (disposition && disposition.indexOf('filename=') !== -1) {
-        const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-        const matches = filenameRegex.exec(disposition);
-        if (matches != null && matches[1]) { 
-          filename = matches[1].replace(/['"]/g, '');
-        }
-      }
-      
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error(`Error exporting meeting to ${format}:`, err);
-      toast.error(`Failed to export meeting to ${format}`);
-    } finally {
-      setIsExporting(false);
-    }
+  const handleExport = (format) => {
+    setShowExportMenu(false);
+    // Use the temporary generated mom object or saved object
+    const meetingToExport = {
+      _id: meetingId,
+      title: title,
+      structuredMoM: summary,
+    };
+    exportMeeting(meetingToExport, format);
   };
 
   const handleDownloadTranscript = () => {

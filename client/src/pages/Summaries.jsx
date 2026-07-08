@@ -2,6 +2,7 @@ import React, { useEffect, useState, useContext, useRef } from "react";
 import Navbar from "../components/Navbar.jsx";
 import axios from "axios";
 import AppContent from "../context/AppContent";
+import useExport from "../hooks/useExport.js";
 import { toast } from "react-toastify";
 import {
   FileText,
@@ -38,6 +39,7 @@ const Summaries = () => {
   const [pinnedIds, setPinnedIds] = useState([]);
   const [starredIds, setStarredIds] = useState([]);
   const [openExportMenuId, setOpenExportMenuId] = useState(null);
+  const { exportMeeting, isExporting } = useExport();
 
   // 🎙️ Setup browser-based voice recognition
   useEffect(() => {
@@ -176,40 +178,8 @@ const Summaries = () => {
     toast.success("Summary copied!");
   };
 
-  const handleExport = async (meeting, format) => {
-    try {
-      const response = await axios.get(
-        `${backendUrl}/api/meetings/${meeting._id}/export?format=${format}`,
-        {
-          withCredentials: true,
-          responseType: "blob",
-        }
-      );
-      
-      const blob = new Blob([response.data], { type: response.headers['content-type'] });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      
-      let filename = `${meeting.title || "meeting"}_mom.${format}`;
-      const disposition = response.headers['content-disposition'];
-      if (disposition && disposition.indexOf('filename=') !== -1) {
-        const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-        const matches = filenameRegex.exec(disposition);
-        if (matches != null && matches[1]) { 
-          filename = matches[1].replace(/['"]/g, '');
-        }
-      }
-      
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error(`Error exporting meeting to ${format}:`, err);
-      toast.error(`Failed to export meeting to ${format}`);
-    }
+  const handleExport = (meeting, format) => {
+    exportMeeting(meeting, format);
   };
 
   return (
@@ -373,9 +343,10 @@ const Summaries = () => {
                     >
                       <button
                         onClick={() => setOpenExportMenuId(openExportMenuId === summary._id ? null : summary._id)}
-                        className="text-sm px-4 py-1.5 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 flex items-center gap-2"
+                        disabled={isExporting}
+                        className="text-sm px-4 py-1.5 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <Download size={16} /> Export
+                        <Download size={16} /> {isExporting && openExportMenuId === summary._id ? "Exporting..." : "Export"}
                       </button>
                       
                       {openExportMenuId === summary._id && (

@@ -75,15 +75,38 @@ export const exportMeeting = async (req, res) => {
 
         doc.font("Helvetica").fontSize(10);
         mom.action_items.forEach(item => {
-          doc.text(item.task || item.description || "N/A", startX, startY, { width: columnWidths[0] });
-          doc.text(item.owner || "Unassigned", startX + columnWidths[0], startY, { width: columnWidths[1] });
-          doc.text(item.due_date || item.dueDate || "N/A", startX + columnWidths[0] + columnWidths[1], startY, { width: columnWidths[2] });
-          doc.text(item.status || "Pending", startX + columnWidths[0] + columnWidths[1] + columnWidths[2], startY, { width: columnWidths[3] });
-          startY += 20;
-          if (startY > 700) {
+          const task = item.task || item.description || "N/A";
+          const owner = item.owner || "Unassigned";
+          const dueDate = item.due_date || item.dueDate || "N/A";
+          const status = item.status || "Pending";
+          
+          const rowHeight = Math.max(
+            doc.heightOfString(task, { width: columnWidths[0] }),
+            doc.heightOfString(owner, { width: columnWidths[1] }),
+            doc.heightOfString(dueDate, { width: columnWidths[2] }),
+            doc.heightOfString(status, { width: columnWidths[3] })
+          ) + 10;
+
+          if (startY + rowHeight > doc.page.height - 50) {
             doc.addPage();
             startY = 50;
+            doc.font("Helvetica-Bold").fontSize(10);
+            doc.text("Task", startX, startY);
+            doc.text("Owner", startX + columnWidths[0], startY);
+            doc.text("Due Date", startX + columnWidths[0] + columnWidths[1], startY);
+            doc.text("Status", startX + columnWidths[0] + columnWidths[1] + columnWidths[2], startY);
+            startY += 15;
+            doc.moveTo(startX, startY).lineTo(startX + 480, startY).stroke();
+            startY += 5;
+            doc.font("Helvetica").fontSize(10);
           }
+
+          doc.text(task, startX, startY, { width: columnWidths[0] });
+          doc.text(owner, startX + columnWidths[0], startY, { width: columnWidths[1] });
+          doc.text(dueDate, startX + columnWidths[0] + columnWidths[1], startY, { width: columnWidths[2] });
+          doc.text(status, startX + columnWidths[0] + columnWidths[1] + columnWidths[2], startY, { width: columnWidths[3] });
+          
+          startY += rowHeight;
         });
         doc.moveDown();
       }
@@ -212,7 +235,11 @@ export const exportMeeting = async (req, res) => {
         md += `| Task | Owner | Due Date | Status |\n`;
         md += `|---|---|---|---|\n`;
         mom.action_items.forEach(item => {
-          md += `| ${item.task || item.description || "N/A"} | ${item.owner || "Unassigned"} | ${item.due_date || item.dueDate || "N/A"} | ${item.status || "Pending"} |\n`;
+          const task = (item.task || item.description || "N/A").toString().replace(/\|/g, '\\|');
+          const owner = (item.owner || "Unassigned").toString().replace(/\|/g, '\\|');
+          const dueDate = (item.due_date || item.dueDate || "N/A").toString().replace(/\|/g, '\\|');
+          const status = (item.status || "Pending").toString().replace(/\|/g, '\\|');
+          md += `| ${task} | ${owner} | ${dueDate} | ${status} |\n`;
         });
         md += `\n`;
       }
@@ -231,6 +258,10 @@ export const exportMeeting = async (req, res) => {
 
   } catch (error) {
     console.error("Export error:", error);
-    res.status(500).json({ success: false, message: "Export failed", error: error.message });
+    if (!res.headersSent) {
+      res.status(500).json({ success: false, message: "Export failed", error: error.message });
+    } else {
+      res.end();
+    }
   }
 };

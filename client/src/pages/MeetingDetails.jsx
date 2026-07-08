@@ -21,31 +21,31 @@ const MeetingDetails = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    const fetchMeetingDetails = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const { data } = await axios.get(`${backendUrl}/api/meetings/${id}`, {
+          withCredentials: true,
+        });
+
+        if (data.success) {
+          setMeeting(data.meeting);
+        } else {
+          setError(data.message || "Failed to fetch meeting details");
+        }
+      } catch (err) {
+        console.error("Error fetching meeting details:", err);
+        setError(
+          err.response?.data?.message || "Failed to fetch meeting details",
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchMeetingDetails();
   }, [id, backendUrl]);
-
-  const fetchMeetingDetails = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const { data } = await axios.get(`${backendUrl}/api/meetings/${id}`, {
-        withCredentials: true,
-      });
-
-      if (data.success) {
-        setMeeting(data.meeting);
-      } else {
-        setError(data.message || "Failed to fetch meeting details");
-      }
-    } catch (err) {
-      console.error("Error fetching meeting details:", err);
-      setError(
-        err.response?.data?.message || "Failed to fetch meeting details",
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleDelete = async (meetingId) => {
     try {

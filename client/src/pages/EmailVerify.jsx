@@ -61,7 +61,7 @@ const EmailVerify = () => {
 
   useEffect(() => {
     isLoggedin && userData && userData.isAccountVerified && navigate("/");
-  }, [isLoggedin, userData]);
+  }, [isLoggedin, userData, navigate]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-linear-to-br from-blue-200 to-purple-400">
