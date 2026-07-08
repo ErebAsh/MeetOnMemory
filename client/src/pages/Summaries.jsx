@@ -111,7 +111,7 @@ const Summaries = () => {
   const filteredSummaries = summaries.filter(
     (m) =>
       m.title?.toLowerCase().includes(search.toLowerCase()) ||
-      m.summary?.toLowerCase().includes(search.toLowerCase())
+      m.summary?.toLowerCase().includes(search.toLowerCase()),
   );
 
   // 📌 Sort meetings (Pinned > Starred > Default)
@@ -130,12 +130,16 @@ const Summaries = () => {
 
   // ❌ Delete meeting
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this meeting?")) return;
+    if (!window.confirm("Are you sure you want to delete this meeting?"))
+      return;
 
     try {
-      const res = await axios.delete(`${backendUrl}/api/meetings/delete/${id}`, {
-        withCredentials: true,
-      });
+      const res = await axios.delete(
+        `${backendUrl}/api/meetings/delete/${id}`,
+        {
+          withCredentials: true,
+        },
+      );
 
       if (res.data?.success) {
         setSummaries((prev) => prev.filter((s) => s._id !== id));
@@ -155,17 +159,13 @@ const Summaries = () => {
 
   const togglePin = (id) => {
     setPinnedIds((prev) =>
-      prev.includes(id)
-        ? prev.filter((pid) => pid !== id)
-        : [...prev, id]
+      prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id],
     );
   };
 
   const toggleStar = (id) => {
     setStarredIds((prev) =>
-      prev.includes(id)
-        ? prev.filter((sid) => sid !== id)
-        : [...prev, id]
+      prev.includes(id) ? prev.filter((sid) => sid !== id) : [...prev, id],
     );
   };
 
@@ -183,10 +183,14 @@ const Summaries = () => {
         <div className="w-full max-w-5xl text-center">
           {/* Header */}
           <h1 className="text-4xl font-bold text-gray-900 mb-3 flex items-center justify-center gap-2">
-            🧠 <span className="bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">AI Meeting Summaries</span>
+            🧠{" "}
+            <span className="bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
+              AI Meeting Summaries
+            </span>
           </h1>
           <p className="text-gray-600 mb-8">
-            Review automatically generated <b>Minutes of Meeting</b>, action items, and insights from all recorded sessions.
+            Review automatically generated <b>Minutes of Meeting</b>, action
+            items, and insights from all recorded sessions.
           </p>
 
           {/* 🔍 Search Bar with Voice + Text */}
@@ -202,8 +206,11 @@ const Summaries = () => {
               {/* 🎤 Voice Search Button */}
               <button
                 onClick={handleVoiceSearch}
-                className={`px-3 py-2 border-l border-gray-200 transition flex items-center justify-center ${listening ? "text-red-500 animate-pulse" : "text-gray-600 hover:text-blue-600"
-                  }`}
+                className={`px-3 py-2 border-l border-gray-200 transition flex items-center justify-center ${
+                  listening
+                    ? "text-red-500 animate-pulse"
+                    : "text-gray-600 hover:text-blue-600"
+                }`}
                 title={listening ? "Stop Listening" : "Start Voice Search"}
               >
                 {listening ? <MicOff size={18} /> : <Mic size={18} />}
@@ -222,7 +229,8 @@ const Summaries = () => {
           {/* Main Section */}
           {loading ? (
             <div className="flex justify-center items-center py-10 text-gray-500">
-              <Loader2 className="animate-spin w-6 h-6 mr-2" /> Loading summaries...
+              <Loader2 className="animate-spin w-6 h-6 mr-2" /> Loading
+              summaries...
             </div>
           ) : sortedSummaries.length > 0 ? (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
@@ -249,7 +257,9 @@ const Summaries = () => {
                   <div className="absolute top-3 right-3">
                     <button
                       onClick={() =>
-                        setOpenMenuId(openMenuId === summary._id ? null : summary._id)
+                        setOpenMenuId(
+                          openMenuId === summary._id ? null : summary._id,
+                        )
                       }
                       className="p-1 hover:bg-gray-100 rounded-full transition"
                     >
@@ -274,13 +284,15 @@ const Summaries = () => {
                           onClick={() => toggleStar(summary._id)}
                           className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-2 text-sm text-gray-700"
                         >
-                          <Star size={16} /> {starredIds.includes(summary._id) ? "Unstar" : "Star"}
+                          <Star size={16} />{" "}
+                          {starredIds.includes(summary._id) ? "Unstar" : "Star"}
                         </button>
                         <button
                           onClick={() => togglePin(summary._id)}
                           className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-2 text-sm text-gray-700"
                         >
-                          <Pin size={16} /> {pinnedIds.includes(summary._id) ? "Unpin" : "Pin"}
+                          <Pin size={16} />{" "}
+                          {pinnedIds.includes(summary._id) ? "Unpin" : "Pin"}
                         </button>
                         <button
                           onClick={() => handleDelete(summary._id)}
@@ -320,7 +332,7 @@ const Summaries = () => {
                       onClick={() => {
                         const blob = new Blob(
                           [summary.summary || summary.transcript || ""],
-                          { type: "text/plain;charset=utf-8" }
+                          { type: "text/plain;charset=utf-8" },
                         );
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement("a");
@@ -340,7 +352,8 @@ const Summaries = () => {
           ) : (
             <div className="bg-white p-10 rounded-2xl shadow-md border border-gray-100">
               <p className="text-gray-500">
-                No meeting summaries found. Upload and transcribe your first meeting to get started!
+                No meeting summaries found. Upload and transcribe your first
+                meeting to get started!
               </p>
             </div>
           )}
@@ -371,9 +384,13 @@ const Summaries = () => {
                   : "Unknown date"}
               </p>
               <div className="prose max-w-none">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Summary:</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  Summary:
+                </h3>
                 <p className="text-gray-700 whitespace-pre-wrap">
-                  {viewModal.summary || viewModal.transcript || "No content available"}
+                  {viewModal.summary ||
+                    viewModal.transcript ||
+                    "No content available"}
                 </p>
               </div>
             </div>
@@ -391,7 +408,7 @@ const Summaries = () => {
                 onClick={() => {
                   const blob = new Blob(
                     [viewModal.summary || viewModal.transcript || ""],
-                    { type: "text/plain;charset=utf-8" }
+                    { type: "text/plain;charset=utf-8" },
                   );
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement("a");
@@ -411,7 +428,10 @@ const Summaries = () => {
 
       {/* Close menu when clicking outside */}
       {openMenuId && (
-        <div className="fixed inset-0 z-0" onClick={() => setOpenMenuId(null)} />
+        <div
+          className="fixed inset-0 z-0"
+          onClick={() => setOpenMenuId(null)}
+        />
       )}
     </div>
   );

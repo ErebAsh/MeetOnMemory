@@ -33,15 +33,24 @@ export const register = async (req, res) => {
 
   try {
     const cleanEmail = normalizeEmail(email);
-    const existingUser = await userModel.findOne({ email: cleanEmail }).select('_id').lean();
+    const existingUser = await userModel
+      .findOne({ email: cleanEmail })
+      .select("_id")
+      .lean();
     if (existingUser)
       return res.json({ success: false, message: "User already exists" });
-    
+
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new userModel({ name, email: cleanEmail, password: hashedPassword });
+    const user = new userModel({
+      name,
+      email: cleanEmail,
+      password: hashedPassword,
+    });
     await user.save();
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
 
     res.cookie("token", token, {
       httpOnly: true,
@@ -50,12 +59,15 @@ export const register = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    sendBackgroundEmail({
-      from: process.env.SENDER_EMAIL,
-      to: cleanEmail,
-      subject: "Welcome to MeetOnMemory!",
-      text: `Welcome to MeetOnMemory, ${name}! Your account has been successfully created.`,
-    }, "Register");
+    sendBackgroundEmail(
+      {
+        from: process.env.SENDER_EMAIL,
+        to: cleanEmail,
+        subject: "Welcome to MeetOnMemory!",
+        text: `Welcome to MeetOnMemory, ${name}! Your account has been successfully created.`,
+      },
+      "Register",
+    );
 
     return res.json({ success: true, message: "Registration successful" });
   } catch (error) {
@@ -73,11 +85,14 @@ export const login = async (req, res) => {
     const cleanEmail = normalizeEmail(email);
     const user = await userModel.findOne({ email: cleanEmail }).lean();
     if (!user) return res.json({ success: false, message: "Invalid Email" });
-    
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.json({ success: false, message: "Invalid Password" });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch)
+      return res.json({ success: false, message: "Invalid Password" });
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
 
     res.cookie("token", token, {
       httpOnly: true,
@@ -112,8 +127,9 @@ export const sendVerifyOtp = async (req, res) => {
   try {
     const { userId } = req;
     const user = await userModel.findById(userId);
-    
-    if (!user) return res.json({ success: false, message: "Authentication failed" });
+
+    if (!user)
+      return res.json({ success: false, message: "Authentication failed" });
     if (user.isAccountVerified)
       return res.json({ success: false, message: "Account already verified" });
 
@@ -126,7 +142,10 @@ export const sendVerifyOtp = async (req, res) => {
       from: process.env.SENDER_EMAIL,
       to: user.email,
       subject: "Account Verification OTP",
-      html: EMAIL_VERIFY_TEMPLATE.replace("{{otp}}", otp).replace("{{email}}", user.email),
+      html: EMAIL_VERIFY_TEMPLATE.replace("{{otp}}", otp).replace(
+        "{{email}}",
+        user.email,
+      ),
     });
 
     res.json({ success: true, message: "Verification OTP sent on email" });
@@ -144,7 +163,11 @@ export const verifyEmail = async (req, res) => {
 
   try {
     const user = await userModel.findById(userId);
-    if (!user) return res.json({ success: false, message: "Verification session invalid" });
+    if (!user)
+      return res.json({
+        success: false,
+        message: "Verification session invalid",
+      });
     if (user.verifyOtp === "" || user.verifyOtp !== otp)
       return res.json({ success: false, message: "Invalid OTP" });
     if (user.verifyOtpExpireAt < Date.now())
@@ -178,7 +201,7 @@ export const sendResetOtp = async (req, res) => {
   try {
     const cleanEmail = normalizeEmail(email);
     const user = await userModel.findOne({ email: cleanEmail });
-    
+
     if (!user) {
       return res.json({ success: true, message: "OTP sent to your email" });
     }
@@ -192,13 +215,19 @@ export const sendResetOtp = async (req, res) => {
       from: process.env.SENDER_EMAIL,
       to: user.email,
       subject: "Password Reset OTP",
-      html: PASSWORD_RESET_TEMPLATE.replace("{{otp}}", otp).replace("{{email}}", user.email),
+      html: PASSWORD_RESET_TEMPLATE.replace("{{otp}}", otp).replace(
+        "{{email}}",
+        user.email,
+      ),
     });
 
     res.json({ success: true, message: "OTP sent to your email" });
   } catch (error) {
     console.error("SendResetOtp error:", error);
-    res.json({ success: false, message: "Failed to process password reset request" });
+    res.json({
+      success: false,
+      message: "Failed to process password reset request",
+    });
   }
 };
 
@@ -210,8 +239,12 @@ export const resetPassword = async (req, res) => {
   try {
     const cleanEmail = normalizeEmail(email);
     const user = await userModel.findOne({ email: cleanEmail });
-    
-    if (!user) return res.json({ success: false, message: "Invalid request or expired token" });
+
+    if (!user)
+      return res.json({
+        success: false,
+        message: "Invalid request or expired token",
+      });
     if (user.resetOtp === "" || user.resetOtp !== otp)
       return res.json({ success: false, message: "Invalid OTP" });
     if (user.resetOtpExpireAt < Date.now())
@@ -222,7 +255,10 @@ export const resetPassword = async (req, res) => {
     user.resetOtpExpireAt = 0;
     await user.save();
 
-    return res.json({ success: true, message: "Password has been reset successfully" });
+    return res.json({
+      success: true,
+      message: "Password has been reset successfully",
+    });
   } catch (error) {
     res.json({ success: false, message: error.message });
   }
@@ -236,7 +272,10 @@ export const getUserData = async (req, res) => {
       .populate("organization", "name")
       .lean();
 
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    if (!user)
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
 
     res.status(200).json({ success: true, user });
   } catch (error) {

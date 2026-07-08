@@ -12,19 +12,19 @@ We pledge to act and interact in ways that contribute to an open, welcoming, div
 
 Examples of behavior that contributes to a positive environment include:
 
-* Demonstrating empathy and kindness toward other people
-* Being respectful of differing opinions, viewpoints, and experiences
-* Giving and gracefully accepting constructive feedback
-* Taking responsibility and apologizing to those affected by our mistakes
-* Focusing on what is best not just for us as individuals, but for the overall community
+- Demonstrating empathy and kindness toward other people
+- Being respectful of differing opinions, viewpoints, and experiences
+- Giving and gracefully accepting constructive feedback
+- Taking responsibility and apologizing to those affected by our mistakes
+- Focusing on what is best not just for us as individuals, but for the overall community
 
 Examples of unacceptable behavior include:
 
-* The use of sexualized language or imagery, and sexual attention or advances of any kind
-* Trolling, insulting, or derogatory comments
-* Public or private harassment
-* Publishing others' private information without their explicit permission
-* Other conduct which could reasonably be considered inappropriate in a professional setting
+- The use of sexualized language or imagery, and sexual attention or advances of any kind
+- Trolling, insulting, or derogatory comments
+- Public or private harassment
+- Publishing others' private information without their explicit permission
+- Other conduct which could reasonably be considered inappropriate in a professional setting
 
 ---
 
@@ -40,11 +40,11 @@ Project maintainers have the right and responsibility to remove, edit, or reject
 
 This Code of Conduct applies within all project spaces, including:
 
-* GitHub Issues
-* Pull Requests
-* Discussions
-* Community forums
-* Any other communication channels related to the project
+- GitHub Issues
+- Pull Requests
+- Discussions
+- Community forums
+- Any other communication channels related to the project
 
 ---
 

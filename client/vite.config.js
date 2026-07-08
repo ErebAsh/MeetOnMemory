@@ -4,14 +4,10 @@ import tailwindcss from "@tailwindcss/vite";
 import fs from "fs";
 
 const useLocalHttps =
-  fs.existsSync("localhost-key.pem") &&
-  fs.existsSync("localhost.pem");
+  fs.existsSync("localhost-key.pem") && fs.existsSync("localhost.pem");
 
 export default defineConfig({
-  plugins: [
-    react(),
-    tailwindcss(),
-  ],
+  plugins: [react(), tailwindcss()],
 
   server: {
     https: useLocalHttps

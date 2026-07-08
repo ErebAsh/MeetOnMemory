@@ -22,7 +22,7 @@ const CreateOrganizationPage = () => {
 
       const { data } = await axios.post(
         `${backendUrl}/api/organizations/create-or-join`,
-        { name: orgName.trim(), role: "admin" }
+        { name: orgName.trim(), role: "admin" },
       );
 
       if (data.success) {
@@ -45,7 +45,9 @@ const CreateOrganizationPage = () => {
       <Navbar />
       <div className="grow flex items-center justify-center w-full px-4">
         <div className="bg-white p-10 rounded-lg shadow-xl text-center w-full max-w-md">
-          <h1 className="text-3xl font-bold mb-6">Create or Join Organization</h1>
+          <h1 className="text-3xl font-bold mb-6">
+            Create or Join Organization
+          </h1>
           <p className="text-gray-600 mb-8">
             Enter your organization name. If it exists, you’ll be linked to it.
           </p>

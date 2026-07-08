@@ -75,7 +75,9 @@ export const semanticSearch = async (req, res) => {
     res.status(500).json({
       success: false,
       message:
-        error.response?.data?.error || error.message || "Server error during semantic search.",
+        error.response?.data?.error ||
+        error.message ||
+        "Server error during semantic search.",
     });
   }
 };

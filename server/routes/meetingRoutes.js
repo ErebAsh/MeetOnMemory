@@ -1,17 +1,21 @@
 import express from "express";
 import multer from "multer";
 import userAuth from "../middleware/userAuth.js";
-import { apiLimiter, writeLimiter, uploadLimiter } from "../middleware/rateLimiter.js";
 import {
-  createMeeting,           // NEW: Schedule meetings from CreateMeeting form
-  uploadMeeting,           // EXISTING: Upload audio and transcribe
-  uploadAudioForMeeting,   // NEW: Upload audio for existing meeting
-  summarizeMeeting,        // EXISTING: Generate AI summary/MOM
+  apiLimiter,
+  writeLimiter,
+  uploadLimiter,
+} from "../middleware/rateLimiter.js";
+import {
+  createMeeting, // NEW: Schedule meetings from CreateMeeting form
+  uploadMeeting, // EXISTING: Upload audio and transcribe
+  uploadAudioForMeeting, // NEW: Upload audio for existing meeting
+  summarizeMeeting, // EXISTING: Generate AI summary/MOM
   getAllMeetings,
-  getMeetingById,          // NEW: Get single meeting details
-  updateMeeting,           // NEW: Update meeting (rename)
-  deleteMeeting,           // EXISTING: Delete meeting
-  searchMeetingsByText,    // 🆕 NEW: Voice/Text Search
+  getMeetingById, // NEW: Get single meeting details
+  updateMeeting, // NEW: Update meeting (rename)
+  deleteMeeting, // EXISTING: Delete meeting
+  searchMeetingsByText, // 🆕 NEW: Voice/Text Search
 } from "../controllers/meetingController.js";
 
 const router = express.Router();
@@ -23,7 +27,13 @@ router.use(apiLimiter);
 // ========== EXISTING ROUTES (Working) ==========
 
 // ✅ Upload & Transcribe Meeting (from UploadMeetings page)
-router.post("/upload", userAuth, uploadLimiter, upload.single("file"), uploadMeeting);
+router.post(
+  "/upload",
+  userAuth,
+  uploadLimiter,
+  upload.single("file"),
+  uploadMeeting,
+);
 
 // ✅ Summarize Transcript (send meetingId or transcript)
 router.post("/summarize", userAuth, writeLimiter, summarizeMeeting);
@@ -46,7 +56,13 @@ router.delete("/delete/:id", userAuth, writeLimiter, deleteMeeting);
 router.post("/create", userAuth, writeLimiter, createMeeting);
 
 // ✅ Upload Audio for existing meeting (from CreateMeeting Upload section)
-router.post("/upload-audio", userAuth, uploadLimiter, upload.single("audio"), uploadAudioForMeeting);
+router.post(
+  "/upload-audio",
+  userAuth,
+  uploadLimiter,
+  upload.single("audio"),
+  uploadAudioForMeeting,
+);
 
 // 🆕 ✅ Voice/Text Search Route (Frontend: Summaries.jsx or Live Search)
 router.post("/search", userAuth, searchMeetingsByText);

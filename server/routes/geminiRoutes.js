@@ -25,15 +25,18 @@ Use formal, data-driven tone.
       `https://generativelanguage.googleapis.com/v1beta/models/${process.env.GEMINI_MODEL}:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         contents: [{ parts: [{ text: prompt }] }],
-      }
+      },
     );
 
     const text =
-      response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "No AI insights generated.";
+      response.data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "No AI insights generated.";
     res.status(200).json({ success: true, insight: text });
   } catch (error) {
     console.error("Gemini insights error:", error.message);
-    res.status(500).json({ success: false, message: "AI insight generation failed." });
+    res
+      .status(500)
+      .json({ success: false, message: "AI insight generation failed." });
   }
 });
 

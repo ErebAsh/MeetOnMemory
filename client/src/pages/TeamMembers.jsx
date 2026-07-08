@@ -77,7 +77,7 @@ const TeamMembers = () => {
         (member) =>
           member.name?.toLowerCase().includes(query) ||
           member.email?.toLowerCase().includes(query) ||
-          member.role?.toLowerCase().includes(query)
+          member.role?.toLowerCase().includes(query),
       );
     }
 

@@ -1,7 +1,7 @@
 // client/src/pages/SelectRolePage.jsx
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import Navbar from '../components/Navbar';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import Navbar from "../components/Navbar";
 
 const SelectRolePage = () => {
   const navigate = useNavigate();
@@ -16,14 +16,14 @@ const SelectRolePage = () => {
 
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
             <button
-              onClick={() => navigate('/create-organization')}
+              onClick={() => navigate("/create-organization")}
               className="w-64 sm:w-48 p-6 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all text-xl font-semibold"
             >
               Join as Admin
             </button>
 
             <button
-              onClick={() => navigate('/join-organization')}
+              onClick={() => navigate("/join-organization")}
               className="w-64 sm:w-48 p-6 bg-gray-700 text-white rounded-lg shadow-lg hover:bg-gray-800 transition-all text-xl font-semibold"
             >
               Join as Member

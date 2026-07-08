@@ -179,7 +179,9 @@ npm run dev
 To ensure code quality and avoid PR checklist failures, we run quality checks on every Pull Request via **GitHub Actions**.
 
 ### ⚙️ CI/CD Pipeline Checks
+
 Every Pull Request runs the following status checks:
+
 - **CI Pipeline / Format**: Verifies file formatting using `npm run format:check`.
 - **CI Pipeline / Lint**: Runs static analysis check via `npm run lint`.
 - **CI Pipeline / Prettier Check**: Checks formatting using Prettier via `npx prettier . --check`.
@@ -187,18 +189,23 @@ Every Pull Request runs the following status checks:
 - **CodeQL Security Analysis**: Scans the codebase for security vulnerabilities.
 
 ### 💻 Running Checks Locally
+
 You can run the same checks locally from the repository root:
 
 1. **Verify Formatting**:
+
    ```bash
    npm run format:check
    ```
+
    To automatically format files:
+
    ```bash
    npm run format
    ```
 
 2. **Run Lint Checks**:
+
    ```bash
    npm run lint
    ```
@@ -209,6 +216,7 @@ You can run the same checks locally from the repository root:
    ```
 
 If your changes affect the backend, make sure it starts correctly:
+
 ```bash
 cd server
 npm run server

@@ -1,5 +1,15 @@
 import React, { useState } from "react";
-import { Calendar, Clock, FileText, Tag, Trash2, Download, Edit2, Eye, MoreVertical } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  FileText,
+  Tag,
+  Trash2,
+  Download,
+  Edit2,
+  Eye,
+  MoreVertical,
+} from "lucide-react";
 
 const MeetingCard = ({ meeting, onDelete, onRename, onDownload }) => {
   const [showMenu, setShowMenu] = useState(false);
@@ -102,7 +112,9 @@ const MeetingCard = ({ meeting, onDelete, onRename, onDownload }) => {
           </div>
         </div>
         <div className="flex items-center gap-2 mt-2">
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(meeting.status)}`}>
+          <span
+            className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(meeting.status)}`}
+          >
             {meeting.status || "Unknown"}
           </span>
           {meeting.meetingType && (
@@ -132,7 +144,10 @@ const MeetingCard = ({ meeting, onDelete, onRename, onDownload }) => {
         {/* Summary Preview */}
         {meeting.summary && (
           <div className="flex items-start gap-2">
-            <FileText size={16} className="text-gray-400 mt-0.5 flex-shrink-0" />
+            <FileText
+              size={16}
+              className="text-gray-400 mt-0.5 flex-shrink-0"
+            />
             <p className="text-sm text-gray-600 line-clamp-3">
               {meeting.summary}
             </p>

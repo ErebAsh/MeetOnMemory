@@ -21,12 +21,10 @@ export const createOrJoinOrganization = async (req, res) => {
 
     // Validate org name
     if (!name || !name.trim()) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Please provide an organization name.",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Please provide an organization name.",
+      });
     }
 
     const userId = req.user.id;
@@ -200,12 +198,10 @@ export const getOrganizationMembers = async (req, res) => {
 
     const user = await userModel.findById(req.user.id);
     if (!user || !user.organization) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "User is not part of an organization.",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "User is not part of an organization.",
+      });
     }
 
     const organization = await Organization.findById(

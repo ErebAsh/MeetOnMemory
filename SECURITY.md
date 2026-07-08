@@ -6,8 +6,8 @@ The latest version of MeetOnMemory receives security updates and fixes.
 
 | Version        | Supported |
 | -------------- | --------- |
-| Latest         | ✅         |
-| Older Versions | ❌         |
+| Latest         | ✅        |
+| Older Versions | ❌        |
 
 ---
 
@@ -23,11 +23,11 @@ Instead, report it privately by contacting the maintainer.
 
 Please provide:
 
-* Description of the vulnerability
-* Steps to reproduce the issue
-* Potential impact
-* Screenshots or proof-of-concept (if applicable)
-* Suggested mitigation or fix (optional)
+- Description of the vulnerability
+- Steps to reproduce the issue
+- Potential impact
+- Screenshots or proof-of-concept (if applicable)
+- Suggested mitigation or fix (optional)
 
 ---
 
@@ -47,16 +47,16 @@ After receiving a report:
 
 Examples of security-related issues include:
 
-* Authentication bypass
-* Authorization issues
-* Privilege escalation
-* Sensitive data exposure
-* JWT vulnerabilities
-* Injection attacks
-* File upload vulnerabilities
-* Cross-Site Scripting (XSS)
-* Cross-Site Request Forgery (CSRF)
-* Remote Code Execution (RCE)
+- Authentication bypass
+- Authorization issues
+- Privilege escalation
+- Sensitive data exposure
+- JWT vulnerabilities
+- Injection attacks
+- File upload vulnerabilities
+- Cross-Site Scripting (XSS)
+- Cross-Site Request Forgery (CSRF)
+- Remote Code Execution (RCE)
 
 ---
 

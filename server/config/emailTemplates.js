@@ -106,7 +106,7 @@ export const EMAIL_VERIFY_TEMPLATE = `
 </body>
 </html>
 
-`
+`;
 
 export const PASSWORD_RESET_TEMPLATE = `
 
@@ -216,5 +216,4 @@ export const PASSWORD_RESET_TEMPLATE = `
   </table>
 </body>
 </html>
-`
-
+`;

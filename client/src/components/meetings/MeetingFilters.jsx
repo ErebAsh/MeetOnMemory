@@ -1,11 +1,7 @@
 import React from "react";
 import { Filter, ChevronDown, X } from "lucide-react";
 
-const MeetingFilters = ({
-  filters,
-  onFilterChange,
-  onClearFilters,
-}) => {
+const MeetingFilters = ({ filters, onFilterChange, onClearFilters }) => {
   const [showDropdown, setShowDropdown] = React.useState(false);
 
   const filterOptions = [
@@ -78,7 +74,10 @@ const MeetingFilters = ({
             {Object.values(filters).filter((v) => v !== "all").length}
           </span>
         )}
-        <ChevronDown size={16} className={`transition-transform ${showDropdown ? "rotate-180" : ""}`} />
+        <ChevronDown
+          size={16}
+          className={`transition-transform ${showDropdown ? "rotate-180" : ""}`}
+        />
       </button>
 
       {showDropdown && (

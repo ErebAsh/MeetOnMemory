@@ -21,9 +21,11 @@ const organizationSchema = new mongoose.Schema(
       },
     ],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-const Organization = mongoose.models.Organization || mongoose.model("Organization", organizationSchema);
+const Organization =
+  mongoose.models.Organization ||
+  mongoose.model("Organization", organizationSchema);
 
 export default Organization;

@@ -21,7 +21,6 @@ Transform meetings, discussions, and organizational knowledge into a searchable 
 
 </div>
 
-
 ---
 
 ## Overview
@@ -36,11 +35,11 @@ Organizations often lose valuable information because meeting notes, decisions, 
 
 Develop a centralized system to manage meetings, events, and policy records while improving:
 
-* Knowledge retention
-* Accountability
-* Documentation
-* Information retrieval
-* Organizational transparency
+- Knowledge retention
+- Accountability
+- Documentation
+- Information retrieval
+- Organizational transparency
 
 MeetOnMemory provides a single platform where organizations can store, manage, search, and analyze meeting-related information.
 
@@ -50,17 +49,17 @@ MeetOnMemory provides a single platform where organizations can store, manage, s
 
 ## Meeting Management
 
-* Create meetings
-* Manage meeting details and agenda
-* Track meeting history
-* Organize discussions in one place
+- Create meetings
+- Manage meeting details and agenda
+- Track meeting history
+- Organize discussions in one place
 
 ## AI Meeting Summaries
 
-* Generate Minutes of Meeting (MoM)
-* Extract key discussion points
-* Capture decisions
-* Generate structured summaries using Google Gemini
+- Generate Minutes of Meeting (MoM)
+- Extract key discussion points
+- Capture decisions
+- Generate structured summaries using Google Gemini
 
 ## Semantic Search
 
@@ -78,42 +77,42 @@ Find previous meetings discussing recruitment.
 
 Powered by:
 
-* Pinecone Vector Database
-* Embeddings
-* AI-based similarity search
+- Pinecone Vector Database
+- Embeddings
+- AI-based similarity search
 
 ## Policy Repository
 
-* Upload policy documents
-* Maintain policy versions
-* Store organizational records
-* Centralized policy management
+- Upload policy documents
+- Maintain policy versions
+- Store organizational records
+- Centralized policy management
 
 ## Reports & Analytics
 
-* Meeting statistics
-* Policy activity tracking
-* Organization insights
-* Visual dashboards
+- Meeting statistics
+- Policy activity tracking
+- Organization insights
+- Visual dashboards
 
 ## Authentication & Security
 
-* JWT Authentication
-* Protected Routes
-* Password Hashing (bcrypt)
-* Secure API Access
+- JWT Authentication
+- Protected Routes
+- Password Hashing (bcrypt)
+- Secure API Access
 
 ## Real-Time Communication
 
-* Socket.IO integration
-* Real-time updates
-* Live meeting interactions
+- Socket.IO integration
+- Real-time updates
+- Live meeting interactions
 
 ## Organization Management
 
-* Create organizations
-* Join organizations
-* Role-based access management
+- Create organizations
+- Join organizations
+- Role-based access management
 
 ---
 
@@ -142,50 +141,50 @@ AI Summaries     Semantic Search
 
 ## Frontend
 
-* React.js
-* Vite
-* Tailwind CSS
-* React Router DOM
-* Axios
-* Recharts
-* Chart.js
-* Lucide React
-* React Toastify
-* React Speech Recognition
-* Socket.IO Client
+- React.js
+- Vite
+- Tailwind CSS
+- React Router DOM
+- Axios
+- Recharts
+- Chart.js
+- Lucide React
+- React Toastify
+- React Speech Recognition
+- Socket.IO Client
 
 ## Backend
 
-* Node.js
-* Express.js
-* Socket.IO
-* JWT Authentication
-* Multer
-* Nodemailer
-* Cookie Parser
-* CORS
+- Node.js
+- Express.js
+- Socket.IO
+- JWT Authentication
+- Multer
+- Nodemailer
+- Cookie Parser
+- CORS
 
 ## Database
 
-* MongoDB
-* Mongoose
+- MongoDB
+- Mongoose
 
 ## AI & Search
 
-* Google Gemini API
-* Pinecone
-* Hugging Face Inference API
-* ChromaDB
-* Xenova Transformers
-* ONNX Runtime
-* OpenAI SDK (Optional)
+- Google Gemini API
+- Pinecone
+- Hugging Face Inference API
+- ChromaDB
+- Xenova Transformers
+- ONNX Runtime
+- OpenAI SDK (Optional)
 
 ## Integrations
 
-* Google APIs
-* Microsoft Graph API
-* Calendar Utilities
-* Email Services
+- Google APIs
+- Microsoft Graph API
+- Calendar Utilities
+- Email Services
 
 ---
 
@@ -353,15 +352,15 @@ npm run dev
 
 # Future Improvements
 
-* Live Meeting Recording
-* Real-Time Speech Transcription
-* Voice Search
-* Google Calendar Integration
-* Outlook Integration
-* AI Meeting Assistant
-* Slack Integration
-* Multi-Language Support
-* Mobile Application
+- Live Meeting Recording
+- Real-Time Speech Transcription
+- Voice Search
+- Google Calendar Integration
+- Outlook Integration
+- AI Meeting Assistant
+- Slack Integration
+- Multi-Language Support
+- Mobile Application
 
 ---
 

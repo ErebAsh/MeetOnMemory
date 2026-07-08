@@ -6,7 +6,7 @@ dotenv.config();
 async function generateEmbedding(text) {
   const extractor = await pipeline(
     "feature-extraction",
-    "Xenova/all-MiniLM-L6-v2"
+    "Xenova/all-MiniLM-L6-v2",
   );
   const output = await extractor(text, { pooling: "mean", normalize: true });
   return Array.from(output.data); // Convert Float32Array → normal JS array
@@ -65,7 +65,9 @@ async function queryPinecone(query) {
 
   console.log("📊 Query Results:");
   results.matches.forEach((match, i) => {
-    console.log(`${i + 1}. ${match.metadata.topic} (Score: ${match.score.toFixed(3)})`);
+    console.log(
+      `${i + 1}. ${match.metadata.topic} (Score: ${match.score.toFixed(3)})`,
+    );
   });
 }
 

@@ -31,7 +31,7 @@ export const transcribeAudio = async (audioUrl) => {
           authorization: ASSEMBLYAI_API_KEY,
           "content-type": "application/json",
         },
-      }
+      },
     );
 
     const transcriptId = transcriptRes.data.id;
@@ -41,13 +41,15 @@ export const transcribeAudio = async (audioUrl) => {
     while (true) {
       const checkRes = await axios.get(
         `https://api.assemblyai.com/v2/transcript/${transcriptId}`,
-        { headers: { authorization: ASSEMBLYAI_API_KEY } }
+        { headers: { authorization: ASSEMBLYAI_API_KEY } },
       );
       if (checkRes.data.status === "completed") {
         transcriptData = checkRes.data;
         break;
       } else if (checkRes.data.status === "error") {
-        throw new Error(checkRes.data.error || "AssemblyAI transcription failed");
+        throw new Error(
+          checkRes.data.error || "AssemblyAI transcription failed",
+        );
       }
       await new Promise((resolve) => setTimeout(resolve, 2000)); // wait 2 sec
     }
@@ -86,7 +88,7 @@ export const transcribeWithGemini = async (audioUrl) => {
           Authorization: `Bearer ${GEMINI_API_KEY}`,
           "Content-Type": "application/json",
         },
-      }
+      },
     );
 
     const text =

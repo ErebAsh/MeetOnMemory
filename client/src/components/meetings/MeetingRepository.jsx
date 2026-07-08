@@ -126,7 +126,8 @@ const MeetingRepository = () => {
           comparison = new Date(a.createdAt) - new Date(b.createdAt);
           break;
         case "date":
-          comparison = new Date(a.date || a.createdAt) - new Date(b.date || b.createdAt);
+          comparison =
+            new Date(a.date || a.createdAt) - new Date(b.date || b.createdAt);
           break;
         case "title":
           comparison = a.title.localeCompare(b.title);
@@ -318,7 +319,13 @@ ${meeting.transcript || "No transcript available"}
       {/* Meeting Grid */}
       {currentMeetings.length === 0 ? (
         <EmptyState
-          type={hasActiveFilters ? "noResults" : meetings.length === 0 ? "noMeetings" : "noMeetings"}
+          type={
+            hasActiveFilters
+              ? "noResults"
+              : meetings.length === 0
+                ? "noMeetings"
+                : "noMeetings"
+          }
         />
       ) : (
         <>

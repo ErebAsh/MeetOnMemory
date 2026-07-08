@@ -3,7 +3,9 @@ export const aiSearch = async (req, res) => {
   const { query } = req.body;
 
   if (!query || query.trim().length === 0) {
-    return res.status(400).json({ error: "Query text is required", results: [] });
+    return res
+      .status(400)
+      .json({ error: "Query text is required", results: [] });
   }
 
   try {

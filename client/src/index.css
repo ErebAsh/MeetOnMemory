@@ -41,10 +41,10 @@ html {
   --radius-2xl: 1.5rem;
 
   /* Shadows */
-  --shadow-card: 0 4px 6px -1px rgb(0 0 0 / 0.07),
-    0 2px 4px -2px rgb(0 0 0 / 0.05);
-  --shadow-card-hover: 0 20px 40px -8px rgb(37 99 235 / 0.15),
-    0 8px 16px -4px rgb(0 0 0 / 0.08);
+  --shadow-card:
+    0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-card-hover:
+    0 20px 40px -8px rgb(37 99 235 / 0.15), 0 8px 16px -4px rgb(0 0 0 / 0.08);
   --shadow-glow-blue: 0 0 30px rgb(37 99 235 / 0.2);
 }
 
@@ -220,7 +220,14 @@ html {
 /* Professional Cursor Effect Styles */
 @media (pointer: fine) {
   /* Hide default cursor on desktop */
-  html, body, a, button, input, select, textarea, [role="button"] {
+  html,
+  body,
+  a,
+  button,
+  input,
+  select,
+  textarea,
+  [role="button"] {
     cursor: none !important;
   }
 
@@ -237,7 +244,10 @@ html {
     pointer-events: none;
     z-index: 9999; /* Higher z-index to stay forward */
     will-change: transform;
-    transition: width 0.25s ease, height 0.25s ease, background-color 0.25s ease;
+    transition:
+      width 0.25s ease,
+      height 0.25s ease,
+      background-color 0.25s ease;
   }
 
   /* Outer Hollow Circle - Smooth Follow Lags Behind */
@@ -254,10 +264,11 @@ html {
     z-index: 9998; /* Lower z-index so it stays behind the dot */
     will-change: transform;
     /* Only transition size and colors, let JS handle the smooth movement */
-    transition: width 0.3s cubic-bezier(0.25, 1, 0.5, 1), 
-                height 0.3s cubic-bezier(0.25, 1, 0.5, 1), 
-                border-color 0.3s ease, 
-                background-color 0.3s ease;
+    transition:
+      width 0.3s cubic-bezier(0.25, 1, 0.5, 1),
+      height 0.3s cubic-bezier(0.25, 1, 0.5, 1),
+      border-color 0.3s ease,
+      background-color 0.3s ease;
   }
 
   /* Interactive Hover States */

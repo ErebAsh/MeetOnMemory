@@ -53,7 +53,9 @@ const MeetingRoom = () => {
       setTimeout(() => setLoading(false), 1000);
     } catch (err) {
       console.error("Camera/Mic access denied:", err);
-      alert("❌ Camera or microphone access denied. Please enable them and retry.");
+      alert(
+        "❌ Camera or microphone access denied. Please enable them and retry.",
+      );
       setLoading(false);
     }
   };
@@ -74,7 +76,7 @@ const MeetingRoom = () => {
     setTimeout(() => {
       setMeetingEnded(false);
       alert(
-        "✅ Transcript and MoM generated successfully!\nEmail has been sent to your registered account."
+        "✅ Transcript and MoM generated successfully!\nEmail has been sent to your registered account.",
       );
     }, 4000);
   };
@@ -89,7 +91,6 @@ const MeetingRoom = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-100 relative overflow-hidden text-center">
-
       {/* Decorative Background */}
       <div className="absolute top-0 left-0 w-72 h-72 bg-indigo-200 opacity-20 blur-3xl rounded-full animate-pulse"></div>
       <div className="absolute bottom-0 right-0 w-80 h-80 bg-purple-200 opacity-30 blur-3xl rounded-full animate-pulse"></div>
@@ -206,8 +207,7 @@ const MeetingRoom = () => {
             Processing Meeting Data...
           </h2>
           <p className="text-gray-600 mt-3 max-w-md leading-relaxed">
-            Our AI is preparing your{" "}
-            <strong>transcript</strong> and{" "}
+            Our AI is preparing your <strong>transcript</strong> and{" "}
             <strong>Minutes of Meeting</strong>. Once ready, both will be saved
             to your workspace and emailed automatically.
           </p>

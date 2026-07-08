@@ -6,7 +6,7 @@ if (!repository) {
 const [owner, repo] = repository.split("/");
 
 async function fetchContributors() {
-  const PER_PAGE =100;
+  const PER_PAGE = 100;
   const headers = {
     Accept: "application/vnd.github+json",
   };
@@ -14,22 +14,22 @@ async function fetchContributors() {
   if (process.env.GITHUB_TOKEN) {
     headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
   }
-  let page=1;
+  let page = 1;
   const contributors = [];
-  while(true){
-    const url=`https://api.github.com/repos/${owner}/${repo}/contributors?per_page=${PER_PAGE}&page=${page}`
-    const response = await fetch(url,{ headers });
+  while (true) {
+    const url = `https://api.github.com/repos/${owner}/${repo}/contributors?per_page=${PER_PAGE}&page=${page}`;
+    const response = await fetch(url, { headers });
     if (!response.ok) {
       throw new Error(
         `Failed to fetch contributors: ${response.status} ${response.statusText}`,
       );
     }
-    const data=await response.json();
-    contributors.push(...data)
-    if(data.length<PER_PAGE) break
+    const data = await response.json();
+    contributors.push(...data);
+    if (data.length < PER_PAGE) break;
     page++;
   }
-  return contributors.filter((contributor)=>contributor.type==="User");
+  return contributors.filter((contributor) => contributor.type === "User");
 }
 
 function generateContributorHtml(contributors) {

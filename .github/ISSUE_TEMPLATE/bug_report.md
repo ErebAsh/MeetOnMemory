@@ -31,9 +31,9 @@ Add screenshots if applicable.
 
 ## Environment
 
-* OS:
-* Browser:
-* Node.js Version:
+- OS:
+- Browser:
+- Node.js Version:
 
 ## Additional Information
 

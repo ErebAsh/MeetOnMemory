@@ -7,7 +7,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 /**
  * Meeting Controller - Handles all meeting operations
- * 
+ *
  * Features:
  * 1. Schedule meetings (from CreateMeeting Schedule section)
  * 2. Upload & transcribe audio (from both UploadMeeting page and CreateMeeting Upload section)
@@ -32,7 +32,9 @@ export const createMeeting = async (req, res) => {
   try {
     const uploaderId = req.user?.id || req.user?._id;
     if (!uploaderId) {
-      return res.status(401).json({ success: false, message: "Unauthorized. Login required." });
+      return res
+        .status(401)
+        .json({ success: false, message: "Unauthorized. Login required." });
     }
 
     const {
@@ -47,11 +49,13 @@ export const createMeeting = async (req, res) => {
       participants,
       agendaItems,
       policyDetails,
-      recordingType
+      recordingType,
     } = req.body;
 
     if (!title || !title.trim()) {
-      return res.status(400).json({ success: false, message: "Meeting title is required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Meeting title is required" });
     }
 
     const meeting = await Meeting.create({
@@ -90,11 +94,16 @@ export const createMeeting = async (req, res) => {
         title: meeting.title,
         meetingType: meeting.meetingType,
         date: meeting.date,
-      }
+      },
     });
   } catch (error) {
     console.error("❌ createMeeting Error:", error?.message || error);
-    return res.status(500).json({ success: false, message: error.message || "Failed to create meeting" });
+    return res
+      .status(500)
+      .json({
+        success: false,
+        message: error.message || "Failed to create meeting",
+      });
   }
 };
 
@@ -107,11 +116,15 @@ export const createMeeting = async (req, res) => {
 export const uploadMeeting = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ success: false, message: "No audio file uploaded." });
+      return res
+        .status(400)
+        .json({ success: false, message: "No audio file uploaded." });
     }
     const uploaderId = req.user?.id || req.user?._id;
     if (!uploaderId) {
-      return res.status(401).json({ success: false, message: "Unauthorized. Login required." });
+      return res
+        .status(401)
+        .json({ success: false, message: "Unauthorized. Login required." });
     }
 
     const filePath = req.file.path;
@@ -130,7 +143,7 @@ export const uploadMeeting = async (req, res) => {
             authorization: ASSEMBLYAI_API_KEY,
             "Transfer-Encoding": "chunked",
           },
-        }
+        },
       );
 
       const audioUrl = uploadRes.data.upload_url;
@@ -140,7 +153,7 @@ export const uploadMeeting = async (req, res) => {
       const transcriptRes = await axios.post(
         "https://api.assemblyai.com/v2/transcript",
         { audio_url: audioUrl },
-        { headers: { authorization: ASSEMBLYAI_API_KEY } }
+        { headers: { authorization: ASSEMBLYAI_API_KEY } },
       );
 
       const transcriptId = transcriptRes.data.id;
@@ -149,15 +162,20 @@ export const uploadMeeting = async (req, res) => {
       // Step 3: Poll for completion
       let transcriptData;
       while (true) {
-        const checkRes = await axios.get(`https://api.assemblyai.com/v2/transcript/${transcriptId}`, {
-          headers: { authorization: ASSEMBLYAI_API_KEY },
-        });
+        const checkRes = await axios.get(
+          `https://api.assemblyai.com/v2/transcript/${transcriptId}`,
+          {
+            headers: { authorization: ASSEMBLYAI_API_KEY },
+          },
+        );
         if (checkRes.data.status === "completed") {
           transcriptData = checkRes.data;
           console.log("✅ Transcription completed");
           break;
         } else if (checkRes.data.status === "error") {
-          throw new Error(checkRes.data.error || "AssemblyAI transcription error");
+          throw new Error(
+            checkRes.data.error || "AssemblyAI transcription error",
+          );
         }
         // Wait 2.5 seconds before next poll
         await new Promise((r) => setTimeout(r, 2500));
@@ -171,7 +189,9 @@ export const uploadMeeting = async (req, res) => {
     const meeting = await Meeting.create({
       uploadedBy: uploaderId,
       organization: req.user?.organization || null,
-      title: req.body.title?.trim() || `Meeting - ${new Date().toLocaleDateString()}`,
+      title:
+        req.body.title?.trim() ||
+        `Meeting - ${new Date().toLocaleDateString()}`,
       date: req.body.date ? new Date(req.body.date) : new Date(),
       meetingType: req.body.meetingType || "internal",
       fileUrl: req.file.path,
@@ -202,8 +222,13 @@ export const uploadMeeting = async (req, res) => {
       transcript: transcriptText,
     });
   } catch (error) {
-    console.error("❌ uploadMeeting Error:", error?.response?.data || error?.message || error);
-    return res.status(500).json({ success: false, message: error.message || "Upload failed" });
+    console.error(
+      "❌ uploadMeeting Error:",
+      error?.response?.data || error?.message || error,
+    );
+    return res
+      .status(500)
+      .json({ success: false, message: error.message || "Upload failed" });
   }
 };
 
@@ -215,26 +240,39 @@ export const uploadMeeting = async (req, res) => {
 export const uploadAudioForMeeting = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ success: false, message: "No audio file uploaded." });
+      return res
+        .status(400)
+        .json({ success: false, message: "No audio file uploaded." });
     }
-    
+
     const { meetingId } = req.body;
     if (!meetingId) {
-      return res.status(400).json({ success: false, message: "Meeting ID is required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Meeting ID is required" });
     }
 
     const uploaderId = req.user?.id || req.user?._id;
     if (!uploaderId) {
-      return res.status(401).json({ success: false, message: "Unauthorized. Login required." });
+      return res
+        .status(401)
+        .json({ success: false, message: "Unauthorized. Login required." });
     }
 
     const meeting = await Meeting.findById(meetingId);
     if (!meeting) {
-      return res.status(404).json({ success: false, message: "Meeting not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Meeting not found" });
     }
 
     if (meeting.uploadedBy.toString() !== uploaderId.toString()) {
-      return res.status(403).json({ success: false, message: "You don't have permission to update this meeting" });
+      return res
+        .status(403)
+        .json({
+          success: false,
+          message: "You don't have permission to update this meeting",
+        });
     }
 
     const filePath = req.file.path;
@@ -252,7 +290,7 @@ export const uploadAudioForMeeting = async (req, res) => {
             authorization: ASSEMBLYAI_API_KEY,
             "Transfer-Encoding": "chunked",
           },
-        }
+        },
       );
 
       const audioUrl = uploadRes.data.upload_url;
@@ -260,7 +298,7 @@ export const uploadAudioForMeeting = async (req, res) => {
       const transcriptRes = await axios.post(
         "https://api.assemblyai.com/v2/transcript",
         { audio_url: audioUrl },
-        { headers: { authorization: ASSEMBLYAI_API_KEY } }
+        { headers: { authorization: ASSEMBLYAI_API_KEY } },
       );
 
       const transcriptId = transcriptRes.data.id;
@@ -268,15 +306,20 @@ export const uploadAudioForMeeting = async (req, res) => {
       // Poll for completion
       let transcriptData;
       while (true) {
-        const checkRes = await axios.get(`https://api.assemblyai.com/v2/transcript/${transcriptId}`, {
-          headers: { authorization: ASSEMBLYAI_API_KEY },
-        });
+        const checkRes = await axios.get(
+          `https://api.assemblyai.com/v2/transcript/${transcriptId}`,
+          {
+            headers: { authorization: ASSEMBLYAI_API_KEY },
+          },
+        );
         if (checkRes.data.status === "completed") {
           transcriptData = checkRes.data;
           console.log("✅ Transcription completed");
           break;
         } else if (checkRes.data.status === "error") {
-          throw new Error(checkRes.data.error || "AssemblyAI transcription error");
+          throw new Error(
+            checkRes.data.error || "AssemblyAI transcription error",
+          );
         }
         await new Promise((r) => setTimeout(r, 2500));
       }
@@ -311,7 +354,9 @@ export const uploadAudioForMeeting = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ uploadAudioForMeeting Error:", error?.message || error);
-    return res.status(500).json({ success: false, message: error.message || "Upload failed" });
+    return res
+      .status(500)
+      .json({ success: false, message: error.message || "Upload failed" });
   }
 };
 
@@ -341,7 +386,9 @@ export const summarizeMeeting = async (req, res) => {
     if (meetingId && !textToSummarize) {
       meeting = await Meeting.findById(meetingId);
       if (!meeting)
-        return res.status(404).json({ success: false, message: "Meeting not found" });
+        return res
+          .status(404)
+          .json({ success: false, message: "Meeting not found" });
       textToSummarize = (meeting.transcript || "").trim();
     }
 
@@ -426,11 +473,15 @@ ${textToSummarize}
 
       console.log("✅ Gemini response received");
     } catch (gemErr) {
-      console.error("❌ Gemini API error, falling back to HuggingFace:", gemErr.message);
+      console.error(
+        "❌ Gemini API error, falling back to HuggingFace:",
+        gemErr.message,
+      );
 
       // ======= Fallback: HuggingFace =======
       try {
-        const hfUrl = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn";
+        const hfUrl =
+          "https://api-inference.huggingface.co/models/facebook/bart-large-cnn";
 
         const hfResp = await axios.post(
           hfUrl,
@@ -441,7 +492,7 @@ ${textToSummarize}
               "Content-Type": "application/json",
             },
             timeout: 120000,
-          }
+          },
         );
 
         const hfText =
@@ -461,7 +512,7 @@ ${textToSummarize}
           questions_raised: [],
           keywords: [],
           attendees: [],
-          notes: "Generated using fallback summarization model"
+          notes: "Generated using fallback summarization model",
         };
 
         console.log("✅ HuggingFace fallback completed");
@@ -487,23 +538,25 @@ ${textToSummarize}
         notes: structured.notes || "",
       };
 
-        // Add Overview before Title
-    humanReadable += `📘 Overview:\n${mom.summary}\n\n`;
-    humanReadable += `📅 Title: ${mom.title}\n`;
-    humanReadable += `Date: ${new Date(mom.date).toLocaleDateString()}\n\n`;
-    humanReadable += `📝 Summary:\n${mom.summary}\n\n`;
-
-
+      // Add Overview before Title
+      humanReadable += `📘 Overview:\n${mom.summary}\n\n`;
+      humanReadable += `📅 Title: ${mom.title}\n`;
+      humanReadable += `Date: ${new Date(mom.date).toLocaleDateString()}\n\n`;
+      humanReadable += `📝 Summary:\n${mom.summary}\n\n`;
 
       if (mom.agenda.length) {
         humanReadable += "📋 Agenda:\n";
-        mom.agenda.forEach((item, i) => (humanReadable += `${i + 1}. ${item}\n`));
+        mom.agenda.forEach(
+          (item, i) => (humanReadable += `${i + 1}. ${item}\n`),
+        );
         humanReadable += "\n";
       }
 
       if (mom.key_discussions.length) {
         humanReadable += "💬 Key Discussions:\n";
-        mom.key_discussions.forEach((d, i) => (humanReadable += `${i + 1}. ${d}\n`));
+        mom.key_discussions.forEach(
+          (d, i) => (humanReadable += `${i + 1}. ${d}\n`),
+        );
         humanReadable += "\n";
       }
 
@@ -532,7 +585,9 @@ ${textToSummarize}
       }
       if (mom.questions_raised.length) {
         humanReadable += "❓ Questions Raised:\n";
-        mom.questions_raised.forEach((q, i) => (humanReadable += `${i + 1}. ${q}\n`));
+        mom.questions_raised.forEach(
+          (q, i) => (humanReadable += `${i + 1}. ${q}\n`),
+        );
         humanReadable += "\n";
       }
       if (mom.keywords.length) {
@@ -581,7 +636,9 @@ ${textToSummarize}
       });
     }
 
-    return res.status(500).json({ success: false, message: "No summary generated" });
+    return res
+      .status(500)
+      .json({ success: false, message: "No summary generated" });
   } catch (err) {
     console.error("❌ summarizeMeeting Error:", err.message || err);
     return res.status(500).json({
@@ -605,13 +662,17 @@ export const getAllMeetings = async (req, res) => {
 
     const meetings = await Meeting.find({ uploadedBy: userId })
       .sort({ createdAt: -1 })
-      .select("title summary structuredMoM createdAt date meetingType status time duration recordingType organization")
+      .select(
+        "title summary structuredMoM createdAt date meetingType status time duration recordingType organization",
+      )
       .populate("organization", "name");
 
     return res.status(200).json({ success: true, meetings });
   } catch (error) {
     console.error("❌ getAllMeetings Error:", error.message);
-    return res.status(500).json({ success: false, message: "Failed to fetch meetings" });
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch meetings" });
   }
 };
 
@@ -619,12 +680,18 @@ export const deleteMeeting = async (req, res) => {
   try {
     const meeting = await Meeting.findByIdAndDelete(req.params.id);
     if (!meeting)
-      return res.status(404).json({ success: false, message: "Meeting not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Meeting not found" });
 
-    res.status(200).json({ success: true, message: "Meeting deleted successfully" });
+    res
+      .status(200)
+      .json({ success: true, message: "Meeting deleted successfully" });
   } catch (error) {
     console.error("❌ deleteMeeting Error:", error);
-    res.status(500).json({ success: false, message: "Server error while deleting meeting" });
+    res
+      .status(500)
+      .json({ success: false, message: "Server error while deleting meeting" });
   }
 };
 
@@ -642,13 +709,17 @@ export const getMeetingById = async (req, res) => {
 
     const meeting = await Meeting.findById(req.params.id);
     if (!meeting) {
-      return res.status(404).json({ success: false, message: "Meeting not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Meeting not found" });
     }
 
     return res.status(200).json({ success: true, meeting });
   } catch (error) {
     console.error("❌ getMeetingById Error:", error.message);
-    return res.status(500).json({ success: false, message: "Failed to fetch meeting" });
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch meeting" });
   }
 };
 
@@ -670,16 +741,33 @@ export const updateMeeting = async (req, res) => {
     });
 
     if (!meeting) {
-      return res.status(404).json({ success: false, message: "Meeting not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Meeting not found" });
     }
 
     // Check if user owns the meeting
     if (meeting.uploadedBy.toString() !== userId.toString()) {
-      return res.status(403).json({ success: false, message: "You don't have permission to update this meeting" });
+      return res
+        .status(403)
+        .json({
+          success: false,
+          message: "You don't have permission to update this meeting",
+        });
     }
 
     // Update allowed fields
-    const { title, description, meetingType, date, time, duration, location, venue, tags } = req.body;
+    const {
+      title,
+      description,
+      meetingType,
+      date,
+      time,
+      duration,
+      location,
+      venue,
+      tags,
+    } = req.body;
 
     if (title) meeting.title = title.trim();
     if (description !== undefined) meeting.description = description;
@@ -713,7 +801,9 @@ export const updateMeeting = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ updateMeeting Error:", error.message);
-    return res.status(500).json({ success: false, message: "Failed to update meeting" });
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to update meeting" });
   }
 };
 
@@ -739,7 +829,7 @@ export const searchMeetingsByText = async (req, res) => {
       const transcriptRes = await axios.post(
         "https://api.assemblyai.com/v2/transcript",
         { audio_url: audioUrl },
-        { headers: { authorization: ASSEMBLYAI_API_KEY } }
+        { headers: { authorization: ASSEMBLYAI_API_KEY } },
       );
 
       const transcriptId = transcriptRes.data.id;
@@ -747,14 +837,19 @@ export const searchMeetingsByText = async (req, res) => {
       // Poll for completion
       let transcriptData = null;
       while (true) {
-        const checkRes = await axios.get(`https://api.assemblyai.com/v2/transcript/${transcriptId}`, {
-          headers: { authorization: ASSEMBLYAI_API_KEY },
-        });
+        const checkRes = await axios.get(
+          `https://api.assemblyai.com/v2/transcript/${transcriptId}`,
+          {
+            headers: { authorization: ASSEMBLYAI_API_KEY },
+          },
+        );
         if (checkRes.data.status === "completed") {
           transcriptData = checkRes.data;
           break;
         } else if (checkRes.data.status === "error") {
-          throw new Error(checkRes.data.error || "AssemblyAI transcription error");
+          throw new Error(
+            checkRes.data.error || "AssemblyAI transcription error",
+          );
         }
         // wait 2s before polling again
         await new Promise((r) => setTimeout(r, 2000));
@@ -765,7 +860,9 @@ export const searchMeetingsByText = async (req, res) => {
     }
 
     if (!query || query.trim() === "") {
-      return res.status(400).json({ success: false, message: "No search query provided" });
+      return res
+        .status(400)
+        .json({ success: false, message: "No search query provided" });
     }
 
     // Basic regex search across title, summary, transcript
@@ -788,6 +885,8 @@ export const searchMeetingsByText = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ searchMeetingsByText Error:", error?.message || error);
-    return res.status(500).json({ success: false, message: "Search failed", error: error.message });
+    return res
+      .status(500)
+      .json({ success: false, message: "Search failed", error: error.message });
   }
 };

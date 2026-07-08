@@ -1,13 +1,14 @@
-import React, {useContext, useEffect } from 'react';
-import { assets } from '../assets/assets';
-import axios from 'axios';
+import React, { useContext, useEffect } from "react";
+import { assets } from "../assets/assets";
+import axios from "axios";
 import AppContent from "../context/AppContent";
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const EmailVerify = () => {
   axios.defaults.withCredentials = true;
-  const { backendUrl, getUserData, isLoggedin, userData } = useContext(AppContent);
+  const { backendUrl, getUserData, isLoggedin, userData } =
+    useContext(AppContent);
   const navigate = useNavigate();
   const inputRefs = React.useRef([]);
 
@@ -18,14 +19,14 @@ const EmailVerify = () => {
   };
 
   const handleKeyDown = (e, index) => {
-    if (e.key === 'Backspace' && e.target.value === '' && index > 0) {
+    if (e.key === "Backspace" && e.target.value === "" && index > 0) {
       inputRefs.current[index - 1].focus();
     }
   };
 
   const handlePaste = (e) => {
-    const paste = e.clipboardData.getData('text');
-    const pasteArray = paste.split('');
+    const paste = e.clipboardData.getData("text");
+    const pasteArray = paste.split("");
     pasteArray.forEach((char, index) => {
       if (inputRefs.current[index]) {
         inputRefs.current[index].value = char;
@@ -36,37 +37,36 @@ const EmailVerify = () => {
   const onSubmitHandler = async (e) => {
     e.preventDefault();
     const otpArray = inputRefs.current.map((el) => el.value);
-    const otp = otpArray.join('');
+    const otp = otpArray.join("");
 
     try {
       const { data } = await axios.post(
         `${backendUrl}/api/auth/verify-account`,
         { otp }, // ✅ Send object, not raw string
-        { withCredentials: true }
+        { withCredentials: true },
       );
 
       if (data.success) {
-        toast.success(data.message || 'Email verified successfully!');
+        toast.success(data.message || "Email verified successfully!");
         getUserData();
-        navigate('/');
+        navigate("/");
       } else {
-        toast.error(data.message || 'Verification failed');
+        toast.error(data.message || "Verification failed");
       }
     } catch (error) {
       console.error(error);
-      toast.error(error.response?.data?.message || 'Something went wrong');
+      toast.error(error.response?.data?.message || "Something went wrong");
     }
   };
-   
-  useEffect(()=>{
-    isLoggedin && userData && userData.isAccountVerified && navigate('/')
+
+  useEffect(() => {
+    isLoggedin && userData && userData.isAccountVerified && navigate("/");
   }, [isLoggedin, userData]);
 
-
-    return (
+  return (
     <div className="flex items-center justify-center min-h-screen bg-linear-to-br from-blue-200 to-purple-400">
       <img
-        onClick={() => navigate('/')}
+        onClick={() => navigate("/")}
         src={assets.logo}
         alt=""
         className="absolute left-5 sm:left-20 top-5 w-28 sm:w-32 cursor-pointer"

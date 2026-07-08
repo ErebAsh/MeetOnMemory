@@ -10,8 +10,7 @@ const userAuth = async (req, res, next) => {
     console.log("=================================");
 
     const token =
-      req.cookies?.token ||
-      req.header("Authorization")?.replace("Bearer ", "");
+      req.cookies?.token || req.header("Authorization")?.replace("Bearer ", "");
 
     console.log("Token Found:", token ? "YES" : "NO");
 

@@ -97,7 +97,7 @@ const meetingSchema = new mongoose.Schema(
     },
     tags: [String], // e.g., ["policy", "finance", "staff"]
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Meeting = mongoose.model("Meeting", meetingSchema);

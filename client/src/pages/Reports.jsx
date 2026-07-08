@@ -41,7 +41,9 @@ const Reports = () => {
   // 🧠 Generate Gemini-based insights
   const fetchAIInsights = async (summary) => {
     try {
-      const res = await axios.post(`${backendUrl}/api/gemini/insights`, { summary });
+      const res = await axios.post(`${backendUrl}/api/gemini/insights`, {
+        summary,
+      });
       setAiInsights(res.data.insight || "AI analysis unavailable.");
     } catch {
       setAiInsights("AI insights unavailable — please try again later.");
@@ -93,7 +95,10 @@ const Reports = () => {
     labels: ["Completed Meetings", "Pending Meetings"],
     datasets: [
       {
-        data: [summary.completedMeetings, summary.totalMeetings - summary.completedMeetings],
+        data: [
+          summary.completedMeetings,
+          summary.totalMeetings - summary.completedMeetings,
+        ],
         backgroundColor: ["#6366F1", "#E5E7EB"],
       },
     ],
@@ -107,26 +112,47 @@ const Reports = () => {
           <BarChart4 className="text-indigo-600 w-8 h-8" /> Reports & Analytics
         </h1>
         <p className="text-gray-600 mb-10">
-          Visualize trends — meetings held, policies updated, and AI-powered insights.
+          Visualize trends — meetings held, policies updated, and AI-powered
+          insights.
         </p>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
-          <StatCard title="Total Meetings" value={summary.totalMeetings} color="indigo" />
-          <StatCard title="Completed Meetings" value={summary.completedMeetings} color="green" />
-          <StatCard title="Total Policies" value={summary.totalPolicies} color="blue" />
-          <StatCard title="Updated Policies" value={summary.updatedPolicies} color="purple" />
+          <StatCard
+            title="Total Meetings"
+            value={summary.totalMeetings}
+            color="indigo"
+          />
+          <StatCard
+            title="Completed Meetings"
+            value={summary.completedMeetings}
+            color="green"
+          />
+          <StatCard
+            title="Total Policies"
+            value={summary.totalPolicies}
+            color="blue"
+          />
+          <StatCard
+            title="Updated Policies"
+            value={summary.updatedPolicies}
+            color="purple"
+          />
         </div>
 
         {/* Charts Section */}
         <div className="grid md:grid-cols-2 gap-8 mb-10">
           <div className="bg-white p-6 rounded-xl shadow-md">
-            <h2 className="text-lg font-semibold mb-3">📈 Meetings Activity (6 Months)</h2>
+            <h2 className="text-lg font-semibold mb-3">
+              📈 Meetings Activity (6 Months)
+            </h2>
             <Line data={meetingTrendData} />
           </div>
 
           <div className="bg-white p-6 rounded-xl shadow-md">
-            <h2 className="text-lg font-semibold mb-3">📊 Policies Activity (6 Months)</h2>
+            <h2 className="text-lg font-semibold mb-3">
+              📊 Policies Activity (6 Months)
+            </h2>
             <Bar data={policyTrendData} />
           </div>
         </div>
@@ -162,7 +188,9 @@ const StatCard = ({ title, value, color }) => {
     purple: "bg-purple-50 text-purple-700",
   };
   return (
-    <div className={`p-5 rounded-xl shadow-sm ${colorMap[color]} font-semibold`}>
+    <div
+      className={`p-5 rounded-xl shadow-sm ${colorMap[color]} font-semibold`}
+    >
       <h3 className="text-sm">{title}</h3>
       <p className="text-2xl mt-2">{value}</p>
     </div>

@@ -67,12 +67,8 @@ const Hero = () => {
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 xl:gap-16 items-center">
-
           {/* Left — Text Content */}
-          <div
-            ref={contentRef}
-            className="fade-in-up text-center lg:text-left"
-          >
+          <div ref={contentRef} className="fade-in-up text-center lg:text-left">
             {/* Badge */}
             <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-1.5 rounded-full text-sm font-semibold mb-6 border border-blue-200">
               <span className="relative flex h-2 w-2" aria-hidden="true">
@@ -122,9 +118,21 @@ const Hero = () => {
 
             {/* Statistics */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 mt-12 pt-8 border-t border-gray-200">
-              <StatItem emoji="⚡" label="AI-Powered" sub="Intelligent Processing" />
-              <StatItem emoji="🔍" label="Instant Search" sub="Semantic Retrieval" />
-              <StatItem emoji="📝" label="Auto-Summaries" sub="Meeting Minutes" />
+              <StatItem
+                emoji="⚡"
+                label="AI-Powered"
+                sub="Intelligent Processing"
+              />
+              <StatItem
+                emoji="🔍"
+                label="Instant Search"
+                sub="Semantic Retrieval"
+              />
+              <StatItem
+                emoji="📝"
+                label="Auto-Summaries"
+                sub="Meeting Minutes"
+              />
               <StatItem emoji="🏢" label="500+ Orgs" sub="Trust MeetOnMemory" />
             </div>
           </div>
@@ -147,7 +155,9 @@ const Hero = () => {
                   <div className="w-3 h-3 bg-yellow-400 rounded-full" />
                   <div className="w-3 h-3 bg-green-400 rounded-full" />
                   <div className="flex-1 mx-3 h-6 bg-gray-100 rounded-md flex items-center px-3">
-                    <span className="text-xs text-gray-400 truncate">meetonmemory.app/dashboard</span>
+                    <span className="text-xs text-gray-400 truncate">
+                      meetonmemory.app/dashboard
+                    </span>
                   </div>
                 </div>
 
@@ -198,9 +208,13 @@ const Hero = () => {
                         <div className="font-semibold text-sm text-gray-800 truncate">
                           {label}
                         </div>
-                        <div className="text-xs text-gray-500 truncate">{sub}</div>
+                        <div className="text-xs text-gray-500 truncate">
+                          {sub}
+                        </div>
                       </div>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${badgeColor}`}>
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${badgeColor}`}
+                      >
                         {badge}
                       </span>
                     </div>
@@ -209,7 +223,9 @@ const Hero = () => {
 
                 {/* Subtle footer */}
                 <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
-                  <span className="text-xs text-gray-400">Last synced: just now</span>
+                  <span className="text-xs text-gray-400">
+                    Last synced: just now
+                  </span>
                   <span className="text-xs font-medium text-blue-600 cursor-pointer hover:underline">
                     View all →
                   </span>
@@ -217,7 +233,6 @@ const Hero = () => {
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </section>
