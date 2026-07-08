@@ -376,7 +376,13 @@ Avoid repetition, filler words, and unnecessary phrases. Capture key insights, o
     "List final decisions or outcomes agreed upon during the meeting, if any."
   ],
   "action_items": [
-    {"task": "Describe the specific task or next step", "owner": "Person responsible (if mentioned)", "due_date": "Deadline or expected date, if mentioned"}
+    {"task": "Describe the specific task or next step", "owner": "Person responsible (if mentioned)", "due_date": "Deadline or expected date, if mentioned", "status": "Status if mentioned (e.g., 'pending', 'in progress', 'completed')"}
+  ],
+  "questions_raised": [
+    "List important unanswered questions or follow-up discussions that emerged during the meeting."
+  ],
+  "keywords": [
+    "Extract 5-10 relevant keywords and topics discussed during the meeting."
   ],
   "attendees": ["List attendees if mentioned or infer from transcript"],
   "notes": "Include any follow-up requirements, risks, or additional remarks worth noting."
@@ -452,6 +458,8 @@ ${textToSummarize}
           key_discussions: [],
           decisions: [],
           action_items: [],
+          questions_raised: [],
+          keywords: [],
           attendees: [],
           notes: "Generated using fallback summarization model"
         };
@@ -473,6 +481,8 @@ ${textToSummarize}
         key_discussions: structured.key_discussions || [],
         decisions: structured.decisions || [],
         action_items: structured.action_items || structured.actions || [],
+        questions_raised: structured.questions_raised || [],
+        keywords: structured.keywords || [],
         attendees: structured.attendees || [],
         notes: structured.notes || "",
       };
@@ -519,6 +529,14 @@ ${textToSummarize}
 
       if (mom.attendees.length) {
         humanReadable += "👥 Attendees: " + mom.attendees.join(", ") + "\n\n";
+      }
+      if (mom.questions_raised.length) {
+        humanReadable += "❓ Questions Raised:\n";
+        mom.questions_raised.forEach((q, i) => (humanReadable += `${i + 1}. ${q}\n`));
+        humanReadable += "\n";
+      }
+      if (mom.keywords.length) {
+        humanReadable += "🏷 Keywords: " + mom.keywords.join(", ") + "\n\n";
       }
       if (mom.notes) {
         humanReadable += "🗒 Notes:\n" + mom.notes + "\n";
