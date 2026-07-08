@@ -235,10 +235,10 @@ export const exportMeeting = async (req, res) => {
         md += `| Task | Owner | Due Date | Status |\n`;
         md += `|---|---|---|---|\n`;
         mom.action_items.forEach(item => {
-          const task = (item.task || item.description || "N/A").toString().replace(/\|/g, '\\|');
-          const owner = (item.owner || "Unassigned").toString().replace(/\|/g, '\\|');
-          const dueDate = (item.due_date || item.dueDate || "N/A").toString().replace(/\|/g, '\\|');
-          const status = (item.status || "Pending").toString().replace(/\|/g, '\\|');
+          const task = (item.task || item.description || "N/A").toString().replace(/\\/g, '\\\\').replace(/\|/g, '\\|');
+          const owner = (item.owner || "Unassigned").toString().replace(/\\/g, '\\\\').replace(/\|/g, '\\|');
+          const dueDate = (item.due_date || item.dueDate || "N/A").toString().replace(/\\/g, '\\\\').replace(/\|/g, '\\|');
+          const status = (item.status || "Pending").toString().replace(/\\/g, '\\\\').replace(/\|/g, '\\|');
           md += `| ${task} | ${owner} | ${dueDate} | ${status} |\n`;
         });
         md += `\n`;
