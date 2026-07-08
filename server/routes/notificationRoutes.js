@@ -12,10 +12,10 @@ import {
 
 const notificationRouter = express.Router();
 
-notificationRouter.use(userAuth);
+notificationRouter.use(userAuth, apiLimiter);
 
-notificationRouter.get("/", apiLimiter, getNotifications);
-notificationRouter.get("/unread-count", apiLimiter, getUnreadCount);
+notificationRouter.get("/", getNotifications);
+notificationRouter.get("/unread-count", getUnreadCount);
 notificationRouter.patch("/:id/read", writeLimiter, markAsRead);
 notificationRouter.patch("/mark-all-read", writeLimiter, markAllAsRead);
 notificationRouter.delete("/:id", writeLimiter, deleteNotification);

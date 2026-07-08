@@ -45,39 +45,63 @@ const Navbar = () => {
     setImgFailed(false);
   }, [userData?.profilePic]);
 
-  // Unread notifications mock state
-  const [unreadCount] = useState(3);
-  const [notifications] = useState([
-    {
-      id: 1,
-      title: "Minutes of Meeting Ready",
-      description: "AI summary for 'Q3 Sprint Review' is now compiled.",
-      time: "10m ago",
-      unread: true,
-    },
-    {
-      id: 2,
-      title: "New Team Member Joined",
-      description: "Sarah Jenkins has linked to the organization.",
-      time: "2h ago",
-      unread: true,
-    },
-    {
-      id: 3,
-      title: "Policy Update Alert",
-      description: "The 'Privacy & Security Policy' has been updated.",
-      time: "1d ago",
-      unread: true,
-    },
-    {
-      id: 4,
-      title: "Welcome to MeetOnMemory",
-      description:
-        "Start recording or uploading meetings to generate summaries.",
-      time: "3d ago",
-      unread: false,
-    },
-  ]);
+  // Fetch unread count from backend
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifications, setNotifications] = useState([]);
+
+  const formatTimeAgo = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+
+    if (seconds < 60) return "Just now";
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+    if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+    return date.toLocaleDateString();
+  };
+
+  useEffect(() => {
+    if (userData && backendUrl) {
+      const fetchUnreadCount = async () => {
+        try {
+          const { data } = await axios.get(
+            `${backendUrl}/api/notifications/unread-count`,
+            { withCredentials: true },
+          );
+          if (data.success) {
+            setUnreadCount(data.unreadCount);
+          }
+        } catch (err) {
+          console.error("Error fetching unread count:", err);
+        }
+      };
+
+      const fetchRecentNotifications = async () => {
+        try {
+          const { data } = await axios.get(`${backendUrl}/api/notifications`, {
+            withCredentials: true,
+          });
+          if (data.success) {
+            setNotifications(
+              data.notifications.slice(0, 5).map((n) => ({
+                id: n.id,
+                title: n.title,
+                description: n.description,
+                time: formatTimeAgo(n.createdAt),
+                unread: !n.isRead,
+              })),
+            );
+          }
+        } catch (err) {
+          console.error("Error fetching notifications:", err);
+        }
+      };
+
+      fetchUnreadCount();
+      fetchRecentNotifications();
+    }
+  }, [userData, backendUrl]);
 
   const menuRef = useRef();
   const mobileMenuRef = useRef();
