@@ -391,25 +391,176 @@ Thanks to all the amazing contributors who have helped improve MeetOnMemory!
 <div align="center">
 <!-- CONTRIBUTORS:START -->
 
-<a href="https://github.com/imuniqueshiv">
-            <img src="https://avatars.githubusercontent.com/u/144125626?v=4" width="75" alt="imuniqueshiv"/>
-        </a><a href="https://github.com/aadhish-saini">
-            <img src="https://avatars.githubusercontent.com/u/278401462?v=4" width="75" alt="aadhish-saini"/>
-        </a><a href="https://github.com/Payal29037">
-            <img src="https://avatars.githubusercontent.com/u/185815252?v=4" width="75" alt="Payal29037"/>
-        </a><a href="https://github.com/mrunmayeekokitkar">
-            <img src="https://avatars.githubusercontent.com/u/184808271?v=4" width="75" alt="mrunmayeekokitkar"/>
-        </a><a href="https://github.com/Aaryanvyas">
-            <img src="https://avatars.githubusercontent.com/u/188873438?v=4" width="75" alt="Aaryanvyas"/>
-        </a><a href="https://github.com/BhaveshGadling77">
-            <img src="https://avatars.githubusercontent.com/u/188820144?v=4" width="75" alt="BhaveshGadling77"/>
-        </a><a href="https://github.com/itxhadi27-cmd">
-            <img src="https://avatars.githubusercontent.com/u/222145496?v=4" width="75" alt="itxhadi27-cmd"/>
-        </a><a href="https://github.com/CodeWithShrey-collab">
-            <img src="https://avatars.githubusercontent.com/u/179368106?v=4" width="75" alt="CodeWithShrey-collab"/>
-        </a><a href="https://github.com/Khushi1310-nayak">
-            <img src="https://avatars.githubusercontent.com/u/221927504?v=4" width="75" alt="Khushi1310-nayak"/>
-        </a>
+## 🏆 Hall of Fame
+
+<table align="center">
+<tr>
+
+<td align="center" width="20%" valign="top">
+
+### 🥇
+
+<a href="https://github.com/mrunmayeekokitkar">
+  <img
+    src="https://avatars.githubusercontent.com/u/184808271?v=4"
+    width="96"
+    height="96"
+    alt="@mrunmayeekokitkar"
+    style="border-radius:50%;"
+  />
+</a>
+
+<br/><br/>
+
+<strong>
+<a href="https://github.com/mrunmayeekokitkar">
+@mrunmayeekokitkar
+</a>
+</strong>
+
+<br/>
+
+🔀 <strong>20</strong> Merged PRs
+
+<br/>
+
+⭐ <strong>40</strong> Commits
+
+</td>
+<td align="center" width="20%" valign="top">
+
+### 🥈
+
+<a href="https://github.com/revatikadam0607">
+  <img
+    src="https://avatars.githubusercontent.com/u/261348571?v=4"
+    width="96"
+    height="96"
+    alt="@revatikadam0607"
+    style="border-radius:50%;"
+  />
+</a>
+
+<br/><br/>
+
+<strong>
+<a href="https://github.com/revatikadam0607">
+@revatikadam0607
+</a>
+</strong>
+
+<br/>
+
+🔀 <strong>5</strong> Merged PRs
+
+<br/>
+
+⭐ <strong>9</strong> Commits
+
+</td>
+<td align="center" width="20%" valign="top">
+
+### 🥉
+
+<a href="https://github.com/Kashvi108">
+  <img
+    src="https://avatars.githubusercontent.com/u/287214039?v=4"
+    width="96"
+    height="96"
+    alt="@Kashvi108"
+    style="border-radius:50%;"
+  />
+</a>
+
+<br/><br/>
+
+<strong>
+<a href="https://github.com/Kashvi108">
+@Kashvi108
+</a>
+</strong>
+
+<br/>
+
+🔀 <strong>4</strong> Merged PRs
+
+<br/>
+
+⭐ <strong>9</strong> Commits
+
+</td>
+<td align="center" width="20%" valign="top">
+
+### 4
+
+<a href="https://github.com/M0izz">
+  <img
+    src="https://avatars.githubusercontent.com/u/180389597?v=4"
+    width="96"
+    height="96"
+    alt="@M0izz"
+    style="border-radius:50%;"
+  />
+</a>
+
+<br/><br/>
+
+<strong>
+<a href="https://github.com/M0izz">
+@M0izz
+</a>
+</strong>
+
+<br/>
+
+🔀 <strong>2</strong> Merged PRs
+
+<br/>
+
+⭐ <strong>5</strong> Commits
+
+</td>
+<td align="center" width="20%" valign="top">
+
+### 5
+
+<a href="https://github.com/Diwakar-odds">
+  <img
+    src="https://avatars.githubusercontent.com/u/170966675?v=4"
+    width="96"
+    height="96"
+    alt="@Diwakar-odds"
+    style="border-radius:50%;"
+  />
+</a>
+
+<br/><br/>
+
+<strong>
+<a href="https://github.com/Diwakar-odds">
+@Diwakar-odds
+</a>
+</strong>
+
+<br/>
+
+🔀 <strong>2</strong> Merged PRs
+
+<br/>
+
+⭐ <strong>3</strong> Commits
+
+</td>
+</tr>
+</table>
+
+## ❤️ All Contributors
+
+<div align="center">
+
+<a href="https://github.com/mrunmayeekokitkar"><img src="https://avatars.githubusercontent.com/u/184808271?v=4" width="64" height="64" alt="@mrunmayeekokitkar" title="@mrunmayeekokitkar" style="border-radius:50%;margin:6px;"/></a><a href="https://github.com/revatikadam0607"><img src="https://avatars.githubusercontent.com/u/261348571?v=4" width="64" height="64" alt="@revatikadam0607" title="@revatikadam0607" style="border-radius:50%;margin:6px;"/></a><a href="https://github.com/Kashvi108"><img src="https://avatars.githubusercontent.com/u/287214039?v=4" width="64" height="64" alt="@Kashvi108" title="@Kashvi108" style="border-radius:50%;margin:6px;"/></a><a href="https://github.com/M0izz"><img src="https://avatars.githubusercontent.com/u/180389597?v=4" width="64" height="64" alt="@M0izz" title="@M0izz" style="border-radius:50%;margin:6px;"/></a><a href="https://github.com/Diwakar-odds"><img src="https://avatars.githubusercontent.com/u/170966675?v=4" width="64" height="64" alt="@Diwakar-odds" title="@Diwakar-odds" style="border-radius:50%;margin:6px;"/></a><a href="https://github.com/ErebAsh"><img src="https://avatars.githubusercontent.com/u/156138261?v=4" width="64" height="64" alt="@ErebAsh" title="@ErebAsh" style="border-radius:50%;margin:6px;"/></a><a href="https://github.com/Payal29037"><img src="https://avatars.githubusercontent.com/u/185815252?v=4" width="64" height="64" alt="@Payal29037" title="@Payal29037" style="border-radius:50%;margin:6px;"/></a><a href="https://github.com/Twinklekumari2"><img src="https://avatars.githubusercontent.com/u/180191992?v=4" width="64" height="64" alt="@Twinklekumari2" title="@Twinklekumari2" style="border-radius:50%;margin:6px;"/></a><a href="https://github.com/Aaryanvyas"><img src="https://avatars.githubusercontent.com/u/188873438?v=4" width="64" height="64" alt="@Aaryanvyas" title="@Aaryanvyas" style="border-radius:50%;margin:6px;"/></a><a href="https://github.com/itxhadi27-cmd"><img src="https://avatars.githubusercontent.com/u/222145496?v=4" width="64" height="64" alt="@itxhadi27-cmd" title="@itxhadi27-cmd" style="border-radius:50%;margin:6px;"/></a><a href="https://github.com/BhaveshGadling77"><img src="https://avatars.githubusercontent.com/u/188820144?v=4" width="64" height="64" alt="@BhaveshGadling77" title="@BhaveshGadling77" style="border-radius:50%;margin:6px;"/></a><a href="https://github.com/harshitha9626"><img src="https://avatars.githubusercontent.com/u/212395044?v=4" width="64" height="64" alt="@harshitha9626" title="@harshitha9626" style="border-radius:50%;margin:6px;"/></a><a href="https://github.com/sunny-4"><img src="https://avatars.githubusercontent.com/u/160472583?v=4" width="64" height="64" alt="@sunny-4" title="@sunny-4" style="border-radius:50%;margin:6px;"/></a><a href="https://github.com/itsaditi05"><img src="https://avatars.githubusercontent.com/u/175183822?v=4" width="64" height="64" alt="@itsaditi05" title="@itsaditi05" style="border-radius:50%;margin:6px;"/></a><a href="https://github.com/palakgoda"><img src="https://avatars.githubusercontent.com/u/206355231?v=4" width="64" height="64" alt="@palakgoda" title="@palakgoda" style="border-radius:50%;margin:6px;"/></a><a href="https://github.com/piush365"><img src="https://avatars.githubusercontent.com/u/173165525?v=4" width="64" height="64" alt="@piush365" title="@piush365" style="border-radius:50%;margin:6px;"/></a><a href="https://github.com/Khushi1310-nayak"><img src="https://avatars.githubusercontent.com/u/221927504?v=4" width="64" height="64" alt="@Khushi1310-nayak" title="@Khushi1310-nayak" style="border-radius:50%;margin:6px;"/></a><a href="https://github.com/CodeWithShrey-collab"><img src="https://avatars.githubusercontent.com/u/179368106?v=4" width="64" height="64" alt="@CodeWithShrey-collab" title="@CodeWithShrey-collab" style="border-radius:50%;margin:6px;"/></a><a href="https://github.com/BikramMondal5"><img src="https://avatars.githubusercontent.com/u/170235967?v=4" width="64" height="64" alt="@BikramMondal5" title="@BikramMondal5" style="border-radius:50%;margin:6px;"/></a><a href="https://github.com/imuniqueshiv"><img src="https://avatars.githubusercontent.com/u/144125626?v=4" width="64" height="64" alt="@imuniqueshiv" title="@imuniqueshiv" style="border-radius:50%;margin:6px;"/></a><a href="https://github.com/aadhish-saini"><img src="https://avatars.githubusercontent.com/u/278401462?v=4" width="64" height="64" alt="@aadhish-saini" title="@aadhish-saini" style="border-radius:50%;margin:6px;"/></a><a href="https://github.com/frontenedaditi"><img src="https://avatars.githubusercontent.com/u/161711740?v=4" width="64" height="64" alt="@frontenedaditi" title="@frontenedaditi" style="border-radius:50%;margin:6px;"/></a>
+
+</div>
 
 <!-- CONTRIBUTORS:END -->
 </div>
