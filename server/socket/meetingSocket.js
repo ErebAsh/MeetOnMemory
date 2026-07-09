@@ -1,9 +1,51 @@
+import jwt from "jsonwebtoken";
+
+const parseCookie = (str) =>
+  str
+    .split(";")
+    .map((v) => v.split("="))
+    .reduce((acc, v) => {
+      if (v[0] && v[1] !== undefined) {
+        acc[decodeURIComponent(v[0].trim())] = decodeURIComponent(v[1].trim());
+      }
+      return acc;
+    }, {});
+
 export default (io) => {
   const usersInRoom = {}; // roomId -> Array of { socketId, ...userInfo }
   const socketToRoom = {}; // socketId -> roomId
 
+  // Authentication Middleware
+  io.use((socket, next) => {
+    try {
+      const cookieHeader = socket.request.headers.cookie;
+      if (!cookieHeader) {
+        return next(new Error("Authentication error: No cookies found"));
+      }
+
+      const cookies = parseCookie(cookieHeader);
+      const token = cookies.token; // The cookie name used in the application is 'token'
+
+      if (!token) {
+        return next(new Error("Authentication error: No token found"));
+      }
+
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      socket.userId = decoded.id;
+      next();
+    } catch (error) {
+      console.error("Socket authentication error:", error.message);
+      return next(new Error("Authentication error"));
+    }
+  });
+
   io.on("connection", (socket) => {
-    console.log("🟢 User connected:", socket.id);
+    console.log("🟢 User connected:", socket.id, "User ID:", socket.userId);
+
+    // Join a personal room for notifications
+    if (socket.userId) {
+      socket.join(socket.userId.toString());
+    }
 
     // Join room
     socket.on("join-meeting", ({ roomId, userInfo }) => {

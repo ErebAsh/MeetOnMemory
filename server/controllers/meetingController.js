@@ -2,9 +2,11 @@ import fs from "fs";
 import axios from "axios";
 import FormData from "form-data";
 import Meeting from "../models/meetingModel.js";
+import User from "../models/userModel.js";
 import { indexMeeting } from "../utils/embeddingUtils.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { processStructuredMoM, detectResolutions } from "../services/knowledgeGraphService.js";
+import { createAndPushNotification } from "../services/notificationService.js";
 /**
  * Meeting Controller - Handles all meeting operations
  *
@@ -84,6 +86,31 @@ export const createMeeting = async (req, res) => {
       await indexMeeting(meeting);
     } catch (idxErr) {
       console.error("⚠️ indexMeeting error (continuing):", idxErr.message);
+    }
+
+    // Notify organization members
+    const io = req.app.get("io");
+    if (meeting.organization && io) {
+      try {
+        const members = await User.find({ 
+          organization: meeting.organization, 
+          _id: { $ne: uploaderId } 
+        });
+        
+        for (const member of members) {
+          await createAndPushNotification(
+            io,
+            member._id,
+            "New Meeting Scheduled",
+            `A new meeting "${meeting.title}" has been scheduled.`,
+            "meetings",
+            `/meeting/${meeting._id}`,
+            "View Details"
+          );
+        }
+      } catch (notifErr) {
+        console.error("⚠️ Notification error (continuing):", notifErr.message);
+      }
     }
 
     return res.status(200).json({
@@ -637,6 +664,24 @@ ${textToSummarize}
            kgError,
          );
        }
+       
+       // Push notification to the meeting creator
+       const io = req.app.get("io");
+       if (io && meetingToUpdate.uploadedBy) {
+         try {
+           await createAndPushNotification(
+             io,
+             meetingToUpdate.uploadedBy,
+             "Minutes of Meeting Generated",
+             `MoM for "${meetingToUpdate.title}" is ready.`,
+             "ai_processing",
+             `/meeting/${meetingToUpdate._id}`,
+             "View MoM"
+           );
+         } catch (notifErr) {
+           console.error("⚠️ Notification error (continuing):", notifErr.message);
+         }
+       }
       }    
 
       return res.status(200).json({
@@ -900,5 +945,58 @@ export const searchMeetingsByText = async (req, res) => {
     return res
       .status(500)
       .json({ success: false, message: "Search failed", error: error.message });
+  }
+};
+
+/**
+ * ✅ Notify Live Meeting Participants
+ * - Given a roomId and an array of participant names/emails,
+ *   looks them up in the DB and pushes a real-time notification to join the live room.
+ */
+export const notifyLiveMeeting = async (req, res) => {
+  try {
+    const { roomId, participants } = req.body;
+    const uploaderId = req.user?.id || req.user?._id;
+
+    if (!roomId || !participants || !Array.isArray(participants)) {
+      return res.status(400).json({ success: false, message: "Invalid request data" });
+    }
+
+    const io = req.app.get("io");
+    if (!io) {
+      return res.status(500).json({ success: false, message: "Socket.IO not initialized" });
+    }
+
+    // Try to find users based on the strings provided (name or email)
+    const searchTerms = participants.map(p => p.name || p);
+    console.log("Searching for live meeting participants:", searchTerms);
+
+    const dbUsers = await User.find({
+      $or: [
+        { email: { $in: searchTerms } },
+        { name: { $in: searchTerms } }
+      ],
+      _id: { $ne: uploaderId } // Don't notify the creator
+    });
+
+    console.log(`Found ${dbUsers.length} users matching criteria.`);
+
+    for (const user of dbUsers) {
+      console.log(`Preparing to notify user ${user.email} (${user._id}) for live room ${roomId}`);
+      await createAndPushNotification(
+        io,
+        user._id,
+        "Live Meeting Started",
+        `You have been invited to join a live meeting.`,
+        "meetings",
+        `/meeting-room/${roomId}`,
+        "Join Now"
+      );
+    }
+
+    return res.status(200).json({ success: true, message: "Participants notified", count: dbUsers.length });
+  } catch (error) {
+    console.error("❌ Error notifying live meeting participants:", error);
+    res.status(500).json({ success: false, message: "Failed to notify participants" });
   }
 };

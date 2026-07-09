@@ -23,8 +23,6 @@ import meetingSocket from "./socket/meetingSocket.js";
 import { initRedis } from "./services/redisService.js";
 import { globalLimiter } from "./middleware/rateLimiter.js";
 import knowledgeRoutes from "./routes/knowledgeRoutes.js";
-// ...
-app.use("/api/knowledge", knowledgeRoutes);
 dotenv.config();
 
 const app = express();
@@ -145,6 +143,7 @@ app.use("/api/analytics", analyticsRoutes);
 app.use("/api/gemini", geminiRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/knowledge", knowledgeRoutes);
 
 // ================================
 // VECTOR STORE INIT
@@ -174,6 +173,8 @@ const io = new Server(server, {
     methods: ["GET", "POST"],
   },
 });
+
+app.set("io", io);
 
 meetingSocket(io);
 

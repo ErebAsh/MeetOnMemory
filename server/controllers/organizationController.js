@@ -1,6 +1,7 @@
 // server/controllers/organizationController.js
 import Organization from "../models/organizationModel.js";
 import userModel from "../models/userModel.js";
+import { createAndPushNotification } from "../services/notificationService.js";
 
 /**
  * ✅ Create or Join Organization
@@ -55,6 +56,24 @@ export const createOrJoinOrganization = async (req, res) => {
       });
 
       message = "Joined existing organization successfully.";
+
+      // Notify the organization admin
+      const io = req.app.get("io");
+      if (io && organization.createdBy && organization.createdBy.toString() !== userId.toString()) {
+        try {
+          await createAndPushNotification(
+            io,
+            organization.createdBy,
+            "New Member Joined",
+            `A new user has joined your organization: ${organization.name}.`,
+            "organizations",
+            "/team-members",
+            "View Team"
+          );
+        } catch (notifErr) {
+          console.error("⚠️ Notification error:", notifErr.message);
+        }
+      }
     } else {
       // --- Create new organization ---
       organization = await Organization.create({
@@ -172,6 +191,24 @@ export const joinOrganization = async (req, res) => {
     const updatedUser = await userModel
       .findById(userId)
       .populate("organization", "name");
+
+    // Notify the organization admin
+    const io = req.app.get("io");
+    if (io && organization.createdBy && organization.createdBy.toString() !== userId.toString()) {
+      try {
+        await createAndPushNotification(
+          io,
+          organization.createdBy,
+          "New Member Joined",
+          `A new user has joined your organization: ${organization.name}.`,
+          "organizations",
+          "/team-members",
+          "View Team"
+        );
+      } catch (notifErr) {
+        console.error("⚠️ Notification error:", notifErr.message);
+      }
+    }
 
     res.status(200).json({
       success: true,
