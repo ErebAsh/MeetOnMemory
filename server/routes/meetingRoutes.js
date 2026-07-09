@@ -1,5 +1,7 @@
 import express from "express";
 import multer from "multer";
+import Meeting from "../models/meetingModel.js";
+import { requireOwnerOrAdmin, requireOwner } from "../middleware/rbac.js";
 import userAuth from "../middleware/userAuth.js";
 import {
   apiLimiter,
@@ -46,13 +48,13 @@ router.get("/all", userAuth, getAllMeetings);
 router.get("/:id", userAuth, getMeetingById);
 
 // ✅ Update Meeting (for Meeting Details Page - rename)
-router.patch("/:id", userAuth, updateMeeting);
+router.patch("/:id", userAuth, requireOwner(Meeting), updateMeeting);
 
 // ✅ Export Meeting
 router.get("/:id/export", userAuth, exportMeeting);
 
 // ✅ Delete Meeting
-router.delete("/delete/:id", userAuth, writeLimiter, deleteMeeting);
+router.delete("/delete/:id", userAuth, writeLimiter, requireOwnerOrAdmin(Meeting), deleteMeeting);
 
 // ========== NEW ROUTES (for CreateMeeting.jsx) ==========
 
@@ -72,6 +74,6 @@ router.post(
 router.post("/search", userAuth, searchMeetingsByText);
 
 // 🆕 ✅ Update Meeting Route (Frontend: Meeting Repository - rename, etc.)
-router.put("/:id", userAuth, writeLimiter, updateMeeting);
+router.put("/:id", userAuth, writeLimiter, requireOwner(Meeting), updateMeeting);
 
 export default router;

@@ -186,6 +186,7 @@ export const uploadPolicy = async (req, res) => {
         key_changes: existing.key_changes,
         keywords: existing.keywords,
         uploadedBy: existing.uploadedBy,
+        organization: existing.organization,
         createdAt: existing.createdAt,
       });
 
@@ -223,6 +224,7 @@ export const uploadPolicy = async (req, res) => {
       commitMsg,
       uploadedBy: uploaderId,
       lastEditedBy: uploaderId,
+      organization: req.user.organization || null,
       status: "ready",
     });
 
@@ -327,7 +329,17 @@ export const analyzePolicy = async (req, res) => {
 // ─────────────────────────────────────────────────────────────
 export const getPolicies = async (req, res) => {
   try {
-    const policies = await Policy.find()
+    const userId = req.user?.id || req.user?._id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const queryOptions = [{ uploadedBy: userId }];
+    if (req.user?.organization) {
+      queryOptions.push({ organization: req.user.organization });
+    }
+
+    const policies = await Policy.find({ $or: queryOptions })
       .populate("uploadedBy", "name email")
       .populate("lastEditedBy", "name email")
       .sort({ updatedAt: -1 });
@@ -378,7 +390,7 @@ export const downloadPolicy = async (req, res) => {
 // ─────────────────────────────────────────────────────────────
 export const deletePolicy = async (req, res) => {
   try {
-    const policy = await Policy.findById(req.params.id);
+    const policy = req.doc || await Policy.findById(req.params.id);
     if (!policy) {
       return res
         .status(404)

@@ -13,6 +13,7 @@ const versionSchema = new mongoose.Schema({
   key_changes: [String],
   keywords: [String],
   uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  organization: { type: mongoose.Schema.Types.ObjectId, ref: "Organization", default: null },
   createdAt: { type: Date, default: Date.now },
 });
 
@@ -45,6 +46,7 @@ const policySchema = new mongoose.Schema(
     // Identity
     uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     lastEditedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    organization: { type: mongoose.Schema.Types.ObjectId, ref: "Organization", default: null },
 
     // Draft flag
     isDraft: { type: Boolean, default: false },

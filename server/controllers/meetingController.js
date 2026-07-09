@@ -660,7 +660,12 @@ export const getAllMeetings = async (req, res) => {
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
-    const meetings = await Meeting.find({ uploadedBy: userId })
+    const queryOptions = [{ uploadedBy: userId }];
+    if (req.user?.organization) {
+      queryOptions.push({ organization: req.user.organization });
+    }
+
+    const meetings = await Meeting.find({ $or: queryOptions })
       .sort({ createdAt: -1 })
       .select(
         "title summary structuredMoM createdAt date meetingType status time duration recordingType organization",
@@ -678,11 +683,18 @@ export const getAllMeetings = async (req, res) => {
 
 export const deleteMeeting = async (req, res) => {
   try {
-    const meeting = await Meeting.findByIdAndDelete(req.params.id);
-    if (!meeting)
-      return res
-        .status(404)
-        .json({ success: false, message: "Meeting not found" });
+    const meeting = req.doc; // from requireOwnerOrAdmin middleware
+    if (!meeting) {
+      // Fallback if middleware isn't used
+      const deleted = await Meeting.findByIdAndDelete(req.params.id);
+      if (!deleted) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Meeting not found" });
+      }
+    } else {
+      await meeting.deleteOne();
+    }
 
     res
       .status(200)
@@ -735,25 +747,13 @@ export const updateMeeting = async (req, res) => {
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
-    const meeting = await Meeting.findOne({
-      _id: req.params.id,
-      uploadedBy: userId,
-    });
+    // `req.doc` is provided by the `requireOwner` middleware
+    const meeting = req.doc || await Meeting.findOne({ _id: req.params.id, uploadedBy: userId });
 
     if (!meeting) {
       return res
         .status(404)
         .json({ success: false, message: "Meeting not found" });
-    }
-
-    // Check if user owns the meeting
-    if (meeting.uploadedBy.toString() !== userId.toString()) {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message: "You don't have permission to update this meeting",
-        });
     }
 
     // Update allowed fields

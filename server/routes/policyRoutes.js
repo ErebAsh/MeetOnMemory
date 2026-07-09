@@ -4,6 +4,8 @@ import path from "path";
 import crypto from "crypto";
 import rateLimit from "express-rate-limit";
 import userAuth from "../middleware/userAuth.js";
+import Policy from "../models/policyModel.js";
+import { requireOwnerOrAdmin } from "../middleware/rbac.js";
 import {
   uploadPolicy,
   getPolicies,
@@ -127,8 +129,8 @@ const handleMulterUpload = (req, res, next) => {
 // Routes
 // ──────────────────────────────────────────────
 
-// Public (read-only)
-router.get("/", getPolicies);
+// Protected (read-only)
+router.get("/", userAuth, getPolicies);
 
 // Protected — require authentication & rate limiting
 router.post(
@@ -140,6 +142,6 @@ router.post(
 );
 router.post("/:id/analyze", analyzeLimiter, userAuth, analyzePolicy);
 router.get("/download/:id", downloadLimiter, userAuth, downloadPolicy);
-router.delete("/:id", deleteLimiter, userAuth, deletePolicy);
+router.delete("/:id", deleteLimiter, userAuth, requireOwnerOrAdmin(Policy), deletePolicy);
 
 export default router;

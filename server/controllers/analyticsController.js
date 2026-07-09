@@ -3,12 +3,25 @@ import Policy from "../models/policyModel.js";
 
 export const getAnalytics = async (req, res) => {
   try {
-    const totalMeetings = await Meeting.countDocuments();
-    const totalPolicies = await Policy.countDocuments();
+    const userId = req.user?.id || req.user?._id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const queryOptions = [{ uploadedBy: userId }];
+    if (req.user?.organization) {
+      queryOptions.push({ organization: req.user.organization });
+    }
+    const matchQuery = { $or: queryOptions };
+
+    const totalMeetings = await Meeting.countDocuments(matchQuery);
+    const totalPolicies = await Policy.countDocuments(matchQuery);
     const completedMeetings = await Meeting.countDocuments({
+      ...matchQuery,
       status: "completed",
     });
     const updatedPolicies = await Policy.countDocuments({
+      ...matchQuery,
       version: { $ne: "1.0" },
     });
 
@@ -16,7 +29,7 @@ export const getAnalytics = async (req, res) => {
     const lastSixMonths = new Date();
     lastSixMonths.setMonth(lastSixMonths.getMonth() - 5);
     const monthlyMeetings = await Meeting.aggregate([
-      { $match: { createdAt: { $gte: lastSixMonths } } },
+      { $match: { createdAt: { $gte: lastSixMonths }, ...matchQuery } },
       {
         $group: {
           _id: { $month: "$createdAt" },
@@ -27,7 +40,7 @@ export const getAnalytics = async (req, res) => {
     ]);
 
     const monthlyPolicies = await Policy.aggregate([
-      { $match: { createdAt: { $gte: lastSixMonths } } },
+      { $match: { createdAt: { $gte: lastSixMonths }, ...matchQuery } },
       {
         $group: {
           _id: { $month: "$createdAt" },
