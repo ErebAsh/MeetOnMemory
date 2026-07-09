@@ -213,7 +213,7 @@ const CreateMeeting = () => {
     // Redirect to meeting room with parameters
     setTimeout(() => {
       window.open(
-        `/meeting-room/${roomId}?recording=${willRecord}&participants=${encodeURIComponent(JSON.stringify(liveParticipants))}`,
+        `/meeting-room/${roomId}`,
         "_blank",
       );
 

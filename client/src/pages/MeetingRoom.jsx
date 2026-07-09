@@ -246,8 +246,8 @@ const MeetingRoom = () => {
   const toggleScreenShare = async () => {
     if (!isScreenSharing) {
       try {
-        const screenStream = await navigator.mediaDevices.getDisplayMedia({ cursor: true });
-        const screenTrack = screenStream.getTracks()[0];
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: true } });
+        const screenTrack = screenStream.getVideoTracks()[0];
         
         peersRef.current.forEach(({ peer }) => {
           const videoTrack = streamRef.current.getVideoTracks()[0];
