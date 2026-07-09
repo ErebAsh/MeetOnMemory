@@ -54,7 +54,15 @@ export async function processStructuredMoM(meeting, mom) {
 
     const embedding = await embedText(text);
     const match = await findBestMatch(Decision, text, embedding, organization);
+    const existingDecision = await Decision.findOne({
+      text,
+      sourceMeetingId: meeting._id,
+     });
 
+    if (existingDecision) {
+      results.decisions.push(existingDecision);
+      continue;
+   }
     const decision = await Decision.create({
       text,
       sourceMeetingId: meeting._id,
@@ -81,7 +89,15 @@ export async function processStructuredMoM(meeting, mom) {
 
     const embedding = await embedText(text);
     const match = await findBestMatch(ActionItem, text, embedding, organization);
+    const existingActionItem = await ActionItem.findOne({
+      text,
+      sourceMeetingId: meeting._id,
+  });
 
+    if (existingActionItem) {
+      results.actionItems.push(existingActionItem);
+      continue;
+   }
     const actionItem = await ActionItem.create({
       text,
       owner,

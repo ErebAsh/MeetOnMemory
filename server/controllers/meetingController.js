@@ -627,12 +627,17 @@ ${textToSummarize}
 
       console.log("✅ MoM saved to database");
             // --- NEW: Knowledge graph processing ---
-      try {
+      if (meetingToUpdate) {
+       try {
          await detectResolutions(meetingToUpdate, mom);
          await processStructuredMoM(meetingToUpdate, mom);
-          } catch (kgError) {
-             console.error("⚠️ Knowledge graph processing failed (non-fatal):", kgError);
-             }
+       } catch (kgError) {
+         console.error(
+           "⚠️ Knowledge graph processing failed (non-fatal):",
+           kgError,
+         );
+       }
+      }    
 
       return res.status(200).json({
         success: true,
