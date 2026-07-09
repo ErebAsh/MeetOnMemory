@@ -1,7 +1,10 @@
 import dotenv from "dotenv";
 import connectDB from "./config/mongodb.js";
 import Meeting from "./models/meetingModel.js";
-import { processStructuredMoM } from "./services/knowledgeGraphService.js";
+import {
+  processStructuredMoM,
+  detectResolutions,
+} from "./services/knowledgeGraphService.js";
 
 dotenv.config();
 
@@ -10,14 +13,18 @@ const run = async () => {
     await connectDB();
     console.log("✅ Database connected for knowledge graph backfill.");
 
-    const meetings = await Meeting.find({ structuredMoM: { $ne: null } });
+    const meetings = await Meeting.find({
+     structuredMoM: { $ne: null },
+    }).sort({ date: 1 });
     console.log(`🔁 Backfilling ${meetings.length} meetings...`);
 
     for (const meeting of meetings) {
-      if (meeting.structuredMoM) {
-        await processStructuredMoM(meeting, meeting.structuredMoM);
-      }
-    }
+     if (!meeting.structuredMoM) continue;
+
+       await processStructuredMoM(meeting, meeting.structuredMoM);
+
+       await detectResolutions(meeting, meeting.structuredMoM);
+   }
 
     console.log("🎉 Knowledge graph backfill completed!");
     process.exit(0);
