@@ -7,12 +7,28 @@ export const MARKERS = Object.freeze({
 
 export const IGNORED_ACCOUNTS = Object.freeze([
   "github-actions[bot]",
+  "github-actions",
   "dependabot[bot]",
+  "dependabot",
   "renovate[bot]",
-  "codecov[bot]",
-  "codecov-commenter",
+  "renovate",
   "renovate-bot",
+  "codecov[bot]",
+  "codecov",
+  "codecov-commenter",
+  "imgbot[bot]",
+  "imgbot",
+  "stale[bot]",
+  "stale",
+  "semantic-release-bot",
+  "allcontributors[bot]",
+  "allcontributors",
 ]);
+
+export const AUTOMATION_GALLERY = Object.freeze({
+  prTitle: "docs: update contributors gallery",
+  branch: "automation/update-contributors",
+});
 
 export const RANK_BADGES = Object.freeze(["🥇", "🥈", "🥉", "4", "5"]);
 

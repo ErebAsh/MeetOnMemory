@@ -11,19 +11,27 @@ export function issueAuthorRole(issue) {
 
 export function actorRoleFromPermission(permissionLevel) {
   if (permissionLevel === "admin") return "owner";
-  if (permissionLevel === "maintain" || permissionLevel === "write") return "maintainer";
+  if (permissionLevel === "maintain" || permissionLevel === "write")
+    return "maintainer";
   if (permissionLevel === "triage") return "collaborator";
   if (permissionLevel === "read") return "contributor";
   return "external";
 }
 
 export function isMaintainerAssociation(association) {
-  return MAINTAINER_ASSOCIATIONS.includes(String(association || "").toUpperCase());
+  return MAINTAINER_ASSOCIATIONS.includes(
+    String(association || "").toUpperCase(),
+  );
 }
 
 export async function resolveActorRole(github, context, core, actor) {
   if (actor === context.repo.owner) return "owner";
-  const permission = await getCollaboratorPermission(github, context, core, actor);
+  const permission = await getCollaboratorPermission(
+    github,
+    context,
+    core,
+    actor,
+  );
   return actorRoleFromPermission(permission);
 }
 

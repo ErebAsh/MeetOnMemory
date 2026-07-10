@@ -25,8 +25,16 @@ export async function processIssueLifecycle({ github, context, core }) {
     return;
   }
 
-  if ([ISSUE_EVENTS.closed, ISSUE_EVENTS.unassigned, ISSUE_EVENTS.transferred].includes(action)) {
-    await updateIssueMetadata(github, context, core, issue, (draft) => clearAssignmentMetadata(draft));
+  if (
+    [
+      ISSUE_EVENTS.closed,
+      ISSUE_EVENTS.unassigned,
+      ISSUE_EVENTS.transferred,
+    ].includes(action)
+  ) {
+    await updateIssueMetadata(github, context, core, issue, (draft) =>
+      clearAssignmentMetadata(draft),
+    );
     return;
   }
 

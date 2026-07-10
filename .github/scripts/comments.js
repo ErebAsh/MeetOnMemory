@@ -91,9 +91,14 @@ export const comments = {
         `If it's still available and you'd like to continue, you're more than welcome to claim it again — we'd love to see you back! 😊`,
     ),
 
-  prValidationChecklist: ({ body }) => withMarker(AUTOMATION.prChecklistMarker, body),
+  prValidationChecklist: ({ body }) =>
+    withMarker(AUTOMATION.prChecklistMarker, body),
 
-  prValidationSummary: ({ lines, missingLinkedIssueText, missingDescriptionText }) =>
+  prValidationSummary: ({
+    lines,
+    missingLinkedIssueText,
+    missingDescriptionText,
+  }) =>
     `Hi @${lines.author}, thank you so much for your PR! 🎉\n\n` +
     `### 📋 PR Review Checklist\n\n${lines.items.join("\n")}\n\n${missingLinkedIssueText}${missingDescriptionText}` +
     `\nWe appreciate the effort you've put in — let us know if you need any help getting this across the finish line! 💪`,

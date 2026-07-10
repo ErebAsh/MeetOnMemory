@@ -2,7 +2,7 @@ import notificationModel from "../models/notificationModel.js";
 
 /**
  * Creates a notification in the database and pushes it to the user in real-time via Socket.IO
- * 
+ *
  * @param {object} io - The Socket.IO server instance
  * @param {string} userId - The ID of the user to notify
  * @param {string} title - Notification title
@@ -20,7 +20,7 @@ export const createAndPushNotification = async (
   category = "system",
   actionUrl = "",
   actionLabel = "",
-  metadata = {}
+  metadata = {},
 ) => {
   try {
     // 1. Create notification in database
@@ -50,10 +50,14 @@ export const createAndPushNotification = async (
 
     // 3. Emit via Socket.IO if io instance is provided
     if (io) {
-      console.log(`📣 Pushing notification to room: ${userId.toString()} - Title: "${title}"`);
+      console.log(
+        `📣 Pushing notification to room: ${userId.toString()} - Title: "${title}"`,
+      );
       io.to(userId.toString()).emit("notification:new", formattedNotification);
     } else {
-      console.warn("⚠️ createAndPushNotification: io instance is missing or not provided.");
+      console.warn(
+        "⚠️ createAndPushNotification: io instance is missing or not provided.",
+      );
     }
 
     return formattedNotification;

@@ -136,10 +136,10 @@ const App = () => {
         <Route
           path="/knowledge/:decisionId"
           element={
-             <ProtectedRoute>
+            <ProtectedRoute>
               <KnowledgeTimeline />
-             </ProtectedRoute>
-         }
+            </ProtectedRoute>
+          }
         />
         <Route
           path="/select-role"

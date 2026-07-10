@@ -1,7 +1,9 @@
 import { AUTOMATION, IGNORE_BOTS } from "./constants.js";
 
 export function normalizeCommentBody(body) {
-  return String(body || "").trim().toLowerCase();
+  return String(body || "")
+    .trim()
+    .toLowerCase();
 }
 
 export function nowIso() {

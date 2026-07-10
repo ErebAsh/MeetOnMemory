@@ -336,19 +336,28 @@ const Summaries = () => {
                       View
                     </button>
 
-                    <div 
+                    <div
                       className="relative ml-auto"
                       onMouseEnter={() => setOpenExportMenuId(summary._id)}
                       onMouseLeave={() => setOpenExportMenuId(null)}
                     >
                       <button
-                        onClick={() => setOpenExportMenuId(openExportMenuId === summary._id ? null : summary._id)}
+                        onClick={() =>
+                          setOpenExportMenuId(
+                            openExportMenuId === summary._id
+                              ? null
+                              : summary._id,
+                          )
+                        }
                         disabled={isExporting}
                         className="text-sm px-4 py-1.5 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <Download size={16} /> {isExporting && openExportMenuId === summary._id ? "Exporting..." : "Export"}
+                        <Download size={16} />{" "}
+                        {isExporting && openExportMenuId === summary._id
+                          ? "Exporting..."
+                          : "Export"}
                       </button>
-                      
+
                       {openExportMenuId === summary._id && (
                         <div className="absolute right-0 bottom-full mb-2 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[140px]">
                           <button

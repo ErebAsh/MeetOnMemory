@@ -3,7 +3,11 @@ import assert from "node:assert/strict";
 import { processClaim, processUnclaim } from "../claim.js";
 import { processIssueCommentGuidance } from "../issue-comments.js";
 import { processManualAssignment } from "../assignment.js";
-import { processPrValidation, processPrMerged, processFirstContributorWelcome } from "../pr.js";
+import {
+  processPrValidation,
+  processPrMerged,
+  processFirstContributorWelcome,
+} from "../pr.js";
 import { processIssueLifecycle } from "../lifecycle.js";
 import { processClaimExpiration } from "../expiration.js";
 
@@ -22,7 +26,13 @@ function createGithub(issueFactory) {
     rest: {
       issues: {
         async get({ issue_number }) {
-          return { data: issueFactory(issue_number, state, state.issues[issue_number] || {}) };
+          return {
+            data: issueFactory(
+              issue_number,
+              state,
+              state.issues[issue_number] || {},
+            ),
+          };
         },
         async createComment({ issue_number, body }) {
           state.comments.push({ issue_number, body });
@@ -44,7 +54,8 @@ function createGithub(issueFactory) {
         async update({ issue_number, body, state: issueState }) {
           state.issues[issue_number] = state.issues[issue_number] || {};
           if (body !== undefined) state.issues[issue_number].body = body;
-          if (issueState !== undefined) state.issues[issue_number].state = issueState;
+          if (issueState !== undefined)
+            state.issues[issue_number].state = issueState;
           return {
             data: issueFactory(issue_number, state, state.issues[issue_number]),
           };
@@ -56,7 +67,11 @@ function createGithub(issueFactory) {
       repos: {
         async getCollaboratorPermissionLevel({ username }) {
           const permission =
-            username === "maintainer" ? "write" : username === "owner" ? "admin" : "read";
+            username === "maintainer"
+              ? "write"
+              : username === "owner"
+                ? "admin"
+                : "read";
           return { data: { permission } };
         },
       },
@@ -67,12 +82,15 @@ function createGithub(issueFactory) {
       },
     },
     async paginate(apiMethod, args) {
-      if (apiMethod === this.rest.issues.listComments) return this.rest.issues.listComments(args).then((r) => r.data);
+      if (apiMethod === this.rest.issues.listComments)
+        return this.rest.issues.listComments(args).then((r) => r.data);
       if (args.assignee) {
-        return new Array(args.assignee === "busy-user" ? 4 : 1).fill(0).map((_, i) => ({
-          number: i + 1,
-          title: `Issue ${i + 1}`,
-        }));
+        return new Array(args.assignee === "busy-user" ? 4 : 1)
+          .fill(0)
+          .map((_, i) => ({
+            number: i + 1,
+            title: `Issue ${i + 1}`,
+          }));
       }
       return Object.keys(state.assignees).map((n) => ({
         number: Number(n),
@@ -98,7 +116,10 @@ function baseContext(action = "created") {
         author_association: "CONTRIBUTOR",
         assignees: [],
       },
-      comment: { body: "/claim", user: { login: "issue-author", type: "User" } },
+      comment: {
+        body: "/claim",
+        user: { login: "issue-author", type: "User" },
+      },
     },
   };
 }
@@ -112,7 +133,7 @@ function issueFactory(issueNumber, state, overrides = {}) {
     body: overrides.body || "",
     user: overrides.user || { login: "issue-author" },
     author_association: overrides.author_association || "CONTRIBUTOR",
-    assignees: assignee ? [{ login: assignee }] : [],
+    assignees: overrides.assignees || (assignee ? [{ login: assignee }] : []),
     updated_at: new Date().toISOString(),
   };
 }
@@ -140,7 +161,9 @@ test("claim: already assigned", async () => {
   github.state.assignees[10] = "other-user";
   const context = baseContext();
   await processClaim({ github, context, core: createCore() });
-  assert.ok(github.state.comments.some((c) => c.body.includes("currently assigned")));
+  assert.ok(
+    github.state.comments.some((c) => c.body.includes("currently assigned")),
+  );
 });
 
 test("claim: max 4 active issues", async () => {
@@ -154,7 +177,9 @@ test("claim: max 4 active issues", async () => {
     author_association: "CONTRIBUTOR",
   };
   await processClaim({ github, context, core: createCore() });
-  assert.ok(github.state.comments.some((c) => c.body.includes("current limit is 4")));
+  assert.ok(
+    github.state.comments.some((c) => c.body.includes("limit is **4**")),
+  );
 });
 
 test("unclaim: unauthorized unclaim", async () => {
@@ -165,7 +190,9 @@ test("unclaim: unauthorized unclaim", async () => {
   context.payload.comment.body = "/unclaim";
   context.payload.comment.user.login = "random-user";
   await processUnclaim({ github, context, core: createCore() });
-  assert.ok(github.state.comments.some((c) => c.body.includes("only @assigned-user")));
+  assert.ok(
+    github.state.comments.some((c) => c.body.includes("Only @assigned-user")),
+  );
 });
 
 test("unclaim: maintainer can unclaim", async () => {
@@ -231,7 +258,7 @@ test("pr validation: missing linked issue", async () => {
   assert.ok(github.state.comments.some((c) => c.body.includes("Linked issue")));
 });
 
-test("pr merged: cleanup linked issues", async () => {
+test("pr merged: closes linked issues and preserves assignees", async () => {
   process.env.GITHUB_REPOSITORY = "org/repo";
   const github = createGithub(issueFactory);
   github.state.assignees[15] = "issue-author";
@@ -249,7 +276,7 @@ test("pr merged: cleanup linked issues", async () => {
     },
   };
   await processPrMerged({ github, context, core: createCore() });
-  assert.equal(github.state.assignees[15], undefined);
+  assert.equal(github.state.assignees[15], "issue-author");
 });
 
 test("first contributor welcome only once", async () => {
@@ -273,20 +300,25 @@ test("first contributor welcome only once", async () => {
   assert.ok(comments.length <= 1);
 });
 
-test("issue lifecycle close clears metadata", async () => {
+test("issue lifecycle close clears metadata and preserves assignees", async () => {
   process.env.GITHUB_REPOSITORY = "org/repo";
   const github = createGithub((number, state) =>
     issueFactory(number, state, {
-      body: "<!-- mom:metadata:start -->\n{\"assignedAt\":\"2020-01-01T00:00:00.000Z\"}\n<!-- mom:metadata:end -->",
+      body: '<!-- mom:metadata:start -->\n{"assignedAt":"2020-01-01T00:00:00.000Z"}\n<!-- mom:metadata:end -->',
+      assignees: [{ login: "assigned-user" }],
     }),
   );
+  github.state.assignees[10] = "assigned-user";
   const context = {
     eventName: "issues",
     repo: { owner: "org", repo: "repo" },
     payload: { action: "closed", issue: { number: 10 } },
   };
   await processIssueLifecycle({ github, context, core: createCore() });
-  assert.ok(String(github.state.issues[10]?.body || "").includes("\"assignedAt\": null"));
+  assert.ok(
+    String(github.state.issues[10]?.body || "").includes('"assignedAt": null'),
+  );
+  assert.equal(github.state.assignees[10], "assigned-user");
 });
 
 test("expiration: reminder and expiration paths", async () => {
@@ -298,7 +330,11 @@ test("expiration: reminder and expiration paths", async () => {
     }),
   );
   github.state.assignees[50] = "assigned-user";
-  const context = { eventName: "schedule", repo: { owner: "org", repo: "repo" }, payload: {} };
+  const context = {
+    eventName: "schedule",
+    repo: { owner: "org", repo: "repo" },
+    payload: {},
+  };
   await processClaimExpiration({ github, context, core: createCore() });
   assert.equal(github.state.assignees[50], undefined);
 });

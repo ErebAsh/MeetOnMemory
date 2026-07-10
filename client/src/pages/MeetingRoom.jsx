@@ -14,7 +14,7 @@ import {
   MonitorUp,
   Users,
   Clock,
-  Copy
+  Copy,
 } from "lucide-react";
 import { toast } from "react-toastify";
 
@@ -49,15 +49,15 @@ const PeerVideo = ({ peer, userInfo }) => {
 const MeetingRoom = () => {
   const { roomId } = useParams();
   const navigate = useNavigate();
-  
+
   const [joined, setJoined] = useState(false);
   const [loading, setLoading] = useState(false);
   const [meetingEnded, setMeetingEnded] = useState(false);
-  
+
   const [micOn, setMicOn] = useState(true);
   const [cameraOn, setCameraOn] = useState(true);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
-  
+
   const [peers, setPeers] = useState([]);
   const [duration, setDuration] = useState(0);
 
@@ -106,7 +106,7 @@ const MeetingRoom = () => {
       }, 100);
 
       socketRef.current = io(backendUrl, { transports: ["websocket"] });
-      
+
       const userInfo = { name: "You" }; // In a real app, grab from context
 
       socketRef.current.emit("join-meeting", { roomId, userInfo });
@@ -118,12 +118,12 @@ const MeetingRoom = () => {
           peersRef.current.push({
             peerID: user.socketId,
             peer,
-            userInfo: user
+            userInfo: user,
           });
           peersArr.push({
             peerID: user.socketId,
             peer,
-            userInfo: user
+            userInfo: user,
           });
         });
         setPeers(peersArr);
@@ -135,14 +135,16 @@ const MeetingRoom = () => {
         peersRef.current.push({
           peerID: user.socketId,
           peer,
-          userInfo: user
+          userInfo: user,
         });
-        
+
         setPeers([...peersRef.current]);
       });
 
       socketRef.current.on("user-joined-signal", (payload) => {
-        const item = peersRef.current.find((p) => p.peerID === payload.callerID);
+        const item = peersRef.current.find(
+          (p) => p.peerID === payload.callerID,
+        );
         if (item) {
           item.peer.signal(payload.signal);
         }
@@ -157,7 +159,7 @@ const MeetingRoom = () => {
 
       socketRef.current.on("user-left", (id) => {
         toast.error(`🚪 Participant left`);
-        const peerObj = peersRef.current.find(p => p.peerID === id);
+        const peerObj = peersRef.current.find((p) => p.peerID === id);
         if (peerObj) {
           peerObj.peer.destroy();
         }
@@ -168,7 +170,9 @@ const MeetingRoom = () => {
       setLoading(false);
     } catch (err) {
       console.error("Camera/Mic access denied:", err);
-      toast.error("Camera or microphone access denied. Please enable them and retry.");
+      toast.error(
+        "Camera or microphone access denied. Please enable them and retry.",
+      );
       setLoading(false);
     }
   };
@@ -185,7 +189,7 @@ const MeetingRoom = () => {
         userToSignal,
         callerID,
         signal,
-        userInfo: { name: "You" }
+        userInfo: { name: "You" },
       });
     });
 
@@ -246,14 +250,16 @@ const MeetingRoom = () => {
   const toggleScreenShare = async () => {
     if (!isScreenSharing) {
       try {
-        const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: true } });
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({
+          video: { cursor: true },
+        });
         const screenTrack = screenStream.getVideoTracks()[0];
-        
+
         peersRef.current.forEach(({ peer }) => {
           const videoTrack = streamRef.current.getVideoTracks()[0];
           peer.replaceTrack(videoTrack, screenTrack, streamRef.current);
         });
-        
+
         screenTrack.onended = () => {
           stopScreenShare();
         };
@@ -277,8 +283,8 @@ const MeetingRoom = () => {
         peer.replaceTrack(currentTrack, videoTrack, streamRef.current);
       }
     });
-    
-    screenTrackRef.current?.getTracks().forEach(t => t.stop());
+
+    screenTrackRef.current?.getTracks().forEach((t) => t.stop());
     userVideoRef.current.srcObject = streamRef.current;
     setIsScreenSharing(false);
   };
@@ -290,7 +296,6 @@ const MeetingRoom = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-900 relative overflow-hidden font-sans">
-      
       {/* ---------- INTRO SCREEN ---------- */}
       {!joined && !meetingEnded && (
         <div className="flex-1 flex flex-col items-center justify-center relative z-10 px-6 md:px-8 text-center bg-gradient-to-br from-indigo-50 via-white to-purple-100">
@@ -298,19 +303,29 @@ const MeetingRoom = () => {
           <div className="absolute bottom-0 right-0 w-80 h-80 bg-purple-200 opacity-30 blur-3xl rounded-full animate-pulse"></div>
 
           <h1 className="text-4xl md:text-5xl font-extrabold text-gray-800 mb-3 flex items-center justify-center gap-3">
-            🎥 MeetOnMemory <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">Live Room</span>
+            🎥 MeetOnMemory{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
+              Live Room
+            </span>
           </h1>
 
           <p className="text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed text-base md:text-lg">
-            Join room <strong>{roomId}</strong> with real-time transcription and automatic AI-generated MoMs.
+            Join room <strong>{roomId}</strong> with real-time transcription and
+            automatic AI-generated MoMs.
           </p>
 
           {loading ? (
-            <button disabled className="px-8 py-3 bg-indigo-600 text-white rounded-full font-semibold shadow-md flex items-center justify-center gap-2 mx-auto cursor-not-allowed">
+            <button
+              disabled
+              className="px-8 py-3 bg-indigo-600 text-white rounded-full font-semibold shadow-md flex items-center justify-center gap-2 mx-auto cursor-not-allowed"
+            >
               <Loader2 className="animate-spin" size={20} /> Connecting...
             </button>
           ) : (
-            <button onClick={joinMeeting} className="px-8 py-3 bg-indigo-600 text-white rounded-full font-semibold shadow-md hover:bg-indigo-700 hover:shadow-xl active:scale-95 transition-all duration-300">
+            <button
+              onClick={joinMeeting}
+              className="px-8 py-3 bg-indigo-600 text-white rounded-full font-semibold shadow-md hover:bg-indigo-700 hover:shadow-xl active:scale-95 transition-all duration-300"
+            >
               🚀 Join Meeting
             </button>
           )}
@@ -326,21 +341,25 @@ const MeetingRoom = () => {
               <span className="font-semibold text-lg flex items-center gap-2">
                 <Video size={20} className="text-indigo-400" /> Room: {roomId}
               </span>
-              <button onClick={copyLink} className="text-gray-400 hover:text-white transition" title="Copy Link">
+              <button
+                onClick={copyLink}
+                className="text-gray-400 hover:text-white transition"
+                title="Copy Link"
+              >
                 <Copy size={16} />
               </button>
             </div>
-            
+
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2 text-red-500 bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20">
                 <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
                 <span className="text-sm font-semibold tracking-wide">REC</span>
               </div>
-              
+
               <div className="flex items-center gap-2 text-gray-300 bg-gray-800 px-3 py-1 rounded-full text-sm font-mono">
                 <Clock size={16} /> {formatTime(duration)}
               </div>
-              
+
               <div className="flex items-center gap-2 text-gray-300 bg-gray-800 px-3 py-1 rounded-full text-sm">
                 <Users size={16} /> {peers.length + 1}
               </div>
@@ -350,7 +369,6 @@ const MeetingRoom = () => {
           {/* Video Grid Area */}
           <div className="flex-1 p-6 overflow-y-auto bg-gray-900 flex items-center justify-center">
             <div className="w-full h-full flex flex-wrap gap-4 items-center justify-center content-center max-w-[1600px] mx-auto">
-              
               {/* Local User */}
               <div className="relative bg-black rounded-2xl overflow-hidden shadow-lg aspect-video flex-1 min-w-[280px] max-w-[600px] border border-gray-800 group">
                 <video
@@ -358,7 +376,7 @@ const MeetingRoom = () => {
                   autoPlay
                   playsInline
                   muted
-                  className={`w-full h-full object-cover ${!cameraOn && !isScreenSharing ? 'hidden' : ''} ${!isScreenSharing ? '-scale-x-100' : ''}`}
+                  className={`w-full h-full object-cover ${!cameraOn && !isScreenSharing ? "hidden" : ""} ${!isScreenSharing ? "-scale-x-100" : ""}`}
                 />
                 {!cameraOn && !isScreenSharing && (
                   <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
@@ -368,16 +386,21 @@ const MeetingRoom = () => {
                   </div>
                 )}
                 <div className="absolute bottom-4 left-4 bg-black/60 px-3 py-1.5 rounded-lg backdrop-blur-sm text-white text-sm flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${micOn ? 'bg-green-500' : 'bg-red-500'}`} />
+                  <div
+                    className={`w-2 h-2 rounded-full ${micOn ? "bg-green-500" : "bg-red-500"}`}
+                  />
                   You {isScreenSharing && "(Sharing)"}
                 </div>
               </div>
 
               {/* Remote Peers */}
               {peers.map((peerObj) => (
-                <PeerVideo key={peerObj.peerID} peer={peerObj.peer} userInfo={peerObj.userInfo} />
+                <PeerVideo
+                  key={peerObj.peerID}
+                  peer={peerObj.peer}
+                  userInfo={peerObj.userInfo}
+                />
               ))}
-              
             </div>
           </div>
 
@@ -386,7 +409,9 @@ const MeetingRoom = () => {
             <button
               onClick={toggleMic}
               className={`p-4 rounded-full transition-all shadow-md ${
-                micOn ? "bg-gray-800 text-white hover:bg-gray-700" : "bg-red-500 text-white hover:bg-red-600"
+                micOn
+                  ? "bg-gray-800 text-white hover:bg-gray-700"
+                  : "bg-red-500 text-white hover:bg-red-600"
               }`}
               title={micOn ? "Mute Microphone" : "Unmute Microphone"}
             >
@@ -396,7 +421,9 @@ const MeetingRoom = () => {
             <button
               onClick={toggleCamera}
               className={`p-4 rounded-full transition-all shadow-md ${
-                cameraOn ? "bg-gray-800 text-white hover:bg-gray-700" : "bg-red-500 text-white hover:bg-red-600"
+                cameraOn
+                  ? "bg-gray-800 text-white hover:bg-gray-700"
+                  : "bg-red-500 text-white hover:bg-red-600"
               }`}
               title={cameraOn ? "Turn off Camera" : "Turn on Camera"}
             >
@@ -406,7 +433,9 @@ const MeetingRoom = () => {
             <button
               onClick={toggleScreenShare}
               className={`p-4 rounded-full transition-all shadow-md ${
-                isScreenSharing ? "bg-indigo-500 text-white hover:bg-indigo-600" : "bg-gray-800 text-white hover:bg-gray-700"
+                isScreenSharing
+                  ? "bg-indigo-500 text-white hover:bg-indigo-600"
+                  : "bg-gray-800 text-white hover:bg-gray-700"
               }`}
               title={isScreenSharing ? "Stop Sharing" : "Share Screen"}
             >
@@ -430,12 +459,17 @@ const MeetingRoom = () => {
       {meetingEnded && (
         <div className="flex-1 flex flex-col items-center justify-center text-center bg-gray-50 z-30">
           <CheckCircle2 className="text-green-500" size={64} />
-          <h2 className="text-2xl font-bold text-gray-800 mt-3">Processing Meeting Data...</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mt-3">
+            Processing Meeting Data...
+          </h2>
           <p className="text-gray-600 mt-3 max-w-md leading-relaxed">
-            Our AI is preparing your <strong>transcript</strong> and <strong>Minutes of Meeting</strong>.
+            Our AI is preparing your <strong>transcript</strong> and{" "}
+            <strong>Minutes of Meeting</strong>.
           </p>
           <Loader2 className="animate-spin text-indigo-600 mt-5" size={28} />
-          <p className="text-sm text-gray-500 mt-2">Redirecting you to dashboard...</p>
+          <p className="text-sm text-gray-500 mt-2">
+            Redirecting you to dashboard...
+          </p>
         </div>
       )}
     </div>

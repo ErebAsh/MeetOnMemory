@@ -55,7 +55,8 @@ export const loginLimiter = rateLimit({
 
 // Rate limiter for registration endpoint (protects against automated account creation)
 export const registerLimiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_REGISTER_WINDOW_MS) || 60 * 60 * 1000, // 1 hour default
+  windowMs:
+    parseInt(process.env.RATE_LIMIT_REGISTER_WINDOW_MS) || 60 * 60 * 1000, // 1 hour default
   max: parseInt(process.env.RATE_LIMIT_REGISTER_MAX) || 3, // 3 registrations per hour default
   message: {
     success: false,
@@ -89,7 +90,8 @@ export const globalLimiter = rateLimit({
   max: 100,
   message: {
     success: false,
-    message: "Too many requests from this IP, please try again after 15 minutes",
+    message:
+      "Too many requests from this IP, please try again after 15 minutes",
   },
   standardHeaders: true,
   legacyHeaders: false,

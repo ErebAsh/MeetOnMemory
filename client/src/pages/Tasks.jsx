@@ -60,7 +60,6 @@ const STATUS_STYLES = {
     icon: AlertCircle,
   },
 };
-    
 
 const PRIORITY_STYLES = {
   high: {
@@ -107,53 +106,53 @@ const Tasks = () => {
   const [showFilters, setShowFilters] = useState(false);
 
   // Extract tasks from meetings
-   // Fetch action items
-useEffect(() => {
-  const fetchTasks = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  // Fetch action items
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      const res = await axios.get(
-        `${backendUrl}/api/knowledge/action-items?status=all`,
-        {
-          withCredentials: true,
+        const res = await axios.get(
+          `${backendUrl}/api/knowledge/action-items?status=all`,
+          {
+            withCredentials: true,
+          },
+        );
+
+        if (res.data?.success) {
+          const items = res.data.actionItems.map((item) => ({
+            id: item._id,
+            title: item.text,
+            owner: item.owner || "Unassigned",
+            dueDate: item.dueDate,
+            status: item.status || "open",
+
+            meetingId: item.sourceMeetingId?._id,
+            meetingTitle: item.sourceMeetingId?.title,
+            meetingDate: item.sourceMeetingId?.date,
+
+            priority: item.priority || "medium",
+            organization:
+              item.sourceMeetingId?.organization?.name || "Personal",
+            description: item.description || item.text,
+          }));
+          setTasks(items);
+        } else {
+          setError(res.data?.message || "Failed to load tasks");
+          toast.error(res.data?.message || "Failed to load tasks");
         }
-      );
-
-      if (res.data?.success) {
-        const items = res.data.actionItems.map((item) => ({
-          id: item._id,
-          title: item.text,
-          owner: item.owner || "Unassigned",
-          dueDate: item.dueDate,
-          status: item.status || "open",
-
-          meetingId: item.sourceMeetingId?._id,
-          meetingTitle: item.sourceMeetingId?.title,
-          meetingDate: item.sourceMeetingId?.date,
-
-          priority: item.priority || "medium",
-          organization: item.sourceMeetingId?.organization?.name || "Personal",
-          description: item.description || item.text,
-      }));
-        setTasks(items);
-      } else {
-        setError(res.data?.message || "Failed to load tasks");
-        toast.error(res.data?.message || "Failed to load tasks");
+      } catch (err) {
+        console.error("Error fetching tasks:", err);
+        setError("Unable to fetch tasks");
+        toast.error("Unable to fetch tasks");
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error("Error fetching tasks:", err);
-      setError("Unable to fetch tasks");
-      toast.error("Unable to fetch tasks");
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  fetchTasks();
-}, [backendUrl]);
-        
+    fetchTasks();
+  }, [backendUrl]);
 
   // Get unique values for filters
   const organizations = [...new Set(tasks.map((t) => t.organization))];
@@ -215,11 +214,11 @@ useEffect(() => {
       }
       case "status": {
         const statusOrder = {
-           open: 0,
-           "in-progress": 1,
-           resolved: 2,
-           superseded: 3,
-     };
+          open: 0,
+          "in-progress": 1,
+          resolved: 2,
+          superseded: 3,
+        };
         comparison = statusOrder[a.status] - statusOrder[b.status];
         break;
       }

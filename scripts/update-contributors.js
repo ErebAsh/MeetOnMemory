@@ -10,7 +10,11 @@ import {
   generateContributorsBlock,
   replaceContributorsBlock,
 } from "./contributors/readme-generator.js";
-import { formatError, parseRepository } from "./contributors/utils.js";
+import {
+  formatError,
+  parseRepository,
+  purgeAutomationAccounts,
+} from "./contributors/utils.js";
 
 const README_PATH = process.env.README_PATH || "README.md";
 
@@ -26,10 +30,7 @@ const DEFAULT_REPOSITORY = "imuniqueshiv/MeetOnMemory";
 function resolveRepository() {
   const repoArgIndex = process.argv.indexOf("--repo");
 
-  if (
-    repoArgIndex !== -1 &&
-    process.argv.length > repoArgIndex + 1
-  ) {
+  if (repoArgIndex !== -1 && process.argv.length > repoArgIndex + 1) {
     return process.argv[repoArgIndex + 1];
   }
 
@@ -63,101 +64,54 @@ async function main() {
   let contributorMap = {};
 
   try {
-    contributorMap = await collectContributorStats(
-      owner,
-      repo,
-      token,
-    );
+    contributorMap = await collectContributorStats(owner, repo, token);
 
     try {
-      const historical =
-        await fetchAllRepoContributors(
-          owner,
-          repo,
-          token,
-        );
+      const historical = await fetchAllRepoContributors(owner, repo, token);
 
-      contributorMap = mergeHistoricalContributors(
-        contributorMap,
-        historical,
-      );
+      contributorMap = mergeHistoricalContributors(contributorMap, historical);
     } catch (historicalError) {
       console.warn(
-        `Historical contributor merge skipped: ${formatError(
-          historicalError,
-        )}`,
+        `Historical contributor merge skipped: ${formatError(historicalError)}`,
       );
     }
   } catch (apiError) {
-    console.warn(
-      `GitHub API unavailable: ${formatError(apiError)}`
-    );
+    console.warn(`GitHub API unavailable: ${formatError(apiError)}`);
 
-    console.warn(
-      "Using git history fallback..."
-    );
+    console.warn("Using git history fallback...");
 
-    contributorMap =
-      await collectContributorStatsFromGit(
-        owner,
-        repo,
-      );
+    contributorMap = await collectContributorStatsFromGit(owner, repo);
   }
 
-  const ranked = rankContributors(contributorMap);
+  const ranked = rankContributors(purgeAutomationAccounts(contributorMap));
 
   if (ranked.length === 0) {
-    console.log(
-      "No human contributors found. README unchanged.",
-    );
+    console.log("No human contributors found. README unchanged.");
     return;
   }
 
-  const contributorsBlock =
-    generateContributorsBlock(ranked);
+  const contributorsBlock = generateContributorsBlock(ranked);
 
-  const readme = await readFile(
-    README_PATH,
-    "utf8",
-  );
+  const readme = await readFile(README_PATH, "utf8");
 
-  const updatedReadme =
-    replaceContributorsBlock(
-      readme,
-      contributorsBlock,
-    );
+  const updatedReadme = replaceContributorsBlock(readme, contributorsBlock);
 
   if (updatedReadme === readme) {
-    console.log(
-      "Contributor section already up to date.",
-    );
+    console.log("Contributor section already up to date.");
     return;
   }
 
-  await writeFile(
-    README_PATH,
-    updatedReadme,
-    "utf8",
-  );
+  await writeFile(README_PATH, updatedReadme, "utf8");
 
   console.log("");
   console.log("✅ Contributor gallery updated.");
   console.log(`Repository : ${repository}`);
   console.log(`Contributors : ${ranked.length}`);
-  console.log(
-    `Hall of Fame : ${Math.min(
-      5,
-      ranked.length,
-    )}`,
-  );
+  console.log(`Hall of Fame : ${Math.min(5, ranked.length)}`);
 }
 
 main().catch((error) => {
-  console.error(
-    `Contributor gallery update failed: ${formatError(
-      error,
-    )}`,
-  );
+  console.error(`Contributor gallery update failed: ${formatError(error)}`);
 
   process.exit(1);
 });

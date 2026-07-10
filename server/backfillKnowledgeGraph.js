@@ -22,15 +22,9 @@ const run = async () => {
     for (const meeting of meetings) {
       if (meeting.structuredMoM) {
         try {
-          await processStructuredMoM(
-            meeting,
-            meeting.structuredMoM,
-          );
+          await processStructuredMoM(meeting, meeting.structuredMoM);
 
-          await detectResolutions(
-            meeting,
-            meeting.structuredMoM,
-          );
+          await detectResolutions(meeting, meeting.structuredMoM);
 
           console.log(`  ✅ Processed meeting ${meeting._id}`);
         } catch (meetingErr) {

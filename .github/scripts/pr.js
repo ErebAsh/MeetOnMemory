@@ -25,7 +25,13 @@ export async function processPrValidation({ github, context, core }) {
   if (context.eventName !== "pull_request_target") return;
 
   const action = context.payload.action;
-  const allowed = ["opened", "edited", "synchronize", "reopened", "ready_for_review"];
+  const allowed = [
+    "opened",
+    "edited",
+    "synchronize",
+    "reopened",
+    "ready_for_review",
+  ];
   if (!allowed.includes(action)) return;
 
   const pr = context.payload.pull_request;
@@ -37,7 +43,9 @@ export async function processPrValidation({ github, context, core }) {
   const lines = [];
 
   lines.push(checklistLine("Linked issue provided", linkedIssues.length > 0));
-  lines.push(checklistLine("PR description present", isMeaningfulDescription(body)));
+  lines.push(
+    checklistLine("PR description present", isMeaningfulDescription(body)),
+  );
   lines.push(
     checklistLine(
       "Branch naming valid",
@@ -55,7 +63,13 @@ export async function processPrValidation({ github, context, core }) {
   lines.push(checklistLine("Screenshots", true, "optional unless UI changed"));
 
   if (pr.draft) {
-    lines.push(checklistLine("Draft PR mode", true, "full validation deferred until ready for review"));
+    lines.push(
+      checklistLine(
+        "Draft PR mode",
+        true,
+        "full validation deferred until ready for review",
+      ),
+    );
   } else {
     for (const issueNumber of linkedIssues) {
       const issue = await getIssue(github, context, core, issueNumber);
@@ -63,13 +77,29 @@ export async function processPrValidation({ github, context, core }) {
         lines.push(checklistLine(`Issue #${issueNumber} exists`, false));
         continue;
       }
-      lines.push(checklistLine(`Issue #${issueNumber} open`, issue.state === "open"));
+      lines.push(
+        checklistLine(`Issue #${issueNumber} open`, issue.state === "open"),
+      );
       const assignee = issue.assignees?.[0]?.login || null;
       if (assignee && assignee !== pr.user.login) {
-        lines.push(checklistLine(`Issue #${issueNumber} assigned contributor`, false, `assigned to @${assignee}`));
-        lines.push(checklistLine("Assignment policy", false, comments.missingAssignment({ issueNumber, assignee })));
+        lines.push(
+          checklistLine(
+            `Issue #${issueNumber} assigned contributor`,
+            false,
+            `assigned to @${assignee}`,
+          ),
+        );
+        lines.push(
+          checklistLine(
+            "Assignment policy",
+            false,
+            comments.missingAssignment({ issueNumber, assignee }),
+          ),
+        );
       } else {
-        lines.push(checklistLine(`Issue #${issueNumber} assigned contributor`, true));
+        lines.push(
+          checklistLine(`Issue #${issueNumber} assigned contributor`, true),
+        );
       }
     }
   }
@@ -85,7 +115,9 @@ export async function processPrValidation({ github, context, core }) {
       }),
     { data: { check_runs: [] } },
   );
-  const checkSummary = summarizeCheckStates(checkRunsResponse?.data?.check_runs || []);
+  const checkSummary = summarizeCheckStates(
+    checkRunsResponse?.data?.check_runs || [],
+  );
   lines.push(
     checklistLine(
       "Build and lint status",
@@ -103,7 +135,8 @@ export async function processPrValidation({ github, context, core }) {
       author: pr.user.login,
       items: lines,
     },
-    missingLinkedIssueText: linkedIssues.length === 0 ? comments.missingLinkedIssue() : "",
+    missingLinkedIssueText:
+      linkedIssues.length === 0 ? comments.missingLinkedIssue() : "",
     missingDescriptionText: !isMeaningfulDescription(body)
       ? `\n${comments.missingPrDescription()}`
       : "",
@@ -134,7 +167,6 @@ export async function processPrMerged({ github, context, core }) {
     pr.number,
     AUTOMATION.mergedMarker,
   );
-  if (existingMergedComment) return;
 
   const linkedIssueRecords = [];
   for (const issueNumber of linkedIssues) {
@@ -149,53 +181,50 @@ export async function processPrMerged({ github, context, core }) {
       ? `Related issue${linkedIssues.length > 1 ? "s" : ""}: ${issueDescriptions.join(", ")}.`
       : "No linked issue detected in the PR description.";
 
-  await createComment(
-    github,
-    context,
-    core,
-    pr.number,
-    comments.prMergedCongratulations({
-      user: pr.user.login,
-      prNumber: pr.number,
-      prTitle: pr.title || "Untitled PR",
-      issuesText,
-    }),
-  );
+  if (!existingMergedComment) {
+    await createComment(
+      github,
+      context,
+      core,
+      pr.number,
+      comments.prMergedCongratulations({
+        user: pr.user.login,
+        prNumber: pr.number,
+        prTitle: pr.title || "Untitled PR",
+        issuesText,
+      }),
+    );
+  }
 
   for (const { issueNumber, issue } of linkedIssueRecords) {
-    if (!issue) continue;
-    if (issue.state === "open") {
-      await safeCall(core, "issues.update(close)", () =>
-        github.rest.issues.update({
-          owner: context.repo.owner,
-          repo: context.repo.repo,
-          issue_number: issueNumber,
-          state: "closed",
-        }),
-      );
-    }
-    const assignee = issue.assignees?.[0]?.login;
-    if (assignee) {
-      await safeCall(core, "issues.removeAssignees(cleanup)", () =>
-        github.rest.issues.removeAssignees({
-          owner: context.repo.owner,
-          repo: context.repo.repo,
-          issue_number: issueNumber,
-          assignees: [assignee],
-        }),
-      );
-    }
+    if (!issue || issue.state !== "open") continue;
+
+    await safeCall(core, "issues.update(close)", () =>
+      github.rest.issues.update({
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        issue_number: issueNumber,
+        state: "closed",
+      }),
+    );
   }
 }
 
-export async function processFirstContributorWelcome({ github, context, core }) {
+export async function processFirstContributorWelcome({
+  github,
+  context,
+  core,
+}) {
   if (!isExpectedRepository(context)) return;
   const action = context.payload.action;
   if (!["opened", "reopened", "ready_for_review"].includes(action)) return;
 
   const pr = context.payload.pull_request;
   if (!pr) return;
-  if (!["FIRST_TIME_CONTRIBUTOR", "FIRST_TIMER"].includes(pr.author_association)) return;
+  if (
+    !["FIRST_TIME_CONTRIBUTOR", "FIRST_TIMER"].includes(pr.author_association)
+  )
+    return;
 
   const existing = await safeCall(
     core,
@@ -209,7 +238,12 @@ export async function processFirstContributorWelcome({ github, context, core }) 
       }),
     [],
   );
-  if ((existing || []).some((comment) => hasMarker(comment.body, AUTOMATION.firstWelcomeMarker))) return;
+  if (
+    (existing || []).some((comment) =>
+      hasMarker(comment.body, AUTOMATION.firstWelcomeMarker),
+    )
+  )
+    return;
 
   await createComment(
     github,

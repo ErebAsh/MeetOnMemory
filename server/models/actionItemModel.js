@@ -21,9 +21,7 @@ const actionItemSchema = new mongoose.Schema(
     },
     dueDate: { type: Date, default: null },
     embedding: { type: [Number], default: [] },
-    relatesTo: [
-      { type: mongoose.Schema.Types.ObjectId, ref: "ActionItem" },
-    ],
+    relatesTo: [{ type: mongoose.Schema.Types.ObjectId, ref: "ActionItem" }],
     resolvedAt: { type: Date, default: null },
     resolvedInMeetingId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -34,5 +32,6 @@ const actionItemSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-const ActionItem = mongoose.models.ActionItem || mongoose.model("ActionItem", actionItemSchema);
+const ActionItem =
+  mongoose.models.ActionItem || mongoose.model("ActionItem", actionItemSchema);
 export default ActionItem;

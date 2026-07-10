@@ -6,7 +6,9 @@ const SIMILARITY_THRESHOLD = 0.85; // conservative, per issue's technical consid
 
 function cosineSimilarity(a, b) {
   if (!a?.length || !b?.length || a.length !== b.length) return 0;
-  let dot = 0, normA = 0, normB = 0;
+  let dot = 0,
+    normA = 0,
+    normB = 0;
   for (let i = 0; i < a.length; i++) {
     dot += a[i] * b[i];
     normA += a[i] * a[i];
@@ -49,7 +51,8 @@ export async function processStructuredMoM(meeting, mom) {
 
   // --- Decisions ---
   for (const decisionText of mom.decisions || []) {
-    const text = typeof decisionText === "string" ? decisionText : decisionText.text || "";
+    const text =
+      typeof decisionText === "string" ? decisionText : decisionText.text || "";
     if (!text.trim()) continue;
 
     const embedding = await embedText(text);
@@ -57,12 +60,12 @@ export async function processStructuredMoM(meeting, mom) {
     const existingDecision = await Decision.findOne({
       text,
       sourceMeetingId: meeting._id,
-     });
+    });
 
     if (existingDecision) {
       results.decisions.push(existingDecision);
       continue;
-   }
+    }
     const decision = await Decision.create({
       text,
       sourceMeetingId: meeting._id,
@@ -81,23 +84,33 @@ export async function processStructuredMoM(meeting, mom) {
 
   // --- Action Items ---
   for (const item of mom.action_items || []) {
-    const text = typeof item === "string" ? item : item.task || item.action || "";
+    const text =
+      typeof item === "string" ? item : item.task || item.action || "";
     if (!text.trim()) continue;
 
-    const owner = typeof item === "object" ? item.owner || "Unassigned" : "Unassigned";
-    const dueDate = typeof item === "object" && item.due_date ? new Date(item.due_date) : null;
+    const owner =
+      typeof item === "object" ? item.owner || "Unassigned" : "Unassigned";
+    const dueDate =
+      typeof item === "object" && item.due_date
+        ? new Date(item.due_date)
+        : null;
 
     const embedding = await embedText(text);
-    const match = await findBestMatch(ActionItem, text, embedding, organization);
+    const match = await findBestMatch(
+      ActionItem,
+      text,
+      embedding,
+      organization,
+    );
     const existingActionItem = await ActionItem.findOne({
       text,
       sourceMeetingId: meeting._id,
-  });
+    });
 
     if (existingActionItem) {
       results.actionItems.push(existingActionItem);
       continue;
-   }
+    }
     const actionItem = await ActionItem.create({
       text,
       owner,
@@ -130,7 +143,10 @@ export async function getDecisionLineage(decisionId) {
     if (visited.has(id.toString())) return;
     visited.add(id.toString());
 
-    const decision = await Decision.findById(id).populate("sourceMeetingId", "title date");
+    const decision = await Decision.findById(id).populate(
+      "sourceMeetingId",
+      "title date",
+    );
     if (!decision) return;
     chain.push(decision);
 
@@ -152,12 +168,23 @@ export async function getDecisionLineage(decisionId) {
  */
 export async function detectResolutions(meeting, mom) {
   const organization = meeting.organization || null;
-  const openItems = await ActionItem.find({ organization, status: { $in: ["open", "in-progress"] } });
+  const openItems = await ActionItem.find({
+    organization,
+    status: { $in: ["open", "in-progress"] },
+  });
   if (!openItems.length) return [];
 
   const resolvedNowIds = [];
-  const summaryText = (mom.summary || "") + " " + (mom.key_discussions || []).join(" ");
-  const completionPhrases = ["completed", "done", "resolved", "finished", "closed out", "wrapped up"];
+  const summaryText =
+    (mom.summary || "") + " " + (mom.key_discussions || []).join(" ");
+  const completionPhrases = [
+    "completed",
+    "done",
+    "resolved",
+    "finished",
+    "closed out",
+    "wrapped up",
+  ];
 
   const hasCompletionLanguage = completionPhrases.some((p) =>
     summaryText.toLowerCase().includes(p),

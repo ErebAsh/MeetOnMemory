@@ -1,12 +1,17 @@
 import { comments } from "./comments.js";
 import { createComment, getIssue, isExpectedRepository } from "./helpers.js";
-import { readMetadata, setAssignmentMetadata, updateIssueMetadata } from "./metadata.js";
+import {
+  readMetadata,
+  setAssignmentMetadata,
+  updateIssueMetadata,
+} from "./metadata.js";
 import { isMaintainerRole, resolveActorRole } from "./permissions.js";
 import { isIgnoredBotUser } from "./utils.js";
 
 export async function processManualAssignment({ github, context, core }) {
   if (!isExpectedRepository(context)) return;
-  if (context.eventName !== "issues" || context.payload.action !== "assigned") return;
+  if (context.eventName !== "issues" || context.payload.action !== "assigned")
+    return;
   if (context.payload.issue?.pull_request) return;
   if (isIgnoredBotUser(context.payload.sender)) return;
   const assigner = context.payload.sender?.login;

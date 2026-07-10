@@ -73,25 +73,25 @@ export const getOpenActionItems = async (req, res) => {
     if (status === "all") {
       query = ActionItem.find({ organization });
     } else if (status === "open") {
-       query = ActionItem.find({
-       organization,
-       status: "open",
-       });
+      query = ActionItem.find({
+        organization,
+        status: "open",
+      });
     } else if (status === "in-progress") {
-       query = ActionItem.find({
-       organization,
-       status: "in-progress",
-       });
+      query = ActionItem.find({
+        organization,
+        status: "in-progress",
+      });
     } else if (status === "resolved") {
-       query = ActionItem.find({
-       organization,
-       status: "resolved",
-       });
+      query = ActionItem.find({
+        organization,
+        status: "resolved",
+      });
     } else if (status === "superseded") {
-       query = ActionItem.find({
-       organization,
-       status: "superseded",
-       });
+      query = ActionItem.find({
+        organization,
+        status: "superseded",
+      });
     }
 
     const items = await query
@@ -125,12 +125,7 @@ export const updateActionItemStatus = async (req, res) => {
       });
     }
 
-    const allowedStatuses = [
-      "open",
-      "in-progress",
-      "resolved",
-      "superseded",
-    ];
+    const allowedStatuses = ["open", "in-progress", "resolved", "superseded"];
 
     if (!allowedStatuses.includes(status)) {
       return res.status(400).json({
@@ -153,8 +148,7 @@ export const updateActionItemStatus = async (req, res) => {
     }
 
     item.status = status;
-    item.resolvedAt =
-      status === "resolved" ? new Date() : null;
+    item.resolvedAt = status === "resolved" ? new Date() : null;
 
     await item.save();
 

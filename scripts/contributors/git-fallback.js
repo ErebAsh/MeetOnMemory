@@ -1,6 +1,10 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { getOrCreateContributor, isIgnoredBot, recordMergedPullRequest } from "./utils.js";
+import {
+  getOrCreateContributor,
+  isIgnoredBot,
+  recordMergedPullRequest,
+} from "./utils.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -29,7 +33,8 @@ export async function collectContributorStatsFromGit(owner, repo) {
     const lines = stdout.split("\n").filter(Boolean);
     for (const line of lines) {
       const [, authorName, authorEmail, mergedAt] = line.split("|");
-      const login = resolveLoginFromEmail(authorEmail) || sanitizeAuthorName(authorName);
+      const login =
+        resolveLoginFromEmail(authorEmail) || sanitizeAuthorName(authorName);
       if (isIgnoredBot(login)) continue;
 
       const contributor = getOrCreateContributor(contributors, login);
@@ -47,7 +52,8 @@ export async function collectContributorStatsFromGit(owner, repo) {
     );
     for (const line of stdout.split("\n").filter(Boolean)) {
       const [authorName, authorEmail, mergedAt] = line.split("|");
-      const login = resolveLoginFromEmail(authorEmail) || sanitizeAuthorName(authorName);
+      const login =
+        resolveLoginFromEmail(authorEmail) || sanitizeAuthorName(authorName);
       if (isIgnoredBot(login)) continue;
       const contributor = getOrCreateContributor(contributors, login);
       recordMergedPullRequest(contributor, mergedAt, 1);
@@ -55,10 +61,14 @@ export async function collectContributorStatsFromGit(owner, repo) {
   }
 
   if (Object.keys(contributors).length === 0) {
-    throw new Error(`Git fallback produced no contributors for ${owner}/${repo}.`);
+    throw new Error(
+      `Git fallback produced no contributors for ${owner}/${repo}.`,
+    );
   }
 
-  console.log(`Git fallback collected ${Object.keys(contributors).length} contributors.`);
+  console.log(
+    `Git fallback collected ${Object.keys(contributors).length} contributors.`,
+  );
   return contributors;
 }
 
@@ -68,7 +78,9 @@ export async function collectContributorStatsFromGit(owner, repo) {
  */
 function resolveLoginFromEmail(email) {
   if (!email) return null;
-  const noreply = email.match(/^(\d+\+)?([^@+]+)@users\.noreply\.github\.com$/i);
+  const noreply = email.match(
+    /^(\d+\+)?([^@+]+)@users\.noreply\.github\.com$/i,
+  );
   if (noreply?.[2]) return noreply[2];
   return null;
 }

@@ -113,7 +113,10 @@ const Navbar = () => {
       });
 
       socket.on("connect", () => {
-        console.log("🟢 Real-time notifications connected. Socket ID:", socket.id);
+        console.log(
+          "🟢 Real-time notifications connected. Socket ID:",
+          socket.id,
+        );
       });
 
       socket.on("connect_error", (err) => {

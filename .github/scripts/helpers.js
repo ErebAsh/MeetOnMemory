@@ -1,5 +1,11 @@
 import { EXPECTED_REPOSITORY } from "./constants.js";
-import { formatError, hasMarker, logError, logInfo, logWarning } from "./utils.js";
+import {
+  formatError,
+  hasMarker,
+  logError,
+  logInfo,
+  logWarning,
+} from "./utils.js";
 
 export function getRepoFromContext(context) {
   return `${context.repo.owner}/${context.repo.repo}`;
@@ -7,7 +13,10 @@ export function getRepoFromContext(context) {
 
 export function isExpectedRepository(context) {
   if (!EXPECTED_REPOSITORY) return true;
-  return getRepoFromContext(context).toLowerCase() === EXPECTED_REPOSITORY.toLowerCase();
+  return (
+    getRepoFromContext(context).toLowerCase() ===
+    EXPECTED_REPOSITORY.toLowerCase()
+  );
 }
 
 export async function safeCall(core, operationName, fn, fallback = null) {
@@ -65,7 +74,13 @@ export async function listComments(github, context, core, issueNumber) {
   return comments || [];
 }
 
-export async function findCommentByMarker(github, context, core, issueNumber, marker) {
+export async function findCommentByMarker(
+  github,
+  context,
+  core,
+  issueNumber,
+  marker,
+) {
   const comments = await listComments(github, context, core, issueNumber);
   return comments.find((comment) => hasMarker(comment.body, marker)) || null;
 }
@@ -78,7 +93,13 @@ export async function createOrUpdateMarkerComment(
   marker,
   body,
 ) {
-  const existing = await findCommentByMarker(github, context, core, issueNumber, marker);
+  const existing = await findCommentByMarker(
+    github,
+    context,
+    core,
+    issueNumber,
+    marker,
+  );
   if (!existing) return createComment(github, context, core, issueNumber, body);
   return safeCall(
     core,
@@ -94,7 +115,13 @@ export async function createOrUpdateMarkerComment(
   );
 }
 
-export async function addAssignee(github, context, core, issueNumber, assignee) {
+export async function addAssignee(
+  github,
+  context,
+  core,
+  issueNumber,
+  assignee,
+) {
   return safeCall(
     core,
     "issues.addAssignees",
@@ -109,7 +136,13 @@ export async function addAssignee(github, context, core, issueNumber, assignee) 
   );
 }
 
-export async function removeAssignee(github, context, core, issueNumber, assignee) {
+export async function removeAssignee(
+  github,
+  context,
+  core,
+  issueNumber,
+  assignee,
+) {
   return safeCall(
     core,
     "issues.removeAssignees",
@@ -124,7 +157,12 @@ export async function removeAssignee(github, context, core, issueNumber, assigne
   );
 }
 
-export async function listOpenAssignedIssuesForUser(github, context, core, username) {
+export async function listOpenAssignedIssuesForUser(
+  github,
+  context,
+  core,
+  username,
+) {
   const records = await safeCall(
     core,
     "issues.listForRepo",
@@ -154,10 +192,17 @@ export async function listOpenAssignedIssues(github, context, core) {
       }),
     [],
   );
-  return (records || []).filter((item) => !item.pull_request && (item.assignees || []).length > 0);
+  return (records || []).filter(
+    (item) => !item.pull_request && (item.assignees || []).length > 0,
+  );
 }
 
-export async function getCollaboratorPermission(github, context, core, username) {
+export async function getCollaboratorPermission(
+  github,
+  context,
+  core,
+  username,
+) {
   const result = await safeCall(
     core,
     "repos.getCollaboratorPermissionLevel",
@@ -181,7 +226,9 @@ export function isIssueUnavailable(issue, context, core) {
 }
 
 export function summarizeCheckStates(checkRuns = []) {
-  const failed = checkRuns.filter((c) => c.status === "completed" && c.conclusion === "failure");
+  const failed = checkRuns.filter(
+    (c) => c.status === "completed" && c.conclusion === "failure",
+  );
   const pending = checkRuns.filter((c) => c.status !== "completed");
   return {
     failedCount: failed.length,

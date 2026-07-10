@@ -36,7 +36,10 @@ test("rankContributors sorts by PRs, commits, then earliest contribution", () =>
     },
   });
 
-  assert.deepEqual(ranked.map((c) => c.login), ["carol", "bob", "alice"]);
+  assert.deepEqual(
+    ranked.map((c) => c.login),
+    ["carol", "bob", "alice"],
+  );
 });
 
 test("rankContributors uses earliest contribution as final tie-breaker", () => {
@@ -91,8 +94,59 @@ test("replaceContributorsBlock preserves content outside markers", () => {
 
 test("isIgnoredBot filters automation accounts", () => {
   assert.equal(isIgnoredBot("github-actions[bot]"), true);
+  assert.equal(isIgnoredBot("github-actions"), true);
   assert.equal(isIgnoredBot("dependabot[bot]"), true);
+  assert.equal(isIgnoredBot("semantic-release-bot"), true);
   assert.equal(isIgnoredBot("imuniqueshiv"), false);
+});
+
+test("isAutomationGalleryPullRequest filters gallery automation PRs", async () => {
+  const { isAutomationGalleryPullRequest } = await import("../utils.js");
+  assert.equal(
+    isAutomationGalleryPullRequest({
+      title: "docs: update contributors gallery",
+      head: { ref: "feature/test" },
+    }),
+    true,
+  );
+  assert.equal(
+    isAutomationGalleryPullRequest({
+      title: "feat: add search",
+      head: { ref: "automation/update-contributors" },
+    }),
+    true,
+  );
+  assert.equal(
+    isAutomationGalleryPullRequest({
+      title: "feat: add search",
+      head: { ref: "feature/search" },
+    }),
+    false,
+  );
+});
+
+test("purgeAutomationAccounts removes bot entries", async () => {
+  const { purgeAutomationAccounts } = await import("../utils.js");
+  const cleaned = purgeAutomationAccounts({
+    human: {
+      login: "human",
+      avatarUrl: "",
+      profileUrl: "",
+      mergedPrs: 1,
+      mergedCommits: 1,
+      firstMergedAt: null,
+    },
+    "github-actions": {
+      login: "github-actions",
+      avatarUrl: "",
+      profileUrl: "",
+      mergedPrs: 5,
+      mergedCommits: 5,
+      firstMergedAt: null,
+    },
+  });
+  assert.ok(cleaned.human);
+  assert.equal(cleaned["github-actions"], undefined);
 });
 
 test("mergeHistoricalContributors keeps contributors missing from PR stats", async () => {

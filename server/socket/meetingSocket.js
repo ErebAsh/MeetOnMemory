@@ -61,7 +61,9 @@ export default (io) => {
       socket.join(roomId);
 
       // Tell the newly joined user about other users in the room
-      const usersInThisRoom = usersInRoom[roomId].filter(id => id.socketId !== socket.id);
+      const usersInThisRoom = usersInRoom[roomId].filter(
+        (id) => id.socketId !== socket.id,
+      );
       socket.emit("all-users", usersInThisRoom);
 
       // Tell everyone else that a new user joined
@@ -72,18 +74,18 @@ export default (io) => {
     // WebRTC Signaling: relaying signals
     socket.on("sending-signal", (payload) => {
       // payload: { userToSignal, callerID, signal }
-      io.to(payload.userToSignal).emit("user-joined-signal", { 
-        signal: payload.signal, 
+      io.to(payload.userToSignal).emit("user-joined-signal", {
+        signal: payload.signal,
         callerID: payload.callerID,
-        userInfo: payload.userInfo
+        userInfo: payload.userInfo,
       });
     });
 
     socket.on("returning-signal", (payload) => {
       // payload: { signal, callerID }
       io.to(payload.callerID).emit("receiving-returned-signal", {
-        signal: payload.signal, 
-        id: socket.id 
+        signal: payload.signal,
+        id: socket.id,
       });
     });
 
@@ -92,7 +94,7 @@ export default (io) => {
       socket.to(roomId).emit("user-media-changed", {
         socketId: socket.id,
         type, // 'audio' | 'video' | 'screen'
-        enabled
+        enabled,
       });
     });
 
@@ -101,15 +103,15 @@ export default (io) => {
       console.log("🔴 User disconnected:", socket.id);
       const roomId = socketToRoom[socket.id];
       let room = usersInRoom[roomId];
-      
+
       if (room) {
-        room = room.filter(u => u.socketId !== socket.id);
+        room = room.filter((u) => u.socketId !== socket.id);
         usersInRoom[roomId] = room;
         if (room.length === 0) {
           delete usersInRoom[roomId];
         }
       }
-      
+
       socket.to(roomId).emit("user-left", socket.id);
       delete socketToRoom[socket.id];
     });

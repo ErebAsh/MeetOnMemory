@@ -390,7 +390,7 @@ export const downloadPolicy = async (req, res) => {
 // ─────────────────────────────────────────────────────────────
 export const deletePolicy = async (req, res) => {
   try {
-    const policy = req.doc || await Policy.findById(req.params.id);
+    const policy = req.doc || (await Policy.findById(req.params.id));
     if (!policy) {
       return res
         .status(404)

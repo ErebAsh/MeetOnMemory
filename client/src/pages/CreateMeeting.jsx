@@ -208,25 +208,27 @@ const CreateMeeting = () => {
       : "without recording";
     toast.success(`🎥 Starting live meeting ${recordingStatus}...`);
 
-    const roomId = Math.random().toString(36).substring(2, 10) + "-" + Math.random().toString(36).substring(2, 6);
+    const roomId =
+      Math.random().toString(36).substring(2, 10) +
+      "-" +
+      Math.random().toString(36).substring(2, 6);
 
     // Notify backend to push notifications to invited participants (fire-and-forget)
     if (liveParticipants.length > 0) {
-      axios.post(
-        `${backendUrl}/api/meetings/notify-live`,
-        { roomId, participants: liveParticipants },
-        { withCredentials: true }
-      ).catch(error => {
-        console.error("Failed to notify participants:", error);
-      });
+      axios
+        .post(
+          `${backendUrl}/api/meetings/notify-live`,
+          { roomId, participants: liveParticipants },
+          { withCredentials: true },
+        )
+        .catch((error) => {
+          console.error("Failed to notify participants:", error);
+        });
     }
 
     // Redirect to meeting room with parameters
     setTimeout(() => {
-      window.open(
-        `/meeting-room/${roomId}`,
-        "_blank",
-      );
+      window.open(`/meeting-room/${roomId}`, "_blank");
 
       // Reset participants after redirect
       setLiveParticipants([]);

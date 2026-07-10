@@ -1,4 +1,4 @@
-import { IGNORED_ACCOUNTS } from "./constants.js";
+import { AUTOMATION_GALLERY, IGNORED_ACCOUNTS } from "./constants.js";
 
 /**
  * @typedef {{ login: string, avatarUrl: string, profileUrl: string, mergedPrs: number, mergedCommits: number, firstMergedAt: string | null }} ContributorStats
@@ -13,6 +13,35 @@ export function isIgnoredBot(login) {
   const normalized = login.toLowerCase();
   if (normalized.endsWith("[bot]")) return true;
   return IGNORED_ACCOUNTS.map((b) => b.toLowerCase()).includes(normalized);
+}
+
+/**
+ * @param {{ title?: string, head?: { ref?: string } }} pull
+ * @returns {boolean}
+ */
+export function isAutomationGalleryPullRequest(pull) {
+  const title = String(pull?.title || "")
+    .trim()
+    .toLowerCase();
+  const headRef = String(pull?.head?.ref || "").trim();
+  return (
+    title === AUTOMATION_GALLERY.prTitle ||
+    headRef === AUTOMATION_GALLERY.branch
+  );
+}
+
+/**
+ * @param {Record<string, ContributorStats>} contributorMap
+ * @returns {Record<string, ContributorStats>}
+ */
+export function purgeAutomationAccounts(contributorMap) {
+  const cleaned = {};
+  for (const [login, stats] of Object.entries(contributorMap)) {
+    if (!isIgnoredBot(login)) {
+      cleaned[login] = stats;
+    }
+  }
+  return cleaned;
 }
 
 /**
@@ -73,7 +102,10 @@ export function getOrCreateContributor(map, login) {
 export function recordMergedPullRequest(contributor, mergedAt, commitCount) {
   contributor.mergedPrs += 1;
   contributor.mergedCommits += Math.max(commitCount, 1);
-  if (mergedAt && (!contributor.firstMergedAt || mergedAt < contributor.firstMergedAt)) {
+  if (
+    mergedAt &&
+    (!contributor.firstMergedAt || mergedAt < contributor.firstMergedAt)
+  ) {
     contributor.firstMergedAt = mergedAt;
   }
 }

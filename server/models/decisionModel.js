@@ -20,13 +20,12 @@ const decisionSchema = new mongoose.Schema(
       default: null,
     },
     embedding: { type: [Number], default: [] }, // cached vector for similarity checks
-    relatesTo: [
-      { type: mongoose.Schema.Types.ObjectId, ref: "Decision" },
-    ], // links to prior related decisions
+    relatesTo: [{ type: mongoose.Schema.Types.ObjectId, ref: "Decision" }], // links to prior related decisions
     resolvedAt: { type: Date, default: null },
   },
   { timestamps: true },
 );
 
-const Decision = mongoose.models.Decision || mongoose.model("Decision", decisionSchema);
+const Decision =
+  mongoose.models.Decision || mongoose.model("Decision", decisionSchema);
 export default Decision;

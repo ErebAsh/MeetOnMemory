@@ -19,13 +19,18 @@ import { COMMANDS } from "./constants.js";
 
 export async function processIssueCommentGuidance({ github, context, core }) {
   if (!isExpectedRepository(context)) return;
-  if (context.eventName !== "issue_comment" || context.payload.action !== "created") return;
+  if (
+    context.eventName !== "issue_comment" ||
+    context.payload.action !== "created"
+  )
+    return;
   if (context.payload.issue?.pull_request) return;
 
   const actor = context.payload.comment?.user?.login;
   const body = context.payload.comment?.body || "";
   if (isIgnoredBotUser(context.payload.comment?.user)) return;
-  if (isCommand(body, COMMANDS.claim) || isCommand(body, COMMANDS.unclaim)) return;
+  if (isCommand(body, COMMANDS.claim) || isCommand(body, COMMANDS.unclaim))
+    return;
   if (!isNaturalLanguageClaim(body)) return;
 
   const issueNumber = context.payload.issue.number;

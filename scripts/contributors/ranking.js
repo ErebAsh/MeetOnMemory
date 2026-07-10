@@ -13,7 +13,8 @@
 export function rankContributors(contributorMap) {
   return Object.values(contributorMap).sort((a, b) => {
     if (b.mergedPrs !== a.mergedPrs) return b.mergedPrs - a.mergedPrs;
-    if (b.mergedCommits !== a.mergedCommits) return b.mergedCommits - a.mergedCommits;
+    if (b.mergedCommits !== a.mergedCommits)
+      return b.mergedCommits - a.mergedCommits;
     const aDate = a.firstMergedAt || "9999-12-31T23:59:59.000Z";
     const bDate = b.firstMergedAt || "9999-12-31T23:59:59.000Z";
     if (aDate !== bDate) return aDate.localeCompare(bDate);

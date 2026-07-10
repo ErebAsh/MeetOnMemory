@@ -115,12 +115,22 @@ const MeetingCard = ({ meeting, onDelete, onRename, onView }) => {
                       {isExporting ? "Exporting..." : "Export"}
                     </div>
                     {!isExporting && (
-                      <svg className={`w-4 h-4 text-gray-400 transition-transform ${showExportSubMenu ? "rotate-90" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      <svg
+                        className={`w-4 h-4 text-gray-400 transition-transform ${showExportSubMenu ? "rotate-90" : ""}`}
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
                       </svg>
                     )}
                   </button>
-                  
+
                   {showExportSubMenu && (
                     <div className="absolute right-full top-0 mr-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[140px]">
                       <button
@@ -153,7 +163,7 @@ const MeetingCard = ({ meeting, onDelete, onRename, onView }) => {
                     </div>
                   )}
                 </div>
-                
+
                 <button
                   onClick={() => {
                     onDelete(meeting._id);

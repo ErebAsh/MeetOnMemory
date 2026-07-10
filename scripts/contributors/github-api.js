@@ -2,7 +2,9 @@ import { API } from "./constants.js";
 import {
   formatError,
   getOrCreateContributor,
+  isAutomationGalleryPullRequest,
   isIgnoredBot,
+  purgeAutomationAccounts,
   recordMergedPullRequest,
   sleep,
 } from "./utils.js";
@@ -33,7 +35,9 @@ async function fetchWithRetry(url, init, attempt = 1) {
       ? Math.max(Number(reset) * 1000 - Date.now(), API.retryDelayMs)
       : API.retryDelayMs * attempt;
     if (attempt <= API.maxRetries) {
-      console.warn(`Rate limited. Retrying in ${waitMs}ms (attempt ${attempt})`);
+      console.warn(
+        `Rate limited. Retrying in ${waitMs}ms (attempt ${attempt})`,
+      );
       await sleep(waitMs);
       return fetchWithRetry(url, init, attempt + 1);
     }
@@ -52,7 +56,12 @@ async function fetchWithRetry(url, init, attempt = 1) {
  * @param {{ includeCommitCounts?: boolean, maxCommitLookups?: number }} [options]
  * @returns {Promise<Record<string, import("./utils.js").ContributorStats>>}
  */
-export async function fetchMergedPullRequestsViaRest(owner, repo, token, options = {}) {
+export async function fetchMergedPullRequestsViaRest(
+  owner,
+  repo,
+  token,
+  options = {},
+) {
   const { includeCommitCounts = true, maxCommitLookups = 25 } = options;
   const contributors = {};
   let page = 1;
@@ -63,13 +72,16 @@ export async function fetchMergedPullRequestsViaRest(owner, repo, token, options
     const url = `https://api.github.com/repos/${owner}/${repo}/pulls?state=closed&per_page=${API.perPage}&page=${page}&sort=updated&direction=desc`;
     const response = await fetchWithRetry(url, { headers: restHeaders(token) });
     if (!response.ok) {
-      throw new Error(`REST pulls failed: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `REST pulls failed: ${response.status} ${response.statusText}`,
+      );
     }
     const pulls = await response.json();
     if (!Array.isArray(pulls) || pulls.length === 0) break;
 
     for (const pull of pulls) {
       if (!pull.merged_at) continue;
+      if (isAutomationGalleryPullRequest(pull)) continue;
       mergedPullCount += 1;
       const login = pull.user?.login;
       if (isIgnoredBot(login)) continue;
@@ -80,7 +92,12 @@ export async function fetchMergedPullRequestsViaRest(owner, repo, token, options
 
       let commitCount = 1;
       if (includeCommitCounts && commitLookups < maxCommitLookups) {
-        commitCount = await fetchPullCommitCount(owner, repo, pull.number, token);
+        commitCount = await fetchPullCommitCount(
+          owner,
+          repo,
+          pull.number,
+          token,
+        );
         commitLookups += 1;
       }
       recordMergedPullRequest(contributor, pull.merged_at, commitCount);
@@ -117,7 +134,9 @@ async function fetchPullCommitCount(owner, repo, pullNumber, token) {
     const data = await response.json();
     return Array.isArray(data) && data.length > 0 ? data.length : 1;
   } catch (error) {
-    console.warn(`Commit count fallback for PR #${pullNumber}: ${formatError(error)}`);
+    console.warn(
+      `Commit count fallback for PR #${pullNumber}: ${formatError(error)}`,
+    );
     return 1;
   }
 }
@@ -140,7 +159,9 @@ export async function fetchMergedPullRequestsViaGraphql(owner, repo, token) {
           pullRequests(states: MERGED, first: ${API.graphqlBatchSize}, after: $cursor, orderBy: {field: UPDATED_AT, direction: DESC}) {
             pageInfo { hasNextPage endCursor }
             nodes {
+              title
               mergedAt
+              headRefName
               commits { totalCount }
               author {
                 login
@@ -164,7 +185,9 @@ export async function fetchMergedPullRequestsViaGraphql(owner, repo, token) {
     });
 
     if (!response.ok) {
-      throw new Error(`GraphQL failed: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `GraphQL failed: ${response.status} ${response.statusText}`,
+      );
     }
 
     const payload = await response.json();
@@ -176,12 +199,24 @@ export async function fetchMergedPullRequestsViaGraphql(owner, repo, token) {
     if (!connection) break;
 
     for (const pr of connection.nodes || []) {
+      if (
+        isAutomationGalleryPullRequest({
+          title: pr.title,
+          head: { ref: pr.headRefName },
+        })
+      ) {
+        continue;
+      }
       const login = pr.author?.login;
       if (isIgnoredBot(login)) continue;
       const contributor = getOrCreateContributor(contributors, login);
       if (pr.author?.avatarUrl) contributor.avatarUrl = pr.author.avatarUrl;
       if (pr.author?.url) contributor.profileUrl = pr.author.url;
-      recordMergedPullRequest(contributor, pr.mergedAt, pr.commits?.totalCount || 1);
+      recordMergedPullRequest(
+        contributor,
+        pr.mergedAt,
+        pr.commits?.totalCount || 1,
+      );
     }
 
     hasNextPage = connection.pageInfo?.hasNextPage === true;
@@ -214,7 +249,9 @@ export async function enrichContributorProfiles(contributors, token) {
       if (profile.avatar_url) contributor.avatarUrl = profile.avatar_url;
       if (profile.html_url) contributor.profileUrl = profile.html_url;
     } catch (error) {
-      console.warn(`Profile enrichment skipped for @${contributor.login}: ${formatError(error)}`);
+      console.warn(
+        `Profile enrichment skipped for @${contributor.login}: ${formatError(error)}`,
+      );
     }
   }
   return contributors;
@@ -234,7 +271,9 @@ export async function fetchAllRepoContributors(owner, repo, token) {
     const url = `https://api.github.com/repos/${owner}/${repo}/contributors?per_page=${API.perPage}&page=${page}`;
     const response = await fetchWithRetry(url, { headers: restHeaders(token) });
     if (!response.ok) {
-      throw new Error(`Contributors list failed: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `Contributors list failed: ${response.status} ${response.statusText}`,
+      );
     }
     const rows = await response.json();
     if (!Array.isArray(rows) || rows.length === 0) break;
@@ -268,6 +307,7 @@ export async function fetchAllRepoContributors(owner, repo, token) {
 export function mergeHistoricalContributors(rankedStats, historical) {
   const merged = { ...rankedStats };
   for (const [login, contributor] of Object.entries(historical)) {
+    if (isIgnoredBot(login)) continue;
     if (!merged[login]) {
       merged[login] = contributor;
       continue;
@@ -276,7 +316,7 @@ export function mergeHistoricalContributors(rankedStats, historical) {
       merged[login].avatarUrl = contributor.avatarUrl;
     }
   }
-  return merged;
+  return purgeAutomationAccounts(merged);
 }
 
 /**
@@ -290,7 +330,10 @@ export async function collectContributorStats(owner, repo, token) {
     console.log("Collecting contributor stats via GitHub REST API...");
     const restStats = await fetchMergedPullRequestsViaRest(owner, repo, token);
     if (Object.keys(restStats).length > 0) {
-      return enrichContributorProfiles(restStats, token);
+      return enrichContributorProfiles(
+        purgeAutomationAccounts(restStats),
+        token,
+      );
     }
   } catch (error) {
     console.warn(`REST collection failed: ${formatError(error)}`);
@@ -298,9 +341,16 @@ export async function collectContributorStats(owner, repo, token) {
 
   try {
     console.log("Collecting contributor stats via GitHub GraphQL API...");
-    const graphqlStats = await fetchMergedPullRequestsViaGraphql(owner, repo, token);
+    const graphqlStats = await fetchMergedPullRequestsViaGraphql(
+      owner,
+      repo,
+      token,
+    );
     if (Object.keys(graphqlStats).length > 0) {
-      return enrichContributorProfiles(graphqlStats, token);
+      return enrichContributorProfiles(
+        purgeAutomationAccounts(graphqlStats),
+        token,
+      );
     }
   } catch (error) {
     console.warn(`GraphQL collection failed: ${formatError(error)}`);

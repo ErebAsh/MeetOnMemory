@@ -31,16 +31,26 @@ export async function processClaimExpiration({ github, context, core }) {
     if (!assignee) continue;
 
     const metadata = readMetadata(issue.body);
-    const issueComments = await listComments(github, context, core, issue.number);
+    const issueComments = await listComments(
+      github,
+      context,
+      core,
+      issue.number,
+    );
 
     const lastSignal = issueComments
       .filter((c) => c.user?.login === assignee)
-      .filter((c) => isActivitySignal(c.body) || hasLinkedPrActivity([c], assignee))
+      .filter(
+        (c) => isActivitySignal(c.body) || hasLinkedPrActivity([c], assignee),
+      )
       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
 
     if (lastSignal) {
       const signalTime = lastSignal.created_at;
-      if (!metadata.lastActivityAt || new Date(signalTime) > new Date(metadata.lastActivityAt)) {
+      if (
+        !metadata.lastActivityAt ||
+        new Date(signalTime) > new Date(metadata.lastActivityAt)
+      ) {
         await updateIssueMetadata(github, context, core, issue, (draft) => {
           draft.lastActivityAt = signalTime;
           draft.reminder12SentAt = null;
@@ -53,7 +63,8 @@ export async function processClaimExpiration({ github, context, core }) {
     const freshIssue = await getIssue(github, context, core, issue.number);
     if (!freshIssue) continue;
     const freshMeta = readMetadata(freshIssue.body);
-    const baseline = freshMeta.lastActivityAt || freshMeta.assignedAt || freshIssue.updated_at;
+    const baseline =
+      freshMeta.lastActivityAt || freshMeta.assignedAt || freshIssue.updated_at;
     const inactiveHours = hoursSince(baseline);
 
     if (inactiveHours >= TIMERS.expirationHours) {

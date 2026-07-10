@@ -21,9 +21,7 @@ function extractMetadataBlock(issueBody) {
   const start = body.indexOf(AUTOMATION.metadataStart);
   const end = body.indexOf(AUTOMATION.metadataEnd);
   if (start < 0 || end < 0 || end <= start) return null;
-  const chunk = body
-    .slice(start + AUTOMATION.metadataStart.length, end)
-    .trim();
+  const chunk = body.slice(start + AUTOMATION.metadataStart.length, end).trim();
   return chunk || null;
 }
 
@@ -51,7 +49,13 @@ export function writeMetadataToBody(issueBody, metadata) {
   return `${before}\n\n${block}${after ? `\n\n${after}` : "\n"}`;
 }
 
-export async function updateIssueMetadata(github, context, core, issue, updater) {
+export async function updateIssueMetadata(
+  github,
+  context,
+  core,
+  issue,
+  updater,
+) {
   const current = readMetadata(issue.body);
   const next = updater({ ...current });
   if (JSON.stringify(next) === JSON.stringify(current)) {

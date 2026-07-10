@@ -16,12 +16,20 @@ import {
   setAssignmentMetadata,
   updateIssueMetadata,
 } from "./metadata.js";
-import { canAutoClaimIssue, canUnclaim, resolveActorRole } from "./permissions.js";
+import {
+  canAutoClaimIssue,
+  canUnclaim,
+  resolveActorRole,
+} from "./permissions.js";
 import { isCommand, isIgnoredBotUser, normalizeCommentBody } from "./utils.js";
 
 export async function processClaim({ github, context, core }) {
   if (!isExpectedRepository(context)) return;
-  if (context.eventName !== "issue_comment" || context.payload.action !== "created") return;
+  if (
+    context.eventName !== "issue_comment" ||
+    context.payload.action !== "created"
+  )
+    return;
   if (context.payload.issue?.pull_request) return;
 
   const comment = context.payload.comment;
@@ -32,13 +40,24 @@ export async function processClaim({ github, context, core }) {
   const issueNumber = context.payload.issue.number;
   const issue = await getIssue(github, context, core, issueNumber);
   if (isIssueUnavailable(issue, context, core)) {
-    await createComment(github, context, core, issueNumber, comments.issueUnavailable({ user: actor }));
+    await createComment(
+      github,
+      context,
+      core,
+      issueNumber,
+      comments.issueUnavailable({ user: actor }),
+    );
     return;
   }
 
   const metadata = issue ? readMetadata(issue.body) : null;
   const commentId = comment?.id;
-  if (metadata && commentId && metadata.processedClaimCommentIds?.includes(commentId)) return;
+  if (
+    metadata &&
+    commentId &&
+    metadata.processedClaimCommentIds?.includes(commentId)
+  )
+    return;
 
   const actorRole = await resolveActorRole(github, context, core, actor);
 
@@ -70,14 +89,25 @@ export async function processClaim({ github, context, core }) {
     return;
   }
 
-  const activeIssues = await listOpenAssignedIssuesForUser(github, context, core, actor);
-  if (!["owner", "maintainer", "collaborator"].includes(actorRole) && activeIssues.length >= LIMITS.maxActiveAssignedIssues) {
+  const activeIssues = await listOpenAssignedIssuesForUser(
+    github,
+    context,
+    core,
+    actor,
+  );
+  if (
+    !["owner", "maintainer", "collaborator"].includes(actorRole) &&
+    activeIssues.length >= LIMITS.maxActiveAssignedIssues
+  ) {
     await createComment(
       github,
       context,
       core,
       issueNumber,
-      comments.maxIssueLimitReached({ user: actor, activeCount: activeIssues.length }),
+      comments.maxIssueLimitReached({
+        user: actor,
+        activeCount: activeIssues.length,
+      }),
     );
     return;
   }
@@ -100,11 +130,20 @@ export async function processClaim({ github, context, core }) {
 
   const refreshedIssue = await getIssue(github, context, core, issueNumber);
   if (refreshedIssue) {
-    await updateIssueMetadata(github, context, core, refreshedIssue, (metadataDraft) => {
-      const next = setAssignmentMetadata(metadataDraft, "claim");
-      next.processedClaimCommentIds = [...(next.processedClaimCommentIds || []), commentId].slice(-20);
-      return next;
-    });
+    await updateIssueMetadata(
+      github,
+      context,
+      core,
+      refreshedIssue,
+      (metadataDraft) => {
+        const next = setAssignmentMetadata(metadataDraft, "claim");
+        next.processedClaimCommentIds = [
+          ...(next.processedClaimCommentIds || []),
+          commentId,
+        ].slice(-20);
+        return next;
+      },
+    );
   }
 
   await createComment(
@@ -119,7 +158,11 @@ export async function processClaim({ github, context, core }) {
 
 export async function processUnclaim({ github, context, core }) {
   if (!isExpectedRepository(context)) return;
-  if (context.eventName !== "issue_comment" || context.payload.action !== "created") return;
+  if (
+    context.eventName !== "issue_comment" ||
+    context.payload.action !== "created"
+  )
+    return;
   if (context.payload.issue?.pull_request) return;
 
   const comment = context.payload.comment;
@@ -132,7 +175,8 @@ export async function processUnclaim({ github, context, core }) {
   if (!issue) return;
   const metadata = readMetadata(issue.body);
   const commentId = comment?.id;
-  if (commentId && metadata.processedUnclaimCommentIds?.includes(commentId)) return;
+  if (commentId && metadata.processedUnclaimCommentIds?.includes(commentId))
+    return;
 
   const assignees = issue.assignees || [];
   if (assignees.length === 0) {
@@ -159,16 +203,31 @@ export async function processUnclaim({ github, context, core }) {
     return;
   }
 
-  const removed = await removeAssignee(github, context, core, issueNumber, currentAssignee);
+  const removed = await removeAssignee(
+    github,
+    context,
+    core,
+    issueNumber,
+    currentAssignee,
+  );
   if (!removed) return;
 
   const refreshedIssue = await getIssue(github, context, core, issueNumber);
   if (refreshedIssue) {
-    await updateIssueMetadata(github, context, core, refreshedIssue, (metadataDraft) => {
-      const next = clearAssignmentMetadata(metadataDraft);
-      next.processedUnclaimCommentIds = [...(next.processedUnclaimCommentIds || []), commentId].slice(-20);
-      return next;
-    });
+    await updateIssueMetadata(
+      github,
+      context,
+      core,
+      refreshedIssue,
+      (metadataDraft) => {
+        const next = clearAssignmentMetadata(metadataDraft);
+        next.processedUnclaimCommentIds = [
+          ...(next.processedUnclaimCommentIds || []),
+          commentId,
+        ].slice(-20);
+        return next;
+      },
+    );
   }
 
   await createComment(
@@ -185,7 +244,10 @@ export async function processUnclaim({ github, context, core }) {
       context,
       core,
       issueNumber,
-      comments.maintainerOverrideNotification({ actor, target: currentAssignee }),
+      comments.maintainerOverrideNotification({
+        actor,
+        target: currentAssignee,
+      }),
     );
   }
 }
