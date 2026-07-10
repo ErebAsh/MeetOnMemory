@@ -3,6 +3,7 @@ import { toast } from "react-toastify";
 import AppContent from "./AppContent.js";
 import { useNavigate } from "react-router-dom";
 import { authApi } from "../services";
+import apiClient from "../services/apiClient.js";
 
 export const AppContextProvider = ({ children }) => {
   const backendUrl =
@@ -37,6 +38,16 @@ export const AppContextProvider = ({ children }) => {
 
   const getAuthState = useCallback(async () => {
     try {
+      // Fetch CSRF token first
+      try {
+        const { data: csrfData } = await authApi.getCsrfToken();
+        if (csrfData && csrfData.csrfToken) {
+          apiClient.defaults.headers.common["X-CSRF-Token"] = csrfData.csrfToken;
+        }
+      } catch (csrfErr) {
+        console.error("Failed to fetch CSRF token", csrfErr);
+      }
+
       const { data } = await authApi.getAuthState();
 
       if (data.success) {

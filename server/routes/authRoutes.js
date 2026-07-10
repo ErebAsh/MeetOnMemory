@@ -37,4 +37,9 @@ router.get("/user-data", userAuth, getUserData);
 // 🔥 FIXED: Add this route for frontend login check
 router.get("/is-auth", userAuth, isAuthenticated);
 
+// ✅ CSRF Token route for frontend
+router.get("/csrf", (req, res) => {
+  res.json({ success: true, csrfToken: req.csrfToken() });
+});
+
 export default router;

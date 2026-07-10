@@ -47,7 +47,7 @@ app.use(cookieParser());
 const csrfProtection = csrf({
   cookie: {
     key: "_csrf",
-    sameSite: "lax",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     secure: process.env.NODE_ENV === "production",
     httpOnly: true,
   },
@@ -62,11 +62,6 @@ app.use((req, res, next) => {
   if (req.method === "GET") {
     csrfProtection(req, res, (err) => {
       if (err) return next(err);
-      res.cookie("XSRF-TOKEN", req.csrfToken(), {
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-        httpOnly: false, // JS-readable for Axios auto-pickup
-      });
       next();
     });
   } else {
@@ -100,7 +95,7 @@ app.use(
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "X-CSRF-Token"],
   }),
 );
 
