@@ -47,7 +47,7 @@ export const ThemeProvider = ({ children }) => {
       toggleTheme,
       mounted,
     }),
-    [theme, mounted],
+    [theme, mounted, toggleTheme],
   );
 
   return (

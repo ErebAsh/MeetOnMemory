@@ -3,6 +3,7 @@ import { toast } from "react-toastify";
 import AppContent from "./AppContent.js";
 import { useNavigate } from "react-router-dom";
 import { authApi } from "../services";
+import apiClient from "../services/apiClient.js";
 
 export const AppContextProvider = ({ children }) => {
   const backendUrl =
