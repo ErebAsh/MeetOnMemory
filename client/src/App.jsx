@@ -36,6 +36,8 @@ import Settings from "./pages/Settings.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Footer from "./components/Footer.jsx";
 
+import ErrorBoundary from "./components/ErrorBoundary.jsx";
+
 const App = () => {
   const location = useLocation();
 
@@ -114,10 +116,11 @@ const App = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Toast Notifications */}
-      <ToastContainer position="top-right" autoClose={3000} theme="colored" />
+      <ErrorBoundary>
+        {/* Toast Notifications */}
+        <ToastContainer position="top-right" autoClose={3000} theme="colored" />
 
-      <Routes>
+        <Routes>
         {/* === Public Routes (No login required) === */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
@@ -300,6 +303,7 @@ const App = () => {
           <div className={`custom-cursor-ring ${isHovered ? "hovered" : ""}`} />
         </>
       )}
+      </ErrorBoundary>
     </div>
   );
 };

@@ -17,6 +17,7 @@ import {
   Copy,
 } from "lucide-react";
 import { toast } from "react-toastify";
+import ErrorState from "../components/ErrorState.jsx";
 
 // A separate component to render each peer's video
 const PeerVideo = ({ peer, userInfo }) => {
@@ -53,6 +54,7 @@ const MeetingRoom = () => {
   const [joined, setJoined] = useState(false);
   const [loading, setLoading] = useState(false);
   const [meetingEnded, setMeetingEnded] = useState(false);
+  const [mediaError, setMediaError] = useState(null);
 
   const [micOn, setMicOn] = useState(true);
   const [cameraOn, setCameraOn] = useState(true);
@@ -170,9 +172,14 @@ const MeetingRoom = () => {
       setLoading(false);
     } catch (err) {
       console.error("Camera/Mic access denied:", err);
-      toast.error(
-        "Camera or microphone access denied. Please enable them and retry.",
-      );
+      let errMsg = "Camera or microphone access denied. Please enable them and retry.";
+      if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        errMsg = "Required media devices (camera or microphone) not found.";
+      } else if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        errMsg = "Permission denied. Please allow camera and microphone access in your browser settings.";
+      }
+      setMediaError(errMsg);
+      toast.error(errMsg);
       setLoading(false);
     }
   };
@@ -314,7 +321,18 @@ const MeetingRoom = () => {
             automatic AI-generated MoMs.
           </p>
 
-          {loading ? (
+          {mediaError ? (
+            <div className="w-full max-w-lg mx-auto">
+              <ErrorState 
+                title="Device Access Error" 
+                message={mediaError} 
+                onRetry={() => {
+                  setMediaError(null);
+                  joinMeeting();
+                }} 
+              />
+            </div>
+          ) : loading ? (
             <button
               disabled
               className="px-8 py-3 bg-indigo-600 text-white rounded-full font-semibold shadow-md flex items-center justify-center gap-2 mx-auto cursor-not-allowed"
