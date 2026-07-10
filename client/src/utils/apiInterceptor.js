@@ -12,11 +12,14 @@ axios.interceptors.response.use(
       // Network error (offline or server not reachable)
       friendlyMessage = "Network offline. Please check your internet connection.";
       // Mock the response so local catch blocks using error.response?.data?.message work
-      error.response = { data: { message: friendlyMessage } };
+      error.response = { data: { message: friendlyMessage }, status: 0 };
     } else {
       switch (error.response.status) {
         case 401:
-          friendlyMessage = "Session expired. Please log in again.";
+          friendlyMessage =
+            error.response.data && error.response.data.message
+              ? error.response.data.message
+              : "Session expired. Please log in again.";
           break;
         case 403:
           friendlyMessage = "You do not have permission to perform this action.";

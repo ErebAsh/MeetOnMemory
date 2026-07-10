@@ -19,8 +19,7 @@ class ErrorBoundary extends React.Component {
 
   handleRetry = () => {
     this.setState({ hasError: false, error: null });
-    // Optional: hard reload if soft reset doesn't work
-    // window.location.reload();
+    window.location.reload();
   };
 
   render() {

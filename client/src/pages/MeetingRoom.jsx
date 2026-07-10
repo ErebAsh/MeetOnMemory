@@ -326,7 +326,10 @@ const MeetingRoom = () => {
               <ErrorState 
                 title="Device Access Error" 
                 message={mediaError} 
-                onRetry={() => setMediaError(null)} 
+                onRetry={() => {
+                  setMediaError(null);
+                  joinMeeting();
+                }} 
               />
             </div>
           ) : loading ? (
