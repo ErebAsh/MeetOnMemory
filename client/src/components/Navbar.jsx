@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import AppContent from "../context/AppContent";
 import { toast } from "react-toastify";
+import { io } from "socket.io-client";
 import {
   Menu,
   X,
@@ -101,6 +102,43 @@ const Navbar = () => {
 
       fetchUnreadCount();
       fetchRecentNotifications();
+    }
+  }, [userData, backendUrl]);
+
+  // Real-time notifications via Socket.IO
+  useEffect(() => {
+    if (userData && backendUrl) {
+      const socket = io(backendUrl, {
+        withCredentials: true,
+      });
+
+      socket.on("connect", () => {
+        console.log("🟢 Real-time notifications connected. Socket ID:", socket.id);
+      });
+
+      socket.on("connect_error", (err) => {
+        console.error("🔴 Real-time notifications connect_error:", err.message);
+      });
+
+      socket.on("notification:new", (newNotif) => {
+        setUnreadCount((prev) => prev + 1);
+        setNotifications((prev) => {
+          const formattedNotif = {
+            id: newNotif.id,
+            title: newNotif.title,
+            description: newNotif.description,
+            time: "Just now",
+            unread: true,
+          };
+          // Keep only top 5 recent notifications
+          return [formattedNotif, ...prev].slice(0, 5);
+        });
+        toast.info(`🔔 ${newNotif.title}`);
+      });
+
+      return () => {
+        socket.disconnect();
+      };
     }
   }, [userData, backendUrl]);
 

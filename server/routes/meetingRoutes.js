@@ -18,6 +18,7 @@ import {
   updateMeeting, // NEW: Update meeting (rename)
   deleteMeeting, // EXISTING: Delete meeting
   searchMeetingsByText, // 🆕 NEW: Voice/Text Search
+  notifyLiveMeeting, // NEW: Notify participants of a live meeting
 } from "../controllers/meetingController.js";
 import { exportMeeting } from "../controllers/exportController.js";
 
@@ -75,5 +76,8 @@ router.post("/search", userAuth, searchMeetingsByText);
 
 // 🆕 ✅ Update Meeting Route (Frontend: Meeting Repository - rename, etc.)
 router.put("/:id", userAuth, writeLimiter, requireOwner(Meeting), updateMeeting);
+
+// ✅ Notify Live Meeting Participants (from CreateMeeting Live section)
+router.post("/notify-live", userAuth, writeLimiter, notifyLiveMeeting);
 
 export default router;
