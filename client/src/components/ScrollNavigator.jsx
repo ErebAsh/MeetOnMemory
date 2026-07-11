@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
 
 const SECTIONS = [
@@ -35,7 +35,7 @@ export default function ScrollNavigator() {
   };
 
   // Linear Element Navigation (With Dynamic Header Height Calculations)
-  const scrollToSectionIndex = (targetIndex) => {
+  const scrollToSectionIndex = useCallback((targetIndex) => {
     if (targetIndex < 0 || targetIndex >= SECTIONS.length) return;
 
     isLockActive.current = true;
@@ -70,7 +70,7 @@ export default function ScrollNavigator() {
     lockTimeoutRef.current = setTimeout(() => {
       isLockActive.current = false;
     }, 1200);
-  };
+  }, []);
 
   // Core Window Observers & Maximum Visibility Area Engine
   useEffect(() => {
@@ -164,7 +164,7 @@ export default function ScrollNavigator() {
       if (lockTimeoutRef.current) clearTimeout(lockTimeoutRef.current);
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
     };
-  }, []);
+  }, [scrollToSectionIndex]);
 
   const handleNext = (e) => {
     e.stopPropagation();
