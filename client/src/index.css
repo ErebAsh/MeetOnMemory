@@ -1,6 +1,8 @@
 @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap");
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Dark mode color tokens */
 :root {
   --dark-bg: #0f172a;

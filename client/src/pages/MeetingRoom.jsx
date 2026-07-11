@@ -310,18 +310,18 @@ const MeetingRoom = () => {
     <div className="min-h-screen flex flex-col bg-gray-900 relative overflow-hidden font-sans">
       {/* ---------- INTRO SCREEN ---------- */}
       {!joined && !meetingEnded && (
-        <div className="flex-1 flex flex-col items-center justify-center relative z-10 px-6 md:px-8 text-center bg-gradient-to-br from-indigo-50 via-white to-purple-100">
-          <div className="absolute top-0 left-0 w-72 h-72 bg-indigo-200 opacity-20 blur-3xl rounded-full animate-pulse"></div>
-          <div className="absolute bottom-0 right-0 w-80 h-80 bg-purple-200 opacity-30 blur-3xl rounded-full animate-pulse"></div>
+        <div className="flex-1 flex flex-col items-center justify-center relative z-10 px-6 md:px-8 text-center bg-gradient-to-br from-indigo-50 via-white to-purple-100 dark:from-slate-950 dark:via-slate-900 dark:to-purple-950/20">
+          <div className="absolute top-0 left-0 w-72 h-72 bg-indigo-200 dark:bg-indigo-900/10 opacity-20 blur-3xl rounded-full animate-pulse"></div>
+          <div className="absolute bottom-0 right-0 w-80 h-80 bg-purple-200 dark:bg-purple-900/10 opacity-30 blur-3xl rounded-full animate-pulse"></div>
 
-          <h1 className="text-4xl md:text-5xl font-extrabold text-gray-800 mb-3 flex items-center justify-center gap-3">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-gray-800 dark:text-white mb-3 flex items-center justify-center gap-3">
             🎥 MeetOnMemory{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
               Live Room
             </span>
           </h1>
 
-          <p className="text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed text-base md:text-lg">
+          <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto leading-relaxed text-base md:text-lg">
             Join room <strong>{roomId}</strong> with real-time transcription and
             automatic AI-generated MoMs.
           </p>
@@ -347,7 +347,7 @@ const MeetingRoom = () => {
           ) : (
             <button
               onClick={joinMeeting}
-              className="px-8 py-3 bg-indigo-600 text-white rounded-full font-semibold shadow-md hover:bg-indigo-700 hover:shadow-xl active:scale-95 transition-all duration-300"
+              className="px-8 py-3 bg-indigo-600 text-white rounded-full font-semibold shadow-md hover:bg-indigo-700 hover:shadow-xl active:scale-95 transition-all duration-300 cursor-pointer"
             >
               🚀 Join Meeting
             </button>
@@ -355,122 +355,123 @@ const MeetingRoom = () => {
         </div>
       )}
 
-      {/* ---------- ACTIVE MEETING ---------- */}
-      {joined && (
-        <div className="flex-1 flex flex-col h-screen">
-          {/* Top Bar */}
+      {/* ---------- ACTIVE MEETING SCREEN ---------- */}
+      {joined && !meetingEnded && (
+        <div className="flex-1 flex flex-col min-h-0 bg-gray-900 relative">
+          {/* Header */}
           <div className="h-16 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-6 z-20 shrink-0">
-            <div className="flex items-center gap-4 text-white">
-              <span className="font-semibold text-lg flex items-center gap-2">
-                <Video size={20} className="text-indigo-400" /> Room: {roomId}
-              </span>
-              <button
-                onClick={copyLink}
-                className="text-gray-400 hover:text-white transition"
-                title="Copy Link"
-              >
-                <Copy size={16} />
-              </button>
-            </div>
-
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2 text-red-500 bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20">
-                <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                <span className="text-sm font-semibold tracking-wide">REC</span>
-              </div>
-
-              <div className="flex items-center gap-2 text-gray-300 bg-gray-800 px-3 py-1 rounded-full text-sm font-mono">
-                <Clock size={16} /> {formatTime(duration)}
-              </div>
-
+            <div className="flex items-center gap-4">
+              <h2 className="text-lg font-bold text-white truncate max-w-xs md:max-w-md">
+                {title}
+              </h2>
+              {isRecording ? (
+                <div className="flex items-center gap-2 text-red-500 bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20">
+                  <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                  <span className="text-xs font-semibold uppercase tracking-wider">
+                    Recording
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-gray-300 bg-gray-800 px-3 py-1 rounded-full text-sm font-mono">
+                  Ready
+                </div>
+              )}
               <div className="flex items-center gap-2 text-gray-300 bg-gray-800 px-3 py-1 rounded-full text-sm">
-                <Users size={16} /> {peers.length + 1}
+                <Users size={16} />
+                <span>{participants.length}</span>
               </div>
             </div>
+
+            <button
+              onClick={handleCopyLink}
+              className="text-gray-300 hover:text-white flex items-center gap-1.5 text-sm font-semibold bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-xl transition-all cursor-pointer"
+            >
+              <Copy size={16} />
+              <span className="hidden sm:inline">Copy Link</span>
+            </button>
           </div>
 
-          {/* Video Grid Area */}
+          {/* Grid Layout */}
           <div className="flex-1 p-6 overflow-y-auto bg-gray-900 flex items-center justify-center">
-            <div className="w-full h-full flex flex-wrap gap-4 items-center justify-center content-center max-w-[1600px] mx-auto">
-              {/* Local User */}
+            <div className="w-full h-full max-w-5xl flex flex-col md:flex-row gap-6 items-center justify-center min-h-[300px]">
+              {/* Local Stream */}
               <div className="relative bg-black rounded-2xl overflow-hidden shadow-lg aspect-video flex-1 min-w-[280px] max-w-[600px] border border-gray-800 group">
-                <video
-                  ref={userVideoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className={`w-full h-full object-cover ${!cameraOn && !isScreenSharing ? "hidden" : ""} ${!isScreenSharing ? "-scale-x-100" : ""}`}
-                />
-                {!cameraOn && !isScreenSharing && (
+                {videoOn && localStream ? (
+                  <video
+                    ref={localVideoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="w-full h-full object-cover scale-x-[-1]"
+                  />
+                ) : (
                   <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
                     <div className="w-20 h-20 bg-indigo-600 rounded-full flex items-center justify-center text-3xl font-bold text-white shadow-xl">
-                      You
+                      {userData ? getInitials(userData.name) : "U"}
                     </div>
                   </div>
                 )}
                 <div className="absolute bottom-4 left-4 bg-black/60 px-3 py-1.5 rounded-lg backdrop-blur-sm text-white text-sm flex items-center gap-2">
-                  <div
+                  <span
                     className={`w-2 h-2 rounded-full ${micOn ? "bg-green-500" : "bg-red-500"}`}
                   />
-                  You {isScreenSharing && "(Sharing)"}
+                  <span>You ({userData?.name || "Member"})</span>
                 </div>
               </div>
 
-              {/* Remote Peers */}
-              {peers.map((peerObj) => (
-                <PeerVideo
-                  key={peerObj.peerID}
-                  peer={peerObj.peer}
-                  userInfo={peerObj.userInfo}
-                />
-              ))}
+              {/* Remote Streams */}
+              {participants
+                .filter((p) => p.userId !== userData?._id)
+                .map((participant) => (
+                  <RemoteVideo key={participant.userId} participant={participant} />
+                ))}
             </div>
           </div>
 
-          {/* Bottom Control Bar */}
+          {/* Control Bar */}
           <div className="h-24 bg-gray-900 border-t border-gray-800 flex items-center justify-center gap-4 px-6 z-20 shrink-0">
+            {/* Audio Toggle */}
             <button
               onClick={toggleMic}
-              className={`p-4 rounded-full transition-all shadow-md ${
+              className={`p-4 rounded-full transition-all shadow-md active:scale-95 cursor-pointer ${
                 micOn
                   ? "bg-gray-800 text-white hover:bg-gray-700"
                   : "bg-red-500 text-white hover:bg-red-600"
               }`}
-              title={micOn ? "Mute Microphone" : "Unmute Microphone"}
             >
-              {micOn ? <Mic size={24} /> : <MicOff size={24} />}
+              {micOn ? <Mic size={22} /> : <MicOff size={22} />}
             </button>
 
+            {/* Video Toggle */}
             <button
-              onClick={toggleCamera}
-              className={`p-4 rounded-full transition-all shadow-md ${
-                cameraOn
+              onClick={toggleVideo}
+              className={`p-4 rounded-full transition-all shadow-md active:scale-95 cursor-pointer ${
+                videoOn
                   ? "bg-gray-800 text-white hover:bg-gray-700"
                   : "bg-red-500 text-white hover:bg-red-600"
               }`}
-              title={cameraOn ? "Turn off Camera" : "Turn on Camera"}
             >
-              {cameraOn ? <Video size={24} /> : <VideoOff size={24} />}
+              {videoOn ? <VideoIcon size={22} /> : <VideoOff size={22} />}
             </button>
 
+            {/* Screen Share (Dummy toggle for now) */}
             <button
-              onClick={toggleScreenShare}
-              className={`p-4 rounded-full transition-all shadow-md ${
-                isScreenSharing
+              onClick={() => setScreenShareOn(!screenShareOn)}
+              className={`p-4 rounded-full transition-all shadow-md active:scale-95 cursor-pointer ${
+                screenShareOn
                   ? "bg-indigo-500 text-white hover:bg-indigo-600"
                   : "bg-gray-800 text-white hover:bg-gray-700"
               }`}
-              title={isScreenSharing ? "Stop Sharing" : "Share Screen"}
             >
-              <MonitorUp size={24} />
+              <ScreenShare size={22} />
             </button>
 
             <div className="w-px h-8 bg-gray-700 mx-2"></div>
 
+            {/* End / Leave button */}
             <button
               onClick={leaveMeeting}
-              className="px-6 py-4 bg-red-600 text-white rounded-full font-semibold hover:bg-red-700 shadow-lg transition-all active:scale-95 flex items-center gap-2"
-              title="End Meeting"
+              className="px-6 py-4 bg-red-600 text-white rounded-full font-semibold hover:bg-red-700 shadow-lg transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
             >
               <PhoneOff size={22} /> Leave
             </button>
@@ -480,17 +481,17 @@ const MeetingRoom = () => {
 
       {/* ---------- AI PROCESSING SCREEN ---------- */}
       {meetingEnded && (
-        <div className="flex-1 flex flex-col items-center justify-center text-center bg-gray-50 z-30">
+        <div className="flex-1 flex flex-col items-center justify-center text-center bg-gray-50 dark:bg-slate-900 z-30">
           <CheckCircle2 className="text-green-500" size={64} />
-          <h2 className="text-2xl font-bold text-gray-800 mt-3">
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mt-3">
             Processing Meeting Data...
           </h2>
-          <p className="text-gray-600 mt-3 max-w-md leading-relaxed">
+          <p className="text-gray-600 dark:text-gray-400 mt-3 max-w-md leading-relaxed">
             Our AI is preparing your <strong>transcript</strong> and{" "}
             <strong>Minutes of Meeting</strong>.
           </p>
           <Loader2 className="animate-spin text-indigo-600 mt-5" size={28} />
-          <p className="text-sm text-gray-500 mt-2">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
             Redirecting you to dashboard...
           </p>
         </div>
