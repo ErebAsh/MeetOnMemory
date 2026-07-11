@@ -3,21 +3,51 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-let redisClient;
+let redisClient = null;
+let isRedisDisabled = false;
 
 export const initRedis = async () => {
+  const redisUri = process.env.REDIS_URI;
+
+  if (!redisUri) {
+    console.log("ℹ️ Redis is disabled (REDIS_URI not provided)");
+    isRedisDisabled = true;
+    return;
+  }
+
   redisClient = createClient({
-    url: process.env.REDIS_URI || "redis://localhost:6379",
+    url: redisUri,
+    socket: {
+      reconnectStrategy: (retries) => {
+        if (retries > 3) {
+          console.error("⚠️ Redis connection failed after 3 retries. Disabling Redis.");
+          isRedisDisabled = true;
+          return new Error("Retry limit exceeded");
+        }
+        return Math.min(retries * 50, 500); // Wait 50, 100, 150ms...
+      },
+    },
   });
 
-  redisClient.on("error", (err) => console.log("Redis Client Error", err));
+  redisClient.on("error", (err) => {
+    // Only log if we haven't already disabled it to prevent log spam
+    if (!isRedisDisabled) {
+      console.log(`⚠️ Redis Client Error: ${err.message}`);
+    }
+  });
 
   try {
     await redisClient.connect();
-    console.log("✅ Redis connected successfully");
+    
+    const isLocal = redisUri.includes('localhost') || redisUri.includes('127.0.0.1');
+    const connectionType = isLocal ? 'local' : (redisUri.includes('upstash') ? 'Upstash' : 'remote');
+    
+    console.log(`✅ Redis connected successfully (${connectionType})`);
   } catch (error) {
-    console.error("⚠️ Redis connection failed:", error.message);
+    console.error("⚠️ Redis initial connection failed:", error.message);
+    redisClient = null; // Disable the client for subsequent requests
+    isRedisDisabled = true;
   }
 };
 
-export const getRedisClient = () => redisClient;
+export const getRedisClient = () => (isRedisDisabled ? null : redisClient);
