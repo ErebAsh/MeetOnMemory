@@ -4,6 +4,7 @@ import {
   createOrJoinOrganization,
   getAllOrganizations,
   joinOrganization,
+  selectOrganization,
   getOrganizationMembers,
 } from "../controllers/organizationController.js";
 import userAuth from "../middleware/userAuth.js";
@@ -19,6 +20,9 @@ router.post("/create-or-join", userAuth, createOrJoinOrganization);
 
 // Member joins by selecting an existing org
 router.post("/join", userAuth, joinOrganization);
+
+// Select organization (for users with multiple orgs)
+router.post("/select", userAuth, selectOrganization);
 
 // Fetch all organizations (list) - usable for the join UI
 router.get("/", userAuth, getAllOrganizations);

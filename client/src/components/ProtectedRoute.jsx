@@ -20,16 +20,16 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Onboarding logic
+  // Onboarding logic - redirect to Organization Hub
   const onboardingPages = [
-    "/select-role",
+    "/organizations",
     "/create-organization",
     "/join-organization",
   ];
   const isOnboardingPage = onboardingPages.includes(location.pathname);
 
   if (userData && !userData.hasCompletedOnboarding && !isOnboardingPage) {
-    return <Navigate to="/select-role" replace />;
+    return <Navigate to="/organizations" replace />;
   }
 
   if (userData && userData.hasCompletedOnboarding && isOnboardingPage) {

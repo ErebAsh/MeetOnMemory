@@ -23,6 +23,15 @@ import meetingSocket from "./socket/meetingSocket.js";
 import { initRedis } from "./services/redisService.js";
 import { globalLimiter } from "./middleware/rateLimiter.js";
 import knowledgeRoutes from "./routes/knowledgeRoutes.js";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load .env.local if it exists, otherwise fallback to .env
+const envPath = path.resolve(__dirname, '.env.local');
+dotenv.config({ path: envPath });
 dotenv.config();
 
 const app = express();

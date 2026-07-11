@@ -6,4 +6,6 @@ export const organizationApi = {
   getAllOrganizations: () => apiClient.get("/api/organizations"),
   joinOrganization: (data) => apiClient.post("/api/organizations/join", data),
   getMembers: () => apiClient.get("/api/organizations/members"),
+  getUserOrganizations: () => apiClient.get("/api/organizations/user"),
+  selectOrganization: (data) => apiClient.post("/api/organizations/select", data),
 };

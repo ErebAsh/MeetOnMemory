@@ -1,0 +1,56 @@
+import React, { useEffect, useState } from "react";
+import { organizationApi } from "../services";
+import { toast } from "react-toastify";
+import Navbar from "../components/Navbar";
+import OrganizationHeader from "../components/organization/OrganizationHeader";
+import OrganizationGrid from "../components/organization/OrganizationGrid";
+import OrganizationEmptyState from "../components/organization/OrganizationEmptyState";
+
+// Organization Hub page for managing user organizations
+const OrganizationHub = () => {
+  const [organizations, setOrganizations] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchUserOrganizations = async () => {
+    try {
+      setLoading(true);
+      const { data } = await organizationApi.getUserOrganizations();
+      if (data.success) {
+        setOrganizations(data.organizations || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch organizations:", error);
+      toast.error("Failed to load organizations");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserOrganizations();
+  }, []);
+
+  return (
+    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Navbar />
+      <div className="flex-grow container mx-auto px-4 py-8">
+        <OrganizationHeader />
+
+        {loading ? (
+          <OrganizationGrid organizations={[]} loading={true} />
+        ) : organizations.length > 0 ? (
+          <>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              Your Organizations
+            </h2>
+            <OrganizationGrid organizations={organizations} loading={false} />
+          </>
+        ) : (
+          <OrganizationEmptyState />
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default OrganizationHub;

@@ -26,7 +26,7 @@ const CreateOrganizationPage = () => {
       if (data.success) {
         toast.success(data.message);
         await getUserData();
-        navigate("/dashboard");
+        navigate("/organizations");
       } else {
         toast.error(data.message || "Something went wrong");
       }

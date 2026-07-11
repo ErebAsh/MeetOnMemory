@@ -58,7 +58,7 @@ const Login = () => {
           toast.success(`Welcome, ${user.name}!`);
         }
 
-        navigate(user?.hasCompletedOnboarding ? "/dashboard" : "/select-role");
+        navigate("/organizations");
       } else {
         toast.error(loginData.message || "Login failed");
       }

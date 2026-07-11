@@ -253,9 +253,9 @@ const Navbar = () => {
         currentPath === "/policies"
       );
     }
-    if (tabPath === "/select-role") {
+    if (tabPath === "/organizations") {
       return (
-        currentPath === "/select-role" ||
+        currentPath === "/organizations" ||
         currentPath === "/create-organization" ||
         currentPath === "/join-organization"
       );
@@ -272,7 +272,7 @@ const Navbar = () => {
     { label: "Tasks", href: "/tasks", icon: CheckSquare },
     { label: "Calendar", href: "/calendar", icon: CalendarDays },
     { label: "Team Members", href: "/team-members", icon: Users },
-    { label: "Organizations", href: "/select-role", icon: Building2 },
+    { label: "Organizations", href: "/organizations", icon: Building2 },
     { label: "AI Search", href: "/ai-search", icon: Search },
   ];
 

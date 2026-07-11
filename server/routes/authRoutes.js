@@ -39,7 +39,13 @@ router.get("/is-auth", userAuth, isAuthenticated);
 
 // ✅ CSRF Token route for frontend
 router.get("/csrf", (req, res) => {
-  res.json({ success: true, csrfToken: req.csrfToken() });
+  try {
+    const csrfToken = req.csrfToken ? req.csrfToken() : null;
+    res.json({ success: true, csrfToken });
+  } catch (error) {
+    // CSRF is bypassed in development, return success without token
+    res.json({ success: true, csrfToken: null, message: "CSRF bypassed in development" });
+  }
 });
 
 export default router;
