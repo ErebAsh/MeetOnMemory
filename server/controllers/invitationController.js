@@ -78,6 +78,8 @@ export const createInvitation = async (req, res) => {
         .json({ success: false, message: "Invalid organization ID." });
     }
 
+    const cleanOrganizationId = new mongoose.Types.ObjectId(String(organizationId));
+
     // Validate and sanitize email
     const sanitizedEmail = sanitizeEmail(email);
     if (!sanitizedEmail) {
@@ -93,10 +95,12 @@ export const createInvitation = async (req, res) => {
         .json({ success: false, message: "Invalid role. Must be 'admin' or 'member'." });
     }
 
+    const cleanRole = role && isValidRole(role) ? allowedRoles.find(r => r === role) : "member";
+
     const userId = req.user.id;
 
     // Check if organization exists
-    const organization = await Organization.findById(organizationId);
+    const organization = await Organization.findById(cleanOrganizationId);
 
     if (!organization) {
       return res
@@ -107,7 +111,7 @@ export const createInvitation = async (req, res) => {
     // Check if user is admin or owner
     const membership = await Membership.findOne({
       user: userId,
-      organization: organizationId,
+      organization: cleanOrganizationId,
       role: "admin",
       status: "active",
     }).lean();
@@ -125,7 +129,7 @@ export const createInvitation = async (req, res) => {
     if (existingUser) {
       const existingMembership = await Membership.findOne({
         user: existingUser._id,
-        organization: organizationId,
+        organization: cleanOrganizationId,
         status: "active",
       }).lean();
 
@@ -139,7 +143,7 @@ export const createInvitation = async (req, res) => {
     // Check if there's a pending invitation for this email
     const existingInvitation = await Invitation.findOne({
       email: sanitizedEmail,
-      organization: organizationId,
+      organization: cleanOrganizationId,
       status: "pending",
     }).lean();
 
@@ -156,11 +160,11 @@ export const createInvitation = async (req, res) => {
 
     // Create invitation with validated fields
     const invitationData = {
-      organization: organizationId,
+      organization: cleanOrganizationId,
       email: sanitizedEmail,
       invitedBy: userId,
       token: generateInvitationToken(),
-      role: isValidRole(role) ? role : "member",
+      role: cleanRole,
       status: "pending",
       expiresAt,
       message: message ? String(message).trim().substring(0, 500) : "",
@@ -206,6 +210,8 @@ export const getOrganizationInvitations = async (req, res) => {
         .json({ success: false, message: "Invalid organization ID." });
     }
 
+    const cleanOrganizationId = new mongoose.Types.ObjectId(String(organizationId));
+
     // Validate status if provided
     if (status && !isValidStatus(status)) {
       return res
@@ -213,7 +219,9 @@ export const getOrganizationInvitations = async (req, res) => {
         .json({ success: false, message: "Invalid status value." });
     }
 
-    const organization = await Organization.findById(organizationId);
+    const cleanStatus = status && isValidStatus(status) ? allowedStatuses.find(s => s === status) : undefined;
+
+    const organization = await Organization.findById(cleanOrganizationId);
 
     if (!organization) {
       return res
@@ -224,7 +232,7 @@ export const getOrganizationInvitations = async (req, res) => {
     // Check if user is admin or owner
     const membership = await Membership.findOne({
       user: req.user.id,
-      organization: organizationId,
+      organization: cleanOrganizationId,
       role: "admin",
       status: "active",
     });
@@ -237,9 +245,9 @@ export const getOrganizationInvitations = async (req, res) => {
         .json({ success: false, message: "Not authorized to view invitations." });
     }
 
-    const filter = { organization: organizationId };
-    if (status) {
-      filter.status = status;
+    const filter = { organization: cleanOrganizationId };
+    if (cleanStatus) {
+      filter.status = cleanStatus;
     }
 
     const invitations = await Invitation.find(filter)
@@ -447,7 +455,14 @@ export const revokeInvitation = async (req, res) => {
         .json({ success: false, message: "Authentication failed." });
     }
 
-    const invitation = await Invitation.findById(id).populate("organization");
+    if (!isValidObjectId(id)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid invitation ID." });
+    }
+
+    const cleanInvitationId = new mongoose.Types.ObjectId(String(id));
+    const invitation = await Invitation.findById(cleanInvitationId).populate("organization");
 
     if (!invitation) {
       return res

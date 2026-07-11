@@ -45,10 +45,12 @@ export const createMembershipRequest = async (req, res) => {
         .json({ success: false, message: "Invalid organization ID." });
     }
 
+    const cleanOrganizationId = new mongoose.Types.ObjectId(String(organizationId));
+
     const userId = req.user.id;
 
     // Check if organization exists
-    const organization = await Organization.findById(organizationId);
+    const organization = await Organization.findById(cleanOrganizationId);
 
     if (!organization) {
       return res
@@ -59,7 +61,7 @@ export const createMembershipRequest = async (req, res) => {
     // Check if user already has an active membership
     const existingMembership = await Membership.findOne({
       user: userId,
-      organization: organizationId,
+      organization: cleanOrganizationId,
       status: "active",
     }).lean();
 
@@ -72,7 +74,7 @@ export const createMembershipRequest = async (req, res) => {
     // Check if there's already a pending request
     const existingRequest = await MembershipRequest.findOne({
       user: userId,
-      organization: organizationId,
+      organization: cleanOrganizationId,
       status: "pending",
     }).lean();
 
@@ -85,7 +87,7 @@ export const createMembershipRequest = async (req, res) => {
     // Create membership request
     const membershipRequest = await MembershipRequest.create({
       user: userId,
-      organization: organizationId,
+      organization: cleanOrganizationId,
       message: message ? String(message).trim().substring(0, 500) : "",
       status: "pending",
     });
@@ -128,15 +130,17 @@ export const getOrganizationMembershipRequests = async (req, res) => {
         .json({ success: false, message: "Invalid organization ID." });
     }
 
+    const cleanOrganizationId = new mongoose.Types.ObjectId(String(organizationId));
+
     // Validate status if provided
-    const validStatus = status && isValidStatus(status) ? status : null;
+    const validStatus = status && isValidStatus(status) ? allowedStatuses.find(s => s === status) : null;
     if (status && !validStatus) {
       return res
         .status(400)
         .json({ success: false, message: "Invalid status value." });
     }
 
-    const organization = await Organization.findById(organizationId);
+    const organization = await Organization.findById(cleanOrganizationId);
 
     if (!organization) {
       return res
@@ -147,7 +151,7 @@ export const getOrganizationMembershipRequests = async (req, res) => {
     // Check if user is admin or owner
     const membership = await Membership.findOne({
       user: req.user.id,
-      organization: organizationId,
+      organization: cleanOrganizationId,
       role: "admin",
       status: "active",
     }).lean();
@@ -160,7 +164,7 @@ export const getOrganizationMembershipRequests = async (req, res) => {
         .json({ success: false, message: "Not authorized to view requests." });
     }
 
-    const filter = { organization: organizationId };
+    const filter = { organization: cleanOrganizationId };
     if (validStatus) {
       filter.status = validStatus;
     }
@@ -218,7 +222,14 @@ export const approveMembershipRequest = async (req, res) => {
         .json({ success: false, message: "Authentication failed." });
     }
 
-    const request = await MembershipRequest.findById(id).populate(
+    if (!isValidObjectId(id)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid membership request ID." });
+    }
+
+    const cleanRequestId = new mongoose.Types.ObjectId(String(id));
+    const request = await MembershipRequest.findById(cleanRequestId).populate(
       "organization"
     );
 
@@ -300,7 +311,14 @@ export const rejectMembershipRequest = async (req, res) => {
         .json({ success: false, message: "Authentication failed." });
     }
 
-    const request = await MembershipRequest.findById(id).populate(
+    if (!isValidObjectId(id)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid membership request ID." });
+    }
+
+    const cleanRequestId = new mongoose.Types.ObjectId(String(id));
+    const request = await MembershipRequest.findById(cleanRequestId).populate(
       "organization"
     );
 
@@ -365,7 +383,14 @@ export const cancelMembershipRequest = async (req, res) => {
         .json({ success: false, message: "Authentication failed." });
     }
 
-    const request = await MembershipRequest.findById(id).lean();
+    if (!isValidObjectId(id)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid membership request ID." });
+    }
+
+    const cleanRequestId = new mongoose.Types.ObjectId(String(id));
+    const request = await MembershipRequest.findById(cleanRequestId);
 
     if (!request) {
       return res

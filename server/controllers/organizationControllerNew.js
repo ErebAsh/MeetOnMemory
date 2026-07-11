@@ -125,7 +125,7 @@ export const getOrganizations = async (req, res) => {
     const { visibility, page = 1, limit = 20 } = req.query;
 
     const filter = {};
-    const validVisibility = visibility && isValidVisibility(visibility) ? visibility : null;
+    const validVisibility = visibility && isValidVisibility(visibility) ? allowedVisibilities.find(v => v === visibility) : null;
     if (visibility) {
       // Validate visibility value
       if (!validVisibility) {
@@ -190,8 +190,8 @@ export const getOrganizationById = async (req, res) => {
     // Try as ObjectId first, then as slug
     const isObjectId = isValidObjectId(idOrSlug);
     const query = isObjectId 
-      ? { _id: idOrSlug } 
-      : { slug: idOrSlug };
+      ? { _id: new mongoose.Types.ObjectId(String(idOrSlug)) } 
+      : { slug: String(idOrSlug) };
 
     const organization = await Organization.findOne(query)
       .populate("owner", "name email")
@@ -232,6 +232,8 @@ export const updateOrganization = async (req, res) => {
         .json({ success: false, message: "Invalid organization ID." });
     }
 
+    const cleanId = new mongoose.Types.ObjectId(String(id));
+
     // Validate visibility if provided
     if (visibility && !isValidVisibility(visibility)) {
       return res
@@ -239,7 +241,9 @@ export const updateOrganization = async (req, res) => {
         .json({ success: false, message: "Invalid visibility value." });
     }
 
-    const organization = await Organization.findById(id);
+    const cleanVisibility = visibility && isValidVisibility(visibility) ? allowedVisibilities.find(v => v === visibility) : undefined;
+
+    const organization = await Organization.findById(cleanId);
 
     if (!organization) {
       return res
@@ -250,7 +254,7 @@ export const updateOrganization = async (req, res) => {
     // Check if user is owner or admin
     const membership = await Membership.findOne({
       user: req.user.id,
-      organization: id,
+      organization: cleanId,
       role: "admin",
       status: "active",
     }).lean();
@@ -265,7 +269,7 @@ export const updateOrganization = async (req, res) => {
     if (name) organization.name = String(name).trim().substring(0, 100);
     if (description !== undefined) organization.description = String(description).trim().substring(0, 500);
     if (logo !== undefined) organization.logo = String(logo).trim().substring(0, 500);
-    if (visibility) organization.visibility = visibility;
+    if (cleanVisibility) organization.visibility = cleanVisibility;
     if (metadata) organization.metadata = typeof metadata === 'object' ? metadata : {};
 
     await organization.save();
@@ -302,7 +306,9 @@ export const deleteOrganization = async (req, res) => {
         .json({ success: false, message: "Invalid organization ID." });
     }
 
-    const organization = await Organization.findById(id);
+    const cleanId = new mongoose.Types.ObjectId(String(id));
+
+    const organization = await Organization.findById(cleanId);
 
     if (!organization) {
       return res
@@ -318,10 +324,10 @@ export const deleteOrganization = async (req, res) => {
     }
 
     // Delete all memberships
-    await Membership.deleteMany({ organization: id });
+    await Membership.deleteMany({ organization: cleanId });
 
     // Delete organization
-    await Organization.findByIdAndDelete(id);
+    await Organization.findByIdAndDelete(cleanId);
 
     res.status(200).json({
       success: true,
@@ -354,7 +360,9 @@ export const getOrganizationMembers = async (req, res) => {
         .json({ success: false, message: "Invalid organization ID." });
     }
 
-    const organization = await Organization.findById(id);
+    const cleanId = new mongoose.Types.ObjectId(String(id));
+
+    const organization = await Organization.findById(cleanId);
 
     if (!organization) {
       return res
@@ -365,7 +373,7 @@ export const getOrganizationMembers = async (req, res) => {
     // Check if user is a member
     const membership = await Membership.findOne({
       user: req.user.id,
-      organization: id,
+      organization: cleanId,
       status: "active",
     }).lean();
 
@@ -377,7 +385,7 @@ export const getOrganizationMembers = async (req, res) => {
 
     // Get all active memberships with user details
     const memberships = await Membership.find({
-      organization: id,
+      organization: cleanId,
       status: "active",
     })
       .populate("user", "name email profilePic isAccountVerified createdAt")
