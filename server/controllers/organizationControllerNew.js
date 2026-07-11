@@ -3,6 +3,26 @@ import Organization from "../models/organizationModel.js";
 import Membership from "../models/membershipModel.js";
 import userModel from "../models/userModel.js";
 import crypto from "crypto";
+import mongoose from "mongoose";
+
+/**
+ * Validate MongoDB ObjectId
+ */
+const isValidObjectId = (id) => {
+  return mongoose.Types.ObjectId.isValid(id);
+};
+
+/**
+ * Whitelist allowed visibility values
+ */
+const allowedVisibilities = ["public", "private"];
+const isValidVisibility = (visibility) => allowedVisibilities.includes(visibility);
+
+/**
+ * Whitelist allowed role values
+ */
+const allowedRoles = ["admin", "member"];
+const isValidRole = (role) => allowedRoles.includes(role);
 
 /**
  * Generate a unique slug from organization name
@@ -106,14 +126,25 @@ export const getOrganizations = async (req, res) => {
 
     const filter = {};
     if (visibility) {
+      // Validate visibility value
+      if (!isValidVisibility(visibility)) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid visibility value." });
+      }
       filter.visibility = visibility;
     }
 
+    // Validate and sanitize pagination parameters
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 20));
+
     const organizations = await Organization.find(filter)
       .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(parseInt(limit))
-      .select("name slug description logo visibility owner createdAt");
+      .skip((pageNum - 1) * limitNum)
+      .limit(limitNum)
+      .select("name slug description logo visibility owner createdAt")
+      .lean();
 
     const total = await Organization.countDocuments(filter);
 
@@ -121,10 +152,10 @@ export const getOrganizations = async (req, res) => {
       success: true,
       organizations,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page: pageNum,
+        limit: limitNum,
         total,
-        pages: Math.ceil(total / limit),
+        pages: Math.ceil(total / limitNum),
       },
     });
   } catch (error) {
@@ -141,9 +172,23 @@ export const getOrganizationById = async (req, res) => {
   try {
     const { idOrSlug } = req.params;
 
-    const organization = await Organization.findOne({
-      $or: [{ _id: idOrSlug }, { slug: idOrSlug }],
-    }).populate("owner", "name email");
+    // Validate input - only allow alphanumeric, hyphens, and underscores for slug
+    const slugRegex = /^[a-zA-Z0-9-_]+$/;
+    if (!slugRegex.test(idOrSlug)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid organization identifier." });
+    }
+
+    // Try as ObjectId first, then as slug
+    const isObjectId = isValidObjectId(idOrSlug);
+    const query = isObjectId 
+      ? { _id: idOrSlug } 
+      : { slug: idOrSlug };
+
+    const organization = await Organization.findOne(query)
+      .populate("owner", "name email")
+      .lean();
 
     if (!organization) {
       return res
@@ -173,6 +218,20 @@ export const updateOrganization = async (req, res) => {
         .json({ success: false, message: "Authentication failed." });
     }
 
+    // Validate organizationId
+    if (!isValidObjectId(id)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid organization ID." });
+    }
+
+    // Validate visibility if provided
+    if (visibility && !isValidVisibility(visibility)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid visibility value." });
+    }
+
     const organization = await Organization.findById(id);
 
     if (!organization) {
@@ -187,7 +246,7 @@ export const updateOrganization = async (req, res) => {
       organization: id,
       role: "admin",
       status: "active",
-    });
+    }).lean();
 
     if (!membership && organization.owner.toString() !== req.user.id.toString()) {
       return res
@@ -195,12 +254,12 @@ export const updateOrganization = async (req, res) => {
         .json({ success: false, message: "Not authorized to update this organization." });
     }
 
-    // Update fields
-    if (name) organization.name = name.trim();
-    if (description !== undefined) organization.description = description;
-    if (logo !== undefined) organization.logo = logo;
+    // Update fields with sanitization
+    if (name) organization.name = String(name).trim().substring(0, 100);
+    if (description !== undefined) organization.description = String(description).trim().substring(0, 500);
+    if (logo !== undefined) organization.logo = String(logo).trim().substring(0, 500);
     if (visibility) organization.visibility = visibility;
-    if (metadata) organization.metadata = metadata;
+    if (metadata) organization.metadata = typeof metadata === 'object' ? metadata : {};
 
     await organization.save();
 
@@ -227,6 +286,13 @@ export const deleteOrganization = async (req, res) => {
       return res
         .status(401)
         .json({ success: false, message: "Authentication failed." });
+    }
+
+    // Validate organizationId
+    if (!isValidObjectId(id)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid organization ID." });
     }
 
     const organization = await Organization.findById(id);
@@ -274,6 +340,13 @@ export const getOrganizationMembers = async (req, res) => {
         .json({ success: false, message: "Authentication failed." });
     }
 
+    // Validate organizationId
+    if (!isValidObjectId(id)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid organization ID." });
+    }
+
     const organization = await Organization.findById(id);
 
     if (!organization) {
@@ -287,7 +360,7 @@ export const getOrganizationMembers = async (req, res) => {
       user: req.user.id,
       organization: id,
       status: "active",
-    });
+    }).lean();
 
     if (!membership) {
       return res
@@ -301,7 +374,8 @@ export const getOrganizationMembers = async (req, res) => {
       status: "active",
     })
       .populate("user", "name email profilePic isAccountVerified createdAt")
-      .sort({ joinedAt: -1 });
+      .sort({ joinedAt: -1 })
+      .lean();
 
     const members = memberships.map((m) => ({
       _id: m.user._id,

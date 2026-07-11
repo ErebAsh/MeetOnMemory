@@ -3,6 +3,20 @@ import MembershipRequest from "../models/membershipRequestModel.js";
 import Membership from "../models/membershipModel.js";
 import Organization from "../models/organizationModel.js";
 import userModel from "../models/userModel.js";
+import mongoose from "mongoose";
+
+/**
+ * Validate MongoDB ObjectId
+ */
+const isValidObjectId = (id) => {
+  return mongoose.Types.ObjectId.isValid(id);
+};
+
+/**
+ * Whitelist allowed status values
+ */
+const allowedStatuses = ["pending", "approved", "rejected", "cancelled"];
+const isValidStatus = (status) => allowedStatuses.includes(status);
 
 /**
  * ✅ Create Membership Request
@@ -24,6 +38,13 @@ export const createMembershipRequest = async (req, res) => {
         .json({ success: false, message: "Organization ID is required." });
     }
 
+    // Validate organizationId
+    if (!isValidObjectId(organizationId)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid organization ID." });
+    }
+
     const userId = req.user.id;
 
     // Check if organization exists
@@ -40,7 +61,7 @@ export const createMembershipRequest = async (req, res) => {
       user: userId,
       organization: organizationId,
       status: "active",
-    });
+    }).lean();
 
     if (existingMembership) {
       return res
@@ -53,7 +74,7 @@ export const createMembershipRequest = async (req, res) => {
       user: userId,
       organization: organizationId,
       status: "pending",
-    });
+    }).lean();
 
     if (existingRequest) {
       return res
@@ -65,7 +86,7 @@ export const createMembershipRequest = async (req, res) => {
     const membershipRequest = await MembershipRequest.create({
       user: userId,
       organization: organizationId,
-      message: message || "",
+      message: message ? String(message).trim().substring(0, 500) : "",
       status: "pending",
     });
 
@@ -100,6 +121,20 @@ export const getOrganizationMembershipRequests = async (req, res) => {
         .json({ success: false, message: "Authentication failed." });
     }
 
+    // Validate organizationId
+    if (!isValidObjectId(organizationId)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid organization ID." });
+    }
+
+    // Validate status if provided
+    if (status && !isValidStatus(status)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid status value." });
+    }
+
     const organization = await Organization.findById(organizationId);
 
     if (!organization) {
@@ -114,7 +149,7 @@ export const getOrganizationMembershipRequests = async (req, res) => {
       organization: organizationId,
       role: "admin",
       status: "active",
-    });
+    }).lean();
 
     const isOwner = organization.owner.toString() === req.user.id.toString();
 
@@ -131,7 +166,8 @@ export const getOrganizationMembershipRequests = async (req, res) => {
 
     const requests = await MembershipRequest.find(filter)
       .populate("user", "name email profilePic isAccountVerified")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     res.status(200).json({ success: true, requests });
   } catch (error) {
@@ -156,7 +192,8 @@ export const getUserMembershipRequests = async (req, res) => {
       user: req.user.id,
     })
       .populate("organization", "name slug description logo")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     res.status(200).json({ success: true, requests });
   } catch (error) {
@@ -202,7 +239,7 @@ export const approveMembershipRequest = async (req, res) => {
       organization: request.organization._id,
       role: "admin",
       status: "active",
-    });
+    }).lean();
 
     const isOwner =
       request.organization.owner.toString() === req.user.id.toString();
@@ -217,7 +254,7 @@ export const approveMembershipRequest = async (req, res) => {
     request.status = "approved";
     request.reviewedBy = req.user.id;
     request.reviewedAt = new Date();
-    request.reviewNotes = reviewNotes || "";
+    request.reviewNotes = reviewNotes ? String(reviewNotes).trim().substring(0, 500) : "";
     await request.save();
 
     // Create membership
@@ -284,7 +321,7 @@ export const rejectMembershipRequest = async (req, res) => {
       organization: request.organization._id,
       role: "admin",
       status: "active",
-    });
+    }).lean();
 
     const isOwner =
       request.organization.owner.toString() === req.user.id.toString();
@@ -299,7 +336,7 @@ export const rejectMembershipRequest = async (req, res) => {
     request.status = "rejected";
     request.reviewedBy = req.user.id;
     request.reviewedAt = new Date();
-    request.reviewNotes = reviewNotes || "";
+    request.reviewNotes = reviewNotes ? String(reviewNotes).trim().substring(0, 500) : "";
     await request.save();
 
     res.status(200).json({
@@ -327,7 +364,7 @@ export const cancelMembershipRequest = async (req, res) => {
         .json({ success: false, message: "Authentication failed." });
     }
 
-    const request = await MembershipRequest.findById(id);
+    const request = await MembershipRequest.findById(id).lean();
 
     if (!request) {
       return res

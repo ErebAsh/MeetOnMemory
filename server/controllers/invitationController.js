@@ -4,6 +4,36 @@ import Membership from "../models/membershipModel.js";
 import Organization from "../models/organizationModel.js";
 import userModel from "../models/userModel.js";
 import crypto from "crypto";
+import mongoose from "mongoose";
+
+/**
+ * Validate MongoDB ObjectId
+ */
+const isValidObjectId = (id) => {
+  return mongoose.Types.ObjectId.isValid(id);
+};
+
+/**
+ * Sanitize and validate email
+ */
+const sanitizeEmail = (email) => {
+  if (!email || typeof email !== "string") return null;
+  const sanitized = email.trim().toLowerCase();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(sanitized) ? sanitized : null;
+};
+
+/**
+ * Whitelist allowed status values
+ */
+const allowedStatuses = ["pending", "accepted", "rejected", "revoked", "expired"];
+const isValidStatus = (status) => allowedStatuses.includes(status);
+
+/**
+ * Whitelist allowed role values
+ */
+const allowedRoles = ["admin", "member"];
+const isValidRole = (role) => allowedRoles.includes(role);
 
 /**
  * Generate unique invitation token
@@ -32,6 +62,28 @@ export const createInvitation = async (req, res) => {
         .json({ success: false, message: "Organization ID and email are required." });
     }
 
+    // Validate organizationId
+    if (!isValidObjectId(organizationId)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid organization ID." });
+    }
+
+    // Validate and sanitize email
+    const sanitizedEmail = sanitizeEmail(email);
+    if (!sanitizedEmail) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid email address." });
+    }
+
+    // Validate role if provided
+    if (role && !isValidRole(role)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid role. Must be 'admin' or 'member'." });
+    }
+
     const userId = req.user.id;
 
     // Check if organization exists
@@ -49,7 +101,7 @@ export const createInvitation = async (req, res) => {
       organization: organizationId,
       role: "admin",
       status: "active",
-    });
+    }).lean();
 
     const isOwner = organization.owner.toString() === userId.toString();
 
@@ -60,13 +112,13 @@ export const createInvitation = async (req, res) => {
     }
 
     // Check if email already has an active membership
-    const existingUser = await userModel.findOne({ email: email.toLowerCase() });
+    const existingUser = await userModel.findOne({ email: sanitizedEmail }).lean();
     if (existingUser) {
       const existingMembership = await Membership.findOne({
         user: existingUser._id,
         organization: organizationId,
         status: "active",
-      });
+      }).lean();
 
       if (existingMembership) {
         return res
@@ -77,10 +129,10 @@ export const createInvitation = async (req, res) => {
 
     // Check if there's a pending invitation for this email
     const existingInvitation = await Invitation.findOne({
-      email: email.toLowerCase(),
+      email: sanitizedEmail,
       organization: organizationId,
       status: "pending",
-    });
+    }).lean();
 
     if (existingInvitation) {
       return res
@@ -95,13 +147,13 @@ export const createInvitation = async (req, res) => {
     // Create invitation
     const invitation = await Invitation.create({
       organization: organizationId,
-      email: email.toLowerCase(),
+      email: sanitizedEmail,
       invitedBy: userId,
       token: generateInvitationToken(),
       role: role || "member",
       status: "pending",
       expiresAt,
-      message: message || "",
+      message: message ? String(message).trim().substring(0, 500) : "",
     });
 
     res.status(201).json({
@@ -135,6 +187,20 @@ export const getOrganizationInvitations = async (req, res) => {
         .json({ success: false, message: "Authentication failed." });
     }
 
+    // Validate organizationId
+    if (!isValidObjectId(organizationId)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid organization ID." });
+    }
+
+    // Validate status if provided
+    if (status && !isValidStatus(status)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid status value." });
+    }
+
     const organization = await Organization.findById(organizationId);
 
     if (!organization) {
@@ -166,7 +232,8 @@ export const getOrganizationInvitations = async (req, res) => {
 
     const invitations = await Invitation.find(filter)
       .populate("invitedBy", "name email")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     res.status(200).json({ success: true, invitations });
   } catch (error) {
