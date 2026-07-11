@@ -1,5 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
-import AppContent from "../context/AppContent";
+import React, { useEffect, useState } from "react";
 import { organizationApi } from "../services";
 import { toast } from "react-toastify";
 import Navbar from "../components/Navbar";
@@ -7,6 +6,7 @@ import OrganizationHeader from "../components/organization/OrganizationHeader";
 import OrganizationGrid from "../components/organization/OrganizationGrid";
 import OrganizationEmptyState from "../components/organization/OrganizationEmptyState";
 
+// Organization Hub page for managing user organizations
 const OrganizationHub = () => {
   const [organizations, setOrganizations] = useState([]);
   const [loading, setLoading] = useState(true);
