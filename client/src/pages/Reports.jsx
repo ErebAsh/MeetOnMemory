@@ -18,10 +18,9 @@ const Reports = () => {
     // 🧠 Generate Gemini-based insights
     const fetchAIInsights = async (summary) => {
       try {
-        const prompt = `Based on these platform stats, provide 2 actionable insights for productivity: ${JSON.stringify(summary)}`;
-        const aiRes = await analyticsApi.askAnalyticsChat({ message: prompt });
+        const aiRes = await analyticsApi.askAnalyticsChat({ summary });
         if (aiRes.data.success) {
-          setAiInsights(aiRes.data.reply);
+          setAiInsights(aiRes.data.insight);
         } else {
           setAiInsights("AI insights unavailable — please try again later.");
         }

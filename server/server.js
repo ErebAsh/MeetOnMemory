@@ -17,12 +17,13 @@ import analyticsRoutes from "./routes/analyticsRoutes.js";
 import geminiRoutes from "./routes/geminiRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
+import knowledgeRoutes from "./routes/knowledgeRoutes.js";
+import sessionRoutes from "./routes/sessionRoutes.js";
 
 import { initVectorStore } from "./utils/embeddingUtils.js";
 import meetingSocket from "./socket/meetingSocket.js";
 import { initRedis } from "./services/redisService.js";
 import { globalLimiter } from "./middleware/rateLimiter.js";
-import knowledgeRoutes from "./routes/knowledgeRoutes.js";
 dotenv.config();
 
 const app = express();
@@ -147,6 +148,7 @@ app.use("/api/gemini", geminiRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/knowledge", knowledgeRoutes);
+app.use("/api/sessions", sessionRoutes);
 
 // ================================
 // VECTOR STORE INIT (Non-blocking)

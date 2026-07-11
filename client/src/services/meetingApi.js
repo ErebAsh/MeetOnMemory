@@ -1,7 +1,7 @@
 import apiClient from "./apiClient";
 
 export const meetingApi = {
-  scheduleMeeting: (data) => apiClient.post("/api/meetings/schedule", data),
+  scheduleMeeting: (data) => apiClient.post("/api/meetings/create", data),
   notifyLive: (data) => apiClient.post("/api/meetings/notify-live", data),
   generateSession: (formData, config) =>
     apiClient.post("/api/sessions/generate", formData, config),
