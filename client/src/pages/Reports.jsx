@@ -53,15 +53,15 @@ const Reports = () => {
 
   if (loading)
     return (
-      <div className="min-h-screen bg-gray-50 flex justify-center items-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex justify-center items-center">
         <Loader2 className="animate-spin w-8 h-8 text-gray-500" />
-        <span className="ml-3 text-gray-600">Loading analytics...</span>
+        <span className="ml-3 text-gray-600 dark:text-gray-400">Loading analytics...</span>
       </div>
     );
 
   if (!data)
     return (
-      <div className="min-h-screen bg-gray-50 flex justify-center items-center text-gray-600">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex justify-center items-center text-gray-600 dark:text-gray-400">
         No data available.
       </div>
     );
@@ -100,19 +100,19 @@ const Reports = () => {
           summary.completedMeetings,
           summary.totalMeetings - summary.completedMeetings,
         ],
-        backgroundColor: ["#6366F1", "#E5E7EB"],
+        backgroundColor: ["#6366F1", "rgba(148, 163, 184, 0.3)"],
       },
     ],
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-800 dark:text-gray-200">
       <Navbar />
       <div className="max-w-6xl mx-auto text-center pt-24 pb-20 px-6">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2 flex justify-center items-center gap-2">
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2 flex justify-center items-center gap-2">
           <BarChart4 className="text-indigo-600 w-8 h-8" /> Reports & Analytics
         </h1>
-        <p className="text-gray-600 mb-10">
+        <p className="text-gray-600 dark:text-gray-400 mb-10">
           Visualize trends — meetings held, policies updated, and AI-powered
           insights.
         </p>
@@ -143,15 +143,15 @@ const Reports = () => {
 
         {/* Charts Section */}
         <div className="grid md:grid-cols-2 gap-8 mb-10">
-          <div className="bg-white p-6 rounded-xl shadow-md">
-            <h2 className="text-lg font-semibold mb-3">
+          <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-md border dark:border-gray-800">
+            <h2 className="text-lg font-semibold dark:text-white mb-3">
               📈 Meetings Activity (6 Months)
             </h2>
             <Line data={meetingTrendData} />
           </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-md">
-            <h2 className="text-lg font-semibold mb-3">
+          <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-md border dark:border-gray-800">
+            <h2 className="text-lg font-semibold dark:text-white mb-3">
               📊 Policies Activity (6 Months)
             </h2>
             <Bar data={policyTrendData} />
@@ -159,19 +159,19 @@ const Reports = () => {
         </div>
 
         {/* Pie Chart */}
-        <div className="bg-white p-6 rounded-xl shadow-md max-w-2xl mx-auto mb-10">
-          <h2 className="text-lg font-semibold mb-3 flex items-center justify-center gap-2">
+        <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-md border dark:border-gray-800 max-w-2xl mx-auto mb-10">
+          <h2 className="text-lg font-semibold dark:text-white mb-3 flex items-center justify-center gap-2">
             <PieChart className="text-indigo-600 w-5 h-5" /> Meetings Status
           </h2>
           <Pie data={pieData} />
         </div>
 
         {/* AI Insights Section */}
-        <div className="bg-white p-6 rounded-xl shadow-md text-left">
-          <h2 className="text-xl font-semibold mb-3 flex items-center gap-2">
+        <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-md border dark:border-gray-800 text-left">
+          <h2 className="text-xl font-semibold dark:text-white mb-3 flex items-center gap-2">
             <Brain className="text-purple-600 w-6 h-6" /> AI Insights
           </h2>
-          <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+          <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
             {aiInsights}
           </p>
         </div>
@@ -183,10 +183,10 @@ const Reports = () => {
 // 🔹 Stats Card Component
 const StatCard = ({ title, value, color }) => {
   const colorMap = {
-    indigo: "bg-indigo-50 text-indigo-700",
-    green: "bg-green-50 text-green-700",
-    blue: "bg-blue-50 text-blue-700",
-    purple: "bg-purple-50 text-purple-700",
+    indigo: "bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 border dark:border-indigo-900/50",
+    green: "bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-300 border dark:border-green-900/50",
+    blue: "bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 border dark:border-blue-900/50",
+    purple: "bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300 border dark:border-purple-900/50",
   };
   return (
     <div

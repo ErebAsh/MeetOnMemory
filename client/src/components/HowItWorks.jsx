@@ -259,22 +259,22 @@ const HowItWorks = () => {
   return (
     <section
       id="how-it-works"
-      className="py-24 bg-linear-to-b from-slate-50 to-white overflow-hidden"
+      className="py-24 bg-linear-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900 overflow-hidden"
     >
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 sm:mb-20">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wider text-blue-700 bg-blue-50 border border-blue-200/50 uppercase">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wider text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 border border-blue-200/50 dark:border-blue-800 uppercase">
             <Sparkles className="w-3.5 h-3.5" /> Core Workflow
           </span>
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 mt-4 mb-6 leading-tight">
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-white mt-4 mb-6 leading-tight">
             How{" "}
             <span className="bg-linear-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">
               MeetOnMemory
             </span>{" "}
             Works
           </h2>
-          <p className="text-lg text-gray-600 leading-relaxed font-medium">
+          <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
             Transform meeting voice and transcripts into searchable structured
             knowledge. Learn how we capture and preserve your organization's
             memory in 5 steps.
@@ -289,7 +289,7 @@ const HowItWorks = () => {
             ref={scrollContainerRef}
           >
             {/* Visual connector line in background (desktop only) */}
-            <div className="absolute left-[34px] top-6 bottom-6 w-0.5 border-l-2 border-dashed border-gray-200 hidden lg:block -z-10" />
+            <div className="absolute left-[34px] top-6 bottom-6 w-0.5 border-l-2 border-dashed border-gray-200 dark:border-slate-800 hidden lg:block -z-10" />
 
             {steps.map((step, idx) => {
               const Icon = step.icon;
@@ -301,8 +301,8 @@ const HowItWorks = () => {
                   onClick={() => setActiveStep(idx)}
                   className={`group relative flex gap-6 items-start p-5 rounded-2xl cursor-pointer border transition-all duration-300 ${
                     isActive
-                      ? "bg-white border-blue-200 shadow-xl shadow-blue-100/30 scale-[1.02]"
-                      : "bg-white/50 border-gray-100 hover:bg-white hover:border-gray-200 hover:shadow-lg"
+                      ? "bg-white dark:bg-slate-800 border-blue-200 dark:border-blue-900 shadow-xl shadow-blue-100/30 dark:shadow-none scale-[1.02]"
+                      : "bg-white/50 dark:bg-slate-900/40 border-gray-100 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-800 hover:border-gray-200 dark:hover:border-slate-700 hover:shadow-lg"
                   }`}
                 >
                   {/* Icon & Number Badge */}
@@ -313,7 +313,7 @@ const HowItWorks = () => {
                       <Icon className="w-6 h-6" />
                     </div>
                     {/* Floating Step Number */}
-                    <span className="absolute -top-2.5 -right-2.5 w-6 h-6 rounded-full bg-white border border-gray-100 shadow-sm flex items-center justify-center text-[10px] font-bold text-gray-500">
+                    <span className="absolute -top-2.5 -right-2.5 w-6 h-6 rounded-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-[10px] font-bold text-gray-500 dark:text-gray-400">
                       {step.number}
                     </span>
                   </div>
@@ -322,18 +322,18 @@ const HowItWorks = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
                       <h3
-                        className={`text-lg font-bold transition-colors ${isActive ? "text-gray-900" : "text-gray-800 group-hover:text-blue-600"}`}
+                        className={`text-lg font-bold transition-colors ${isActive ? "text-gray-900 dark:text-white" : "text-gray-800 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400"}`}
                       >
                         {step.title}
                       </h3>
                       {isActive && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-100 animate-pulse">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-800 animate-pulse">
                           Live Demo
                         </span>
                       )}
                     </div>
                     <p
-                      className={`text-sm leading-relaxed transition-colors ${isActive ? "text-gray-600" : "text-gray-500"}`}
+                      className={`text-sm leading-relaxed transition-colors ${isActive ? "text-gray-600 dark:text-gray-300" : "text-gray-500 dark:text-gray-400"}`}
                     >
                       {step.description}
                     </p>
@@ -350,9 +350,9 @@ const HowItWorks = () => {
 
           {/* Right Column: Interactive Sandbox Display (Sticky) */}
           <div className="lg:col-span-7 lg:sticky lg:top-24">
-            <div className="bg-white/85 backdrop-blur-xl border border-gray-200/60 rounded-3xl p-6 sm:p-8 shadow-xl shadow-blue-50/50 min-h-[460px] flex flex-col justify-between">
+            <div className="bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border border-gray-200/60 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl shadow-blue-50/50 dark:shadow-none min-h-[460px] flex flex-col justify-between">
               {/* Header inside Showcase Card */}
-              <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-6">
+              <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-800 mb-6">
                 <div className="flex items-center gap-2.5">
                   <div
                     className={`p-2 rounded-lg bg-gradient-to-br ${steps[activeStep].color} text-white`}
@@ -362,10 +362,10 @@ const HowItWorks = () => {
                     })}
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-slate-500">
                       Interactive Sandbox
                     </p>
-                    <h4 className="text-base font-bold text-gray-800">
+                    <h4 className="text-base font-bold text-gray-800 dark:text-gray-200">
                       {steps[activeStep].title} Simulation
                     </h4>
                   </div>
@@ -373,7 +373,7 @@ const HowItWorks = () => {
 
                 <button
                   onClick={restartSimulation}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-500 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors border border-gray-100 bg-white"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-lg transition-colors border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900"
                   title="Restart Simulation"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
@@ -385,8 +385,8 @@ const HowItWorks = () => {
               <div className="flex-1 flex flex-col justify-center">
                 {/* -------------------- STEP 1: CREATE ORGANIZATION -------------------- */}
                 {activeStep === 0 && (
-                  <div className="max-w-md mx-auto w-full bg-slate-50 border border-gray-100 rounded-2xl p-5 shadow-inner">
-                    <h5 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-1.5">
+                  <div className="max-w-md mx-auto w-full bg-slate-50 dark:bg-slate-950/40 border border-gray-100 dark:border-slate-800/60 rounded-2xl p-5 shadow-inner">
+                    <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-1.5">
                       <Users className="w-4 h-4 text-blue-600" /> Create
                       Workspace
                     </h5>
@@ -394,7 +394,7 @@ const HowItWorks = () => {
                     {!simulationState.orgCreated ? (
                       <div className="space-y-4">
                         <div>
-                          <label className="block text-xs font-semibold text-gray-500 mb-1">
+                          <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
                             Organization Name
                           </label>
                           <input
@@ -406,12 +406,12 @@ const HowItWorks = () => {
                                 orgName: e.target.value,
                               }))
                             }
-                            className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-blue-500 transition-colors"
+                            className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 transition-colors"
                             placeholder="Enter org name..."
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-gray-500 mb-1">
+                          <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
                             Add Members
                           </label>
                           <div className="flex gap-2">
@@ -424,7 +424,7 @@ const HowItWorks = () => {
                                   newMember: e.target.value,
                                 }))
                               }
-                              className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-blue-500"
+                              className="flex-1 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:border-blue-500 dark:focus:border-blue-500"
                               placeholder="e.g. John Doe"
                               onKeyDown={(e) => {
                                 if (
@@ -467,7 +467,7 @@ const HowItWorks = () => {
                           {simulationState.orgMembers.map((member, i) => (
                             <span
                               key={i}
-                              className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-200/60 text-gray-700 font-medium"
+                              className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-200/60 dark:bg-slate-800 text-gray-700 dark:text-gray-300 font-medium"
                             >
                               {member}
                             </span>
@@ -493,10 +493,10 @@ const HowItWorks = () => {
                           <CheckCircle2 className="w-6 h-6" />
                         </div>
                         <div>
-                          <h6 className="font-bold text-gray-800 text-base">
+                          <h6 className="font-bold text-gray-800 dark:text-gray-200 text-base">
                             Organization Created!
                           </h6>
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                             Welcome to your organization dashboard for{" "}
                             <strong className="text-blue-600">
                               {simulationState.orgName}
@@ -504,7 +504,7 @@ const HowItWorks = () => {
                             .
                           </p>
                         </div>
-                        <div className="bg-white border border-gray-100 rounded-lg p-2 text-xs font-semibold text-gray-600 max-w-xs mx-auto truncate select-all cursor-pointer">
+                        <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-lg p-2 text-xs font-semibold text-gray-600 dark:text-gray-300 max-w-xs mx-auto truncate select-all cursor-pointer">
                           https://meetonmemory.com/join/invite-
                           {Math.random().toString(36).substring(2, 7)}
                         </div>
@@ -527,7 +527,7 @@ const HowItWorks = () => {
                 {/* -------------------- STEP 2: UPLOAD MEETING -------------------- */}
                 {activeStep === 1 && (
                   <div className="max-w-md mx-auto w-full">
-                    <div className="border-2 border-dashed border-gray-200/80 rounded-2xl p-6 bg-slate-50 text-center flex flex-col items-center justify-center min-h-[220px] transition-all hover:bg-slate-50/50">
+                    <div className="border-2 border-dashed border-gray-200/80 dark:border-slate-800 rounded-2xl p-6 bg-slate-50 dark:bg-slate-950/40 text-center flex flex-col items-center justify-center min-h-[220px] transition-all hover:bg-slate-50/50 dark:hover:bg-slate-950/20">
                       {!simulationState.uploadDone ? (
                         <>
                           <div
@@ -538,10 +538,10 @@ const HowItWorks = () => {
 
                           {simulationState.uploading ? (
                             <div className="w-full space-y-2">
-                              <p className="text-sm font-semibold text-gray-700">
+                              <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                                 Uploading Product_Review.mp4...
                               </p>
-                              <div className="w-full bg-gray-200 rounded-full h-2 max-w-xs mx-auto overflow-hidden">
+                              <div className="w-full bg-gray-200 dark:bg-slate-800 rounded-full h-2 max-w-xs mx-auto overflow-hidden">
                                 <div
                                   className="bg-blue-600 h-2 rounded-full transition-all duration-200"
                                   style={{
@@ -555,16 +555,16 @@ const HowItWorks = () => {
                             </div>
                           ) : (
                             <div>
-                              <p className="text-sm font-bold text-gray-700 mb-1">
+                              <p className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
                                 Upload meeting file
                               </p>
-                              <p className="text-xs text-gray-500 mb-4 max-w-xs">
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mb-4 max-w-xs">
                                 Drag and drop audio/video file here, or click to
                                 browse
                               </p>
                               <button
                                 onClick={restartSimulation}
-                                className="bg-white border border-gray-200 text-gray-700 px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-50 shadow-sm"
+                                className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 text-gray-700 dark:text-gray-300 px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-50 dark:hover:bg-slate-800 shadow-sm"
                               >
                                 Select File
                               </button>
@@ -577,7 +577,7 @@ const HowItWorks = () => {
                             <CheckCircle2 className="w-6 h-6" />
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-gray-800">
+                            <p className="text-sm font-bold text-gray-800 dark:text-gray-200">
                               Q3_Strategic_Review.mp4
                             </p>
                             <p className="text-xs text-emerald-600 font-semibold mt-0.5">
@@ -585,7 +585,7 @@ const HowItWorks = () => {
                             </p>
                           </div>
                           <div className="flex gap-2 max-w-xs mx-auto justify-center">
-                            <span className="px-2 py-1 rounded bg-indigo-50 border border-indigo-100 text-[10px] font-semibold text-indigo-700">
+                            <span className="px-2 py-1 rounded bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900 text-[10px] font-semibold text-indigo-700 dark:text-indigo-300">
                               Ready for AI processing
                             </span>
                           </div>
@@ -708,7 +708,7 @@ const HowItWorks = () => {
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                         <SearchIcon className="w-4 h-4" />
                       </div>
-                      <div className="w-full bg-slate-50 border border-gray-200 rounded-xl pl-9 pr-20 py-2.5 text-sm text-gray-800 flex items-center min-h-[42px] relative">
+                      <div className="w-full bg-slate-50 dark:bg-slate-950/40 border border-gray-200 dark:border-slate-800 rounded-xl pl-9 pr-20 py-2.5 text-sm text-gray-800 dark:text-gray-200 flex items-center min-h-[42px] relative">
                         {simulationState.searchQuery}
                         {/* Cursor blinking */}
                         <span className="inline-block w-0.5 h-4 bg-blue-600 animate-pulse ml-0.5" />
@@ -735,22 +735,22 @@ const HowItWorks = () => {
                           {simulationState.searchResults.map((result, idx) => (
                             <div
                               key={idx}
-                              className="bg-slate-50 border border-gray-100 p-3.5 rounded-xl flex justify-between items-start gap-4 hover:border-gray-200 transition-colors"
+                              className="bg-slate-50 dark:bg-slate-950/40 border border-gray-100 dark:border-slate-800/60 p-3.5 rounded-xl flex justify-between items-start gap-4 hover:border-gray-200 dark:hover:border-slate-800 transition-colors"
                             >
                               <div className="space-y-1">
                                 <div className="flex items-center gap-2">
-                                  <h6 className="text-xs font-bold text-gray-800">
+                                  <h6 className="text-xs font-bold text-gray-800 dark:text-gray-200">
                                     {result.title}
                                   </h6>
                                   <span className="text-[9px] text-gray-400 font-medium">
                                     {result.date}
                                   </span>
                                 </div>
-                                <p className="text-xs text-gray-600 italic">
+                                <p className="text-xs text-gray-600 dark:text-gray-400 italic">
                                   "{result.snippet}"
                                 </p>
                               </div>
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 flex-shrink-0">
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-900 flex-shrink-0">
                                 {result.matchScore}% match
                               </span>
                             </div>
@@ -763,9 +763,9 @@ const HowItWorks = () => {
 
                 {/* -------------------- STEP 5: GENERATE REPORTS -------------------- */}
                 {activeStep === 4 && (
-                  <div className="max-w-md mx-auto w-full space-y-5 bg-slate-50 border border-gray-100 rounded-2xl p-5 shadow-inner">
-                    <div className="flex justify-between items-center pb-2 border-b border-gray-200/60">
-                      <span className="text-xs font-bold text-gray-700">
+                  <div className="max-w-md mx-auto w-full space-y-5 bg-slate-50 dark:bg-slate-950/40 border border-gray-100 dark:border-slate-800/60 rounded-2xl p-5 shadow-inner">
+                    <div className="flex justify-between items-center pb-2 border-b border-gray-200/60 dark:border-slate-800">
+                      <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
                         Analytics Briefing
                       </span>
                       <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
@@ -774,37 +774,37 @@ const HowItWorks = () => {
                     </div>
 
                     <div className="grid grid-cols-3 gap-3">
-                      <div className="bg-white border border-gray-200 p-2.5 rounded-xl text-center">
+                      <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 p-2.5 rounded-xl text-center">
                         <span className="text-[10px] text-gray-400 font-bold uppercase block">
                           Meetings
                         </span>
-                        <span className="text-lg font-bold text-gray-800">
+                        <span className="text-lg font-bold text-gray-800 dark:text-gray-200">
                           42
                         </span>
                       </div>
-                      <div className="bg-white border border-gray-200 p-2.5 rounded-xl text-center">
+                      <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 p-2.5 rounded-xl text-center">
                         <span className="text-[10px] text-gray-400 font-bold uppercase block">
                           Hours
                         </span>
-                        <span className="text-lg font-bold text-gray-800">
+                        <span className="text-lg font-bold text-gray-800 dark:text-gray-200">
                           84h
                         </span>
                       </div>
-                      <div className="bg-white border border-gray-200 p-2.5 rounded-xl text-center">
+                      <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 p-2.5 rounded-xl text-center">
                         <span className="text-[10px] text-gray-400 font-bold uppercase block">
                           Decisions
                         </span>
-                        <span className="text-lg font-bold text-gray-800">
+                        <span className="text-lg font-bold text-gray-800 dark:text-gray-200">
                           12
                         </span>
                       </div>
                     </div>
 
-                    <div className="bg-white border border-gray-200 rounded-xl p-3.5 space-y-2">
+                    <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-3.5 space-y-2">
                       <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide block">
                         Recent AI Briefings
                       </span>
-                      <div className="flex items-center justify-between text-xs text-gray-600 hover:text-blue-600 cursor-pointer">
+                      <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-350 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer">
                         <span className="flex items-center gap-1.5 font-medium">
                           <FileText className="w-3.5 h-3.5 text-rose-500" />
                           Executive_Product_Report_Q3.pdf
@@ -846,8 +846,8 @@ const HowItWorks = () => {
                         )}
                       </button>
                     ) : (
-                      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-emerald-800 text-xs font-semibold">
+                      <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 rounded-xl p-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-350 text-xs font-semibold">
                           <div className="p-1 rounded-full bg-emerald-100 text-emerald-600">
                             <FileCheck className="w-4 h-4" />
                           </div>
@@ -871,7 +871,7 @@ const HowItWorks = () => {
               </div>
 
               {/* Progress Stepper indicator under showcase */}
-              <div className="pt-6 border-t border-gray-100 flex justify-between items-center text-xs text-gray-500 mt-6 flex-wrap gap-2">
+              <div className="pt-6 border-t border-gray-100 dark:border-slate-800 flex justify-between items-center text-xs text-gray-500 mt-6 flex-wrap gap-2">
                 <span>Step {steps[activeStep].number} of 5</span>
 
                 <div className="flex gap-1">
@@ -882,7 +882,7 @@ const HowItWorks = () => {
                       className={`h-1.5 rounded-full transition-all duration-300 ${
                         activeStep === i
                           ? `w-6 bg-gradient-to-r ${steps[i].color}`
-                          : "w-2 bg-gray-200 hover:bg-gray-300"
+                          : "w-2 bg-gray-200 dark:bg-slate-800 hover:bg-gray-300 dark:hover:bg-slate-700"
                       }`}
                       aria-label={`Go to step ${i + 1}`}
                     />

@@ -17,16 +17,16 @@ const CreateMeeting = () => {
   const sessionCardsHooks = useSessionCards();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-slate-800 dark:text-slate-200">
       <Navbar />
 
       <div className="max-w-6xl mx-auto px-6 py-20 md:py-28">
         {/* Header */}
         <div className="text-center mb-10">
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-3">
             📝 Meeting & Event Hub
           </h1>
-          <p className="text-gray-600 max-w-3xl mx-auto">
+          <p className="text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
             Schedule meetings with calendar integration, start live meetings
             with AI transcription, or create session cards for conferences.
           </p>

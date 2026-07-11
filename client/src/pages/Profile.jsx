@@ -156,29 +156,29 @@ const Profile = () => {
     : "Member";
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-slate-50 via-white to-slate-50 text-slate-800 flex flex-col font-sans select-none">
+    <div className="min-h-screen bg-linear-to-b from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-800 dark:text-slate-200 flex flex-col font-sans select-none">
       <Navbar />
 
       <main className="flex-1 w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16 flex flex-col justify-center">
         {/* Page title header */}
         <div className="text-center mb-8 fade-in-up stagger-1">
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
             User Profile
           </h1>
-          <p className="text-slate-500 mt-2 text-sm max-w-md mx-auto">
+          <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm max-w-md mx-auto">
             Manage your personal credentials, view your organization link, and
             customize your bio.
           </p>
         </div>
 
         {/* Profile Card component - exact reference design in light theme */}
-        <div className="w-full bg-white border border-slate-200/80 rounded-2xl p-6 sm:p-8 shadow-sm relative fade-in-up stagger-2 max-w-2xl mx-auto transition-all duration-300">
+        <div className="w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm relative fade-in-up stagger-2 max-w-2xl mx-auto transition-all duration-300">
           {/* Toggled content */}
           {!isEditing ? (
             // ================= VIEW STATE =================
             <div className="space-y-6">
               {/* Header section */}
-              <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-6 pb-6 border-b border-slate-100">
+              <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-6 pb-6 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
                   {/* Custom initials / profile image */}
                   {userData.profilePic && !profilePicFailed ? (
@@ -216,7 +216,7 @@ const Profile = () => {
                   )}
 
                   <div className="space-y-1">
-                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
                       {userData.name}
                     </h2>
                     <div className="flex items-center justify-center sm:justify-start gap-2">
@@ -240,7 +240,7 @@ const Profile = () => {
 
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition-all shadow-xs cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-500"
+                  className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl transition-all shadow-xs cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-500"
                 >
                   <Edit2 className="w-3 h-3" />
                   Edit profile
@@ -248,54 +248,54 @@ const Profile = () => {
               </div>
 
               {/* Grid details section */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-5 gap-x-8 py-2 text-slate-600">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-5 gap-x-8 py-2 text-slate-600 dark:text-slate-400">
                 <div className="space-y-1.5">
-                  <div className="text-[11px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <div className="text-[11px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider flex items-center gap-1.5">
                     <Mail className="w-3 h-3 text-slate-400" />
                     Email
                   </div>
-                  <div className="text-sm font-semibold text-slate-900 break-all">
+                  <div className="text-sm font-semibold text-slate-900 dark:text-slate-200 break-all">
                     {userData.email}
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <div className="text-[11px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <div className="text-[11px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider flex items-center gap-1.5">
                     <Building2 className="w-3 h-3 text-slate-400" />
                     Organization
                   </div>
-                  <div className="text-sm font-semibold text-slate-900">
+                  <div className="text-sm font-semibold text-slate-900 dark:text-slate-200">
                     {userData.organization?.name || "No Organization"}
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <div className="text-[11px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <div className="text-[11px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider flex items-center gap-1.5">
                     <User className="w-3 h-3 text-slate-400" />
                     Role
                   </div>
-                  <div className="text-sm font-semibold text-slate-900 capitalize">
+                  <div className="text-sm font-semibold text-slate-900 dark:text-slate-200 capitalize">
                     {displayRole}
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <div className="text-[11px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <div className="text-[11px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider flex items-center gap-1.5">
                     <Calendar className="w-3 h-3 text-slate-400" />
                     Member since
                   </div>
-                  <div className="text-sm font-semibold text-slate-900">
+                  <div className="text-sm font-semibold text-slate-900 dark:text-slate-200">
                     {formattedMemberSince}
                   </div>
                 </div>
               </div>
 
               {/* Bio section */}
-              <div className="pt-6 border-t border-slate-100 space-y-2">
-                <div className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">
+              <div className="pt-6 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                <div className="text-[11px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
                   Bio
                 </div>
-                <p className="text-sm text-slate-600 leading-relaxed italic">
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed italic">
                   {userData.bio || "No bio added yet. Tell us about yourself!"}
                 </p>
               </div>
@@ -303,14 +303,14 @@ const Profile = () => {
           ) : (
             // ================= EDIT STATE =================
             <form onSubmit={handleSave} className="space-y-6">
-              <div className="pb-4 border-b border-slate-100 flex items-center justify-between">
-                <h3 className="text-lg font-bold text-slate-900">
+              <div className="pb-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                   Edit Profile Details
                 </h3>
                 <button
                   type="button"
                   onClick={handleCancel}
-                  className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
+                  className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
                   aria-label="Cancel editing"
                 >
                   <X className="w-4 h-4" />
@@ -322,7 +322,7 @@ const Profile = () => {
                 <div className="space-y-2">
                   <label
                     htmlFor="name-input"
-                    className="block text-xs font-bold text-slate-500 uppercase tracking-wider"
+                    className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                   >
                     Full Name
                   </label>
@@ -335,11 +335,11 @@ const Profile = () => {
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Your Full Name"
                       disabled={loading}
-                      className={`w-full bg-slate-50/50 hover:bg-slate-50 border ${
+                      className={`w-full bg-slate-50/50 dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border ${
                         errors.name
                           ? "border-red-500/80"
-                          : "border-slate-200 focus:border-blue-500 focus:bg-white"
-                      } rounded-xl py-2.5 pl-10 pr-4 text-sm text-slate-800 placeholder-slate-400 transition-all outline-none`}
+                          : "border-slate-200 dark:border-slate-700 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800"
+                      } rounded-xl py-2.5 pl-10 pr-4 text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 transition-all outline-none`}
                     />
                   </div>
                   {errors.name && (
@@ -353,7 +353,7 @@ const Profile = () => {
                 <div className="space-y-2">
                   <label
                     htmlFor="pic-input"
-                    className="block text-xs font-bold text-slate-500 uppercase tracking-wider"
+                    className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                   >
                     Profile Picture URL
                   </label>
@@ -366,11 +366,11 @@ const Profile = () => {
                       onChange={(e) => setProfilePic(e.target.value)}
                       placeholder="https://example.com/avatar.jpg"
                       disabled={loading}
-                      className={`w-full bg-slate-50/50 hover:bg-slate-50 border ${
+                      className={`w-full bg-slate-50/50 dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border ${
                         errors.profilePic
                           ? "border-red-500/80"
-                          : "border-slate-200 focus:border-blue-500 focus:bg-white"
-                      } rounded-xl py-2.5 pl-10 pr-4 text-sm text-slate-800 placeholder-slate-400 transition-all outline-none`}
+                          : "border-slate-200 dark:border-slate-700 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800"
+                      } rounded-xl py-2.5 pl-10 pr-4 text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 transition-all outline-none`}
                     />
                   </div>
                   {errors.profilePic && (
@@ -384,7 +384,7 @@ const Profile = () => {
                 <div className="space-y-2">
                   <label
                     htmlFor="bio-input"
-                    className="block text-xs font-bold text-slate-500 uppercase tracking-wider"
+                    className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                   >
                     Bio (Optional)
                   </label>
@@ -396,7 +396,7 @@ const Profile = () => {
                     disabled={loading}
                     rows="3"
                     maxLength="250"
-                    className="w-full bg-slate-50/50 hover:bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl py-2.5 px-4 text-sm text-slate-800 placeholder-slate-400 transition-all outline-none resize-none"
+                    className="w-full bg-slate-50/50 dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800 rounded-xl py-2.5 px-4 text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 transition-all outline-none resize-none"
                   />
                   <div className="flex justify-end text-[10px] text-slate-400 font-bold">
                     {bio.length}/250 characters
@@ -405,12 +405,12 @@ const Profile = () => {
               </div>
 
               {/* Action buttons */}
-              <div className="flex justify-end items-center gap-3 pt-4 border-t border-slate-100">
+              <div className="flex justify-end items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={handleCancel}
                   disabled={loading}
-                  className="px-4 py-2 text-xs font-semibold text-slate-500 hover:text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition-all cursor-pointer disabled:opacity-50"
+                  className="px-4 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl transition-all cursor-pointer disabled:opacity-50"
                 >
                   Cancel
                 </button>

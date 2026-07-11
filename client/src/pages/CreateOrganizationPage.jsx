@@ -39,14 +39,14 @@ const CreateOrganizationPage = () => {
   };
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-gray-100">
+    <div className="flex flex-col items-center min-h-screen bg-gray-100 dark:bg-gray-950">
       <Navbar />
       <div className="grow flex items-center justify-center w-full px-4">
-        <div className="bg-white p-10 rounded-lg shadow-xl text-center w-full max-w-md">
-          <h1 className="text-3xl font-bold mb-6">
+        <div className="bg-white dark:bg-gray-900 border dark:border-gray-800 p-10 rounded-lg shadow-xl dark:shadow-none text-center w-full max-w-md">
+          <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
             Create or Join Organization
           </h1>
-          <p className="text-gray-600 mb-8">
+          <p className="text-gray-600 dark:text-gray-400 mb-8">
             Enter your organization name. If it exists, you’ll be linked to it.
           </p>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -55,12 +55,12 @@ const CreateOrganizationPage = () => {
               value={orgName}
               onChange={(e) => setOrgName(e.target.value)}
               placeholder="Enter your organization name"
-              className="w-full px-4 py-3 border rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <button
               type="submit"
               disabled={loading}
-              className="w-full p-3 bg-blue-600 text-white rounded-lg text-lg font-semibold hover:bg-blue-700 transition-all"
+              className="w-full p-3 bg-blue-600 text-white rounded-lg text-lg font-semibold hover:bg-blue-700 transition-all cursor-pointer"
             >
               {loading ? "Processing..." : "Create / Join"}
             </button>

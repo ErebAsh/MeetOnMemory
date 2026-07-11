@@ -6,10 +6,10 @@ const MeetingTabs = ({ activeSection, setActiveSection }) => {
       <button
         type="button"
         onClick={() => setActiveSection("schedule")}
-        className={`px-6 py-3 rounded-lg font-semibold transition flex items-center gap-2 ${
+        className={`px-6 py-3 rounded-lg font-semibold transition flex items-center gap-2 cursor-pointer ${
           activeSection === "schedule"
             ? "bg-blue-600 text-white shadow-lg"
-            : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-200"
+            : "bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 border border-gray-200 dark:border-gray-800"
         }`}
       >
         <Calendar size={20} /> Schedule Meeting
@@ -17,10 +17,10 @@ const MeetingTabs = ({ activeSection, setActiveSection }) => {
       <button
         type="button"
         onClick={() => setActiveSection("live")}
-        className={`px-6 py-3 rounded-lg font-semibold transition flex items-center gap-2 ${
+        className={`px-6 py-3 rounded-lg font-semibold transition flex items-center gap-2 cursor-pointer ${
           activeSection === "live"
             ? "bg-indigo-600 text-white shadow-lg"
-            : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-200"
+            : "bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 border border-gray-200 dark:border-gray-800"
         }`}
       >
         <Video size={20} /> Live Meeting
@@ -28,10 +28,10 @@ const MeetingTabs = ({ activeSection, setActiveSection }) => {
       <button
         type="button"
         onClick={() => setActiveSection("session")}
-        className={`px-6 py-3 rounded-lg font-semibold transition flex items-center gap-2 ${
+        className={`px-6 py-3 rounded-lg font-semibold transition flex items-center gap-2 cursor-pointer ${
           activeSection === "session"
             ? "bg-purple-600 text-white shadow-lg"
-            : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-200"
+            : "bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 border border-gray-200 dark:border-gray-800"
         }`}
       >
         <Presentation size={20} /> Session Cards
