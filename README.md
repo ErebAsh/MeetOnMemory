@@ -246,9 +246,25 @@ git clone https://github.com/imuniqueshiv/MeetOnMemory.git
 cd MeetOnMemory
 ```
 
+## Docker Setup (Recommended)
+
+The easiest way to run the entire stack (Database, Redis, Backend, Frontend) locally is using Docker.
+
+1. Make sure you have Docker and Docker Compose installed.
+2. Create `.env` files for both the client and server (see Environment Variables section).
+3. Run the following command from the root directory:
+
+```bash
+docker-compose up -d --build
+```
+
+This will spin up all the necessary services.
+- The frontend will be available at `http://localhost:5173`
+- The backend will be available at `http://localhost:4000`
+
 ---
 
-## Backend Setup
+## Manual Backend Setup
 
 ```bash
 cd server
@@ -300,7 +316,7 @@ npm run server
 
 ---
 
-## Frontend Setup
+## Manual Frontend Setup
 
 ```bash
 cd client
