@@ -96,6 +96,16 @@ const meetingSchema = new mongoose.Schema(
       default: "uploaded",
     },
     tags: [String], // e.g., ["policy", "finance", "staff"]
+
+    // CRDT Collaborative Editing (Yjs)
+    crdtState: {
+      type: Buffer, // Serialized Yjs document binary state (Y.encodeStateAsUpdate)
+      default: null,
+    },
+    collaborativeNotes: {
+      type: String, // Plain-text snapshot for read-only views and semantic search
+      default: "",
+    },
   },
   { timestamps: true },
 );

@@ -1,5 +1,7 @@
 # environment variables
+.env
 .env.local
+.env.*
 server/.env.local
 
 # node modules

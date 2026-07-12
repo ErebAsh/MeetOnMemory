@@ -15,9 +15,12 @@ import {
   Users,
   Clock,
   Copy,
+  NotebookPen,
+  PanelRightClose,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import ErrorState from "../components/ErrorState.jsx";
+import CollaborativeEditor from "../components/meetings/CollaborativeEditor.jsx";
 
 // A separate component to render each peer's video
 const PeerVideo = ({ peer, userInfo }) => {
@@ -62,6 +65,7 @@ const MeetingRoom = () => {
 
   const [peers, setPeers] = useState([]);
   const [duration, setDuration] = useState(0);
+  const [showNotes, setShowNotes] = useState(false);
 
   const socketRef = useRef();
   const userVideoRef = useRef();
@@ -381,44 +385,78 @@ const MeetingRoom = () => {
               <Copy size={16} />
               <span className="hidden sm:inline">Copy Link</span>
             </button>
+
+            {/* Notes Toggle */}
+            <button
+              onClick={() => setShowNotes((v) => !v)}
+              className={`flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl transition-all cursor-pointer ${
+                showNotes
+                  ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                  : "bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700"
+              }`}
+              title={showNotes ? "Hide notes" : "Open collaborative notes"}
+            >
+              {showNotes ? (
+                <PanelRightClose size={16} />
+              ) : (
+                <NotebookPen size={16} />
+              )}
+              <span className="hidden sm:inline">
+                {showNotes ? "Hide Notes" : "Notes"}
+              </span>
+            </button>
           </div>
 
-          {/* Video Grid */}
-          <div className="flex-1 p-6 overflow-y-auto bg-gray-900 flex items-center justify-center">
-            <div className="w-full h-full max-w-5xl flex flex-col md:flex-row gap-6 items-center justify-center min-h-[300px]">
-              {/* Local Stream */}
-              <div className="relative bg-black rounded-2xl overflow-hidden shadow-lg aspect-video flex-1 min-w-[280px] max-w-[600px] border border-gray-800">
-                <video
-                  ref={userVideoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className="w-full h-full object-cover scale-x-[-1]"
-                />
-                {!cameraOn && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
-                    <div className="w-20 h-20 bg-indigo-600 rounded-full flex items-center justify-center text-3xl font-bold text-white shadow-xl">
-                      You
-                    </div>
-                  </div>
-                )}
-                <div className="absolute bottom-4 left-4 bg-black/60 px-3 py-1.5 rounded-lg backdrop-blur-sm text-white text-sm flex items-center gap-2">
-                  <span
-                    className={`w-2 h-2 rounded-full ${micOn ? "bg-green-500" : "bg-red-500"}`}
+          {/* Main content area: video grid + notes panel */}
+          <div className="flex-1 flex min-h-0 overflow-hidden">
+            {/* Video Grid */}
+            <div
+              className={`flex-1 p-6 overflow-y-auto bg-gray-900 flex items-center justify-center transition-all duration-300 ${
+                showNotes ? "hidden md:flex" : "flex"
+              }`}
+            >
+              <div className="w-full h-full max-w-5xl flex flex-col md:flex-row gap-6 items-center justify-center min-h-[300px]">
+                {/* Local Stream */}
+                <div className="relative bg-black rounded-2xl overflow-hidden shadow-lg aspect-video flex-1 min-w-[280px] max-w-[600px] border border-gray-800">
+                  <video
+                    ref={userVideoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="w-full h-full object-cover scale-x-[-1]"
                   />
-                  <span>You</span>
+                  {!cameraOn && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
+                      <div className="w-20 h-20 bg-indigo-600 rounded-full flex items-center justify-center text-3xl font-bold text-white shadow-xl">
+                        You
+                      </div>
+                    </div>
+                  )}
+                  <div className="absolute bottom-4 left-4 bg-black/60 px-3 py-1.5 rounded-lg backdrop-blur-sm text-white text-sm flex items-center gap-2">
+                    <span
+                      className={`w-2 h-2 rounded-full ${micOn ? "bg-green-500" : "bg-red-500"}`}
+                    />
+                    <span>You</span>
+                  </div>
                 </div>
-              </div>
 
-              {/* Remote Streams */}
-              {peers.map((peerObj) => (
-                <PeerVideo
-                  key={peerObj.peerID}
-                  peer={peerObj.peer}
-                  userInfo={peerObj.userInfo}
-                />
-              ))}
+                {/* Remote Streams */}
+                {peers.map((peerObj) => (
+                  <PeerVideo
+                    key={peerObj.peerID}
+                    peer={peerObj.peer}
+                    userInfo={peerObj.userInfo}
+                  />
+                ))}
+              </div>
             </div>
+
+            {/* Collaborative Notes Panel */}
+            {showNotes && (
+              <div className="w-full md:w-[420px] lg:w-[480px] shrink-0 p-4 bg-gray-950 border-l border-gray-800 overflow-hidden flex flex-col">
+                <CollaborativeEditor meetingId={roomId} />
+              </div>
+            )}
           </div>
 
           {/* Control Bar */}
@@ -457,7 +495,9 @@ const MeetingRoom = () => {
                   ? "bg-indigo-500 text-white hover:bg-indigo-600"
                   : "bg-gray-800 text-white hover:bg-gray-700"
               }`}
-              aria-label={isScreenSharing ? "Stop screen share" : "Share screen"}
+              aria-label={
+                isScreenSharing ? "Stop screen share" : "Share screen"
+              }
             >
               <MonitorUp size={22} />
             </button>
