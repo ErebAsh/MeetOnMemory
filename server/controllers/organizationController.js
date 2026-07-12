@@ -347,3 +347,63 @@ export const getOrganizationMembers = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
+/**
+ * ✅ Get public organization profile by slug
+ * Returns only public information, no private data
+ * Route: GET /api/organizations/public/:slug
+ */
+export const getPublicOrganizationBySlug = async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    if (!slug) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Slug is required." });
+    }
+
+    // Find organization by slug - only select public fields
+    const organization = await Organization.findOne(
+      { slug },
+      "name slug description logo visibility createdAt metadata",
+    );
+
+    if (!organization) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Organization not found." });
+    }
+
+    // Get member count from Membership model (without exposing member details)
+    const Membership = (await import("../models/membershipModel.js")).default;
+    const memberCount = await Membership.countDocuments({
+      organization: organization._id,
+      status: "active",
+    });
+
+    // Extract public metadata fields (website, social links, tags)
+    const metadata = organization.metadata || {};
+    const publicData = {
+      _id: organization._id,
+      name: organization.name,
+      slug: organization.slug,
+      description: organization.description,
+      logo: organization.logo,
+      visibility: organization.visibility,
+      createdAt: organization.createdAt,
+      memberCount,
+      website: metadata.website || null,
+      socialLinks: metadata.socialLinks || null,
+      tags: metadata.tags || [],
+    };
+
+    res.status(200).json({
+      success: true,
+      organization: publicData,
+    });
+  } catch (error) {
+    console.error("❌ Error fetching public organization:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};

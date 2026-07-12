@@ -6,6 +6,7 @@ import {
   joinOrganization,
   selectOrganization,
   getOrganizationMembers,
+  getPublicOrganizationBySlug,
 } from "../controllers/organizationController.js";
 import userAuth from "../middleware/userAuth.js";
 import { apiLimiter } from "../middleware/rateLimiter.js";
@@ -29,5 +30,8 @@ router.get("/", userAuth, getAllOrganizations);
 
 // Fetch organization members
 router.get("/members", userAuth, getOrganizationMembers);
+
+// Public organization profile by slug (no auth required)
+router.get("/public/:slug", getPublicOrganizationBySlug);
 
 export default router;

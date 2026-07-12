@@ -8,6 +8,7 @@ import Home from "./pages/Home.jsx"; // 👈 Public landing page
 import Login from "./pages/Login.jsx";
 import EmailVerify from "./pages/EmailVerify.jsx";
 import ResetPassword from "./pages/ResetPassword.jsx";
+import PublicOrganizationProfile from "./pages/PublicOrganizationProfile.jsx";
 
 // --- Protected Pages ---
 import MeetingListPage from "./pages/MeetingListPage.jsx";
@@ -130,6 +131,7 @@ const App = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/email-verify" element={<EmailVerify />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/organizations/:slug" element={<PublicOrganizationProfile />} />
 
           {/* === Protected Routes (Require login) === */}
           <Route
