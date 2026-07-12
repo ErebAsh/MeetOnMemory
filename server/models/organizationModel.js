@@ -58,6 +58,10 @@ organizationSchema.index({ slug: 1 });
 organizationSchema.index({ owner: 1 });
 organizationSchema.index({ visibility: 1 });
 organizationSchema.index({ createdAt: -1 });
+// Indexes for organization discovery and search
+organizationSchema.index({ name: "text", slug: "text", description: "text" });
+organizationSchema.index({ visibility: 1, createdAt: -1 });
+organizationSchema.index({ visibility: 1, name: 1 });
 
 const Organization =
   mongoose.models.Organization ||

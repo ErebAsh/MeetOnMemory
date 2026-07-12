@@ -5,6 +5,13 @@ import { createAndPushNotification } from "../services/notificationService.js";
 import mongoose from "mongoose";
 
 /**
+ * Escape special regex characters to prevent ReDoS attacks
+ */
+const escapeRegex = (string) => {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+};
+
+/**
  * ✅ Create or Join Organization
  * - If org exists → join as Member
  * - If not → create new org as Admin
@@ -344,6 +351,186 @@ export const getOrganizationMembers = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Error fetching organization members:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+/**
+ * ✅ Browse public organizations with pagination and filters
+ * Query params: page, limit, search, sortBy, filter
+ * Returns: { success: true, organizations: [...], pagination: {...} }
+ */
+export const browsePublicOrganizations = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
+    const search = req.query.search || "";
+    const sortBy = req.query.sortBy || "createdAt";
+    const filter = req.query.filter || "all";
+
+    // Validate pagination parameters
+    if (page < 1 || limit < 1 || limit > 50) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid pagination parameters. Page must be >= 1 and limit must be between 1 and 50.",
+      });
+    }
+
+    // Build base query - only public organizations
+    const baseQuery = { visibility: "public" };
+
+    // Add search filter if provided
+    let searchQuery = { ...baseQuery };
+    if (search && search.trim()) {
+      const escapedSearch = escapeRegex(search.trim());
+      const searchRegex = new RegExp(escapedSearch, "i");
+      searchQuery = {
+        ...baseQuery,
+        $or: [
+          { name: searchRegex },
+          { slug: searchRegex },
+          { description: searchRegex },
+        ],
+      };
+    }
+
+    // Build sort object
+    let sortObj = {};
+    switch (sortBy) {
+      case "name":
+        sortObj = { name: 1 };
+        break;
+      case "members":
+        sortObj = { "members.length": -1 };
+        break;
+      case "createdAt":
+      default:
+        sortObj = { createdAt: -1 };
+        break;
+    }
+
+    // Apply additional filters
+    let finalQuery = { ...searchQuery };
+    if (filter === "recent") {
+      // Filter organizations created in the last 30 days
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      finalQuery = { ...searchQuery, createdAt: { $gte: thirtyDaysAgo } };
+    }
+
+    // Execute query with pagination
+    const skip = (page - 1) * limit;
+    const [organizations, total] = await Promise.all([
+      Organization.find(finalQuery)
+        .select("name slug description logo visibility createdAt members metadata")
+        .sort(sortObj)
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Organization.countDocuments(finalQuery),
+    ]);
+
+    // Calculate member counts for each organization
+    const organizationsWithCounts = organizations.map((org) => ({
+      ...org,
+      memberCount: org.members ? org.members.length : 0,
+    }));
+
+    res.status(200).json({
+      success: true,
+      organizations: organizationsWithCounts,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: page < Math.ceil(total / limit),
+        hasPrevPage: page > 1,
+      },
+    });
+  } catch (error) {
+    console.error("❌ Error browsing public organizations:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+/**
+ * ✅ Search organizations (public only)
+ * Query params: q (search query), page, limit
+ * Returns: { success: true, organizations: [...], pagination: {...} }
+ */
+export const searchOrganizations = async (req, res) => {
+  try {
+    const { q } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
+
+    if (!q || !q.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Search query is required.",
+      });
+    }
+
+    if (q.trim().length < 2) {
+      return res.status(400).json({
+        success: false,
+        message: "Search query must be at least 2 characters.",
+      });
+    }
+
+    // Validate pagination parameters
+    if (page < 1 || limit < 1 || limit > 50) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid pagination parameters.",
+      });
+    }
+
+    const escapedQuery = escapeRegex(q.trim());
+    const searchRegex = new RegExp(escapedQuery, "i");
+    const skip = (page - 1) * limit;
+
+    // Search in public organizations only
+    const query = {
+      visibility: "public",
+      $or: [
+        { name: searchRegex },
+        { slug: searchRegex },
+        { description: searchRegex },
+      ],
+    };
+
+    const [organizations, total] = await Promise.all([
+      Organization.find(query)
+        .select("name slug description logo visibility createdAt members metadata")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Organization.countDocuments(query),
+    ]);
+
+    // Calculate member counts
+    const organizationsWithCounts = organizations.map((org) => ({
+      ...org,
+      memberCount: org.members ? org.members.length : 0,
+    }));
+
+    res.status(200).json({
+      success: true,
+      organizations: organizationsWithCounts,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: page < Math.ceil(total / limit),
+        hasPrevPage: page > 1,
+      },
+    });
+  } catch (error) {
+    console.error("❌ Error searching organizations:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
