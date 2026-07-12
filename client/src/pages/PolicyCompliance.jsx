@@ -53,6 +53,13 @@ const CLASSIFICATION_STYLES = {
     borderColor: "border-slate-200 dark:border-slate-700",
     icon: ShieldQuestion,
   },
+  unclassified: {
+    label: "Needs Retry",
+    bgColor: "bg-amber-50 dark:bg-amber-950/30",
+    textColor: "text-amber-700 dark:text-amber-400",
+    borderColor: "border-amber-200 dark:border-amber-900/60",
+    icon: ShieldQuestion,
+  },
 };
 
 const STATUS_TABS = [
@@ -220,7 +227,7 @@ const PolicyCompliance = () => {
                     {flag.sourceMeetingId && (
                       <button
                         onClick={() =>
-                          navigate(`/meetings/${flag.sourceMeetingId._id}`)
+                          navigate(`/meeting/${flag.sourceMeetingId._id}`)
                         }
                         className="mt-2 inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
                       >
