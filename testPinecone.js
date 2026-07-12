@@ -20,8 +20,4 @@ async function testConnection() {
   }
 }
 
-const testVar = 1;
-testVar = 2; // This will trigger an ESLint error
-
-
 testConnection();
