@@ -1,6 +1,7 @@
 import fs from "fs";
 import axios from "axios";
 import FormData from "form-data";
+import mongoose from "mongoose";
 import Meeting from "../models/meetingModel.js";
 import User from "../models/userModel.js";
 import { indexMeeting } from "../utils/embeddingUtils.js";
@@ -9,7 +10,19 @@ import {
   processStructuredMoM,
   detectResolutions,
 } from "../services/knowledgeGraphService.js";
+import { checkMeetingDecisionsAgainstPolicies } from "../services/policyComplianceService.js";
 import { createAndPushNotification } from "../services/notificationService.js";
+
+// Validates any id pulled from req.body/req.params/req.query before it
+// reaches a Mongoose query. Without this, a JSON body like
+// { "meetingId": { "$gt": "" } } would pass a raw Mongo operator object
+// straight into Meeting.findById(), letting an attacker bypass the
+// intended id lookup (CodeQL: js/sql-injection — "Database query built
+// from user-controlled sources"). isValid() also rejects non-ObjectId
+// strings, so callers get a clean 400 instead of a Mongoose CastError.
+const isValidObjectId = (id) =>
+  typeof id === "string" && mongoose.Types.ObjectId.isValid(id);
+
 import * as calendarService from "../services/calendarService.js";
 import { aiQueue } from "../services/queueService.js";
 /**
@@ -295,6 +308,11 @@ export const uploadAudioForMeeting = async (req, res) => {
         .status(400)
         .json({ success: false, message: "Meeting ID is required" });
     }
+    if (!isValidObjectId(meetingId)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid meeting ID" });
+    }
 
     const uploaderId = req.user?.id || req.user?._id;
     if (!uploaderId) {
@@ -414,6 +432,12 @@ export const summarizeMeeting = async (req, res) => {
   try {
     const { meetingId, transcript, date, title } = req.body;
     const userId = req.user?.id || req.user?._id;
+
+    if (meetingId && !isValidObjectId(meetingId)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid meeting ID" });
+    }
 
     if (!date) {
       return res.status(400).json({
@@ -690,7 +714,23 @@ ${textToSummarize}
       if (meetingToUpdate) {
         try {
           await detectResolutions(meetingToUpdate, mom);
-          await processStructuredMoM(meetingToUpdate, mom);
+          const kgResults = await processStructuredMoM(meetingToUpdate, mom);
+
+          // Policy compliance cross-reference — hooks in right after decisions
+          // are extracted/embedded by the knowledge graph pass. Kept in its
+          // own try/catch so a compliance-check failure never affects
+          // knowledge-graph processing that already succeeded above.
+          try {
+            await checkMeetingDecisionsAgainstPolicies(
+              meetingToUpdate,
+              kgResults?.decisions,
+            );
+          } catch (complianceError) {
+            console.error(
+              "⚠️ Policy compliance check failed (non-fatal):",
+              complianceError,
+            );
+          }
         } catch (kgError) {
           console.error(
             "⚠️ Knowledge graph processing failed (non-fatal):",
@@ -804,6 +844,11 @@ export const deleteMeeting = async (req, res) => {
     const meeting = req.doc; // from requireOwnerOrAdmin middleware
     if (!meeting) {
       // Fallback if middleware isn't used
+      if (!isValidObjectId(req.params.id)) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid meeting ID" });
+      }
       const deleted = await Meeting.findByIdAndDelete(req.params.id);
       if (!deleted) {
         return res
@@ -855,6 +900,12 @@ export const getMeetingById = async (req, res) => {
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
+    if (!isValidObjectId(req.params.id)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid meeting ID" });
+    }
+
     const meeting = await Meeting.findById(req.params.id);
     if (!meeting) {
       return res
@@ -881,6 +932,12 @@ export const updateMeeting = async (req, res) => {
     const userId = req.user?.id || req.user?._id;
     if (!userId) {
       return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    if (!req.doc && !isValidObjectId(req.params.id)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid meeting ID" });
     }
 
     // `req.doc` is provided by the `requireOwner` middleware

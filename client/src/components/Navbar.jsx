@@ -22,6 +22,7 @@ import {
   Sparkles,
   Users,
   CheckSquare,
+  ShieldAlert,
   Moon,
   Sun,
 } from "lucide-react";
@@ -270,6 +271,7 @@ const Navbar = () => {
     { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { label: "Meetings", href: "/meetings", icon: Calendar },
     { label: "Tasks", href: "/tasks", icon: CheckSquare },
+    { label: "Compliance", href: "/policy-compliance", icon: ShieldAlert },
     { label: "Calendar", href: "/calendar", icon: CalendarDays },
     { label: "Team Members", href: "/team-members", icon: Users },
     { label: "Organizations", href: "/organizations", icon: Building2 },

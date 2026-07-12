@@ -4,6 +4,12 @@ import dotenv from "dotenv";
 import axios from "axios";
 import { createRequire } from "module";
 import Policy from "../models/policyModel.js";
+import PolicyCompliance from "../models/policyComplianceModel.js";
+import {
+  indexPolicy,
+  removePolicyFromIndex,
+  reevaluatePolicyDecisions,
+} from "../services/policyComplianceService.js";
 
 const require = createRequire(import.meta.url);
 const pdf = require("pdf-parse");
@@ -205,6 +211,16 @@ export const uploadPolicy = async (req, res) => {
       await existing.populate("uploadedBy", "name email");
       await existing.populate("lastEditedBy", "name email");
 
+      // Re-embed into Pinecone under the new version, and re-evaluate any
+      // decisions previously matched against this policy so nothing is left
+      // silently pointing at stale policy text. Non-fatal: never blocks the
+      // upload response.
+      indexPolicy(existing)
+        .then(() => reevaluatePolicyDecisions(existing))
+        .catch((err) =>
+          console.error("⚠️ Policy compliance re-index failed:", err.message),
+        );
+
       return res.status(200).json({
         success: true,
         message: "Policy updated and analyzed by AI.",
@@ -230,6 +246,11 @@ export const uploadPolicy = async (req, res) => {
 
     await policy.populate("uploadedBy", "name email");
     await policy.populate("lastEditedBy", "name email");
+
+    // Embed into the Pinecone policy namespace. Non-fatal — never blocks upload.
+    indexPolicy(policy).catch((err) =>
+      console.error("⚠️ Policy indexing failed:", err.message),
+    );
 
     return res.status(201).json({
       success: true,
@@ -300,6 +321,14 @@ export const analyzePolicy = async (req, res) => {
     policy.keywords = aiData.keywords;
     policy.status = "ready";
     await policy.save();
+
+    // Summary/key_changes content changed — refresh the vector and any
+    // existing compliance classifications built on the old text.
+    indexPolicy(policy)
+      .then(() => reevaluatePolicyDecisions(policy))
+      .catch((err) =>
+        console.error("⚠️ Policy compliance re-index failed:", err.message),
+      );
 
     return res.status(200).json({
       success: true,
@@ -422,6 +451,16 @@ export const deletePolicy = async (req, res) => {
     }
 
     await policy.deleteOne();
+
+    // Best-effort cleanup — a policy that no longer exists shouldn't leave
+    // vectors or flags behind. Non-fatal: the delete itself already succeeded.
+    removePolicyFromIndex(policy._id).catch((err) =>
+      console.error("⚠️ Failed to remove policy vector:", err.message),
+    );
+    PolicyCompliance.deleteMany({ policyId: policy._id }).catch((err) =>
+      console.error("⚠️ Failed to clean up compliance records:", err.message),
+    );
+
     return res.status(200).json({
       success: true,
       message: "Policy deleted successfully.",

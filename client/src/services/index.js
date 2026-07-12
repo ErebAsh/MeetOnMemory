@@ -5,5 +5,6 @@ export * from "./organizationApi";
 export * from "./userApi";
 export * from "./knowledgeApi";
 export * from "./policyApi";
+export * from "./policyComplianceApi";
 export * from "./notificationApi";
 export * from "./analyticsApi";
