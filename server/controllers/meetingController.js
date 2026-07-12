@@ -10,6 +10,7 @@ import {
   detectResolutions,
 } from "../services/knowledgeGraphService.js";
 import { createAndPushNotification } from "../services/notificationService.js";
+import { aiQueue } from "../services/queueService.js";
 /**
  * Meeting Controller - Handles all meeting operations
  *
@@ -397,6 +398,7 @@ export const uploadAudioForMeeting = async (req, res) => {
 export const summarizeMeeting = async (req, res) => {
   try {
     const { meetingId, transcript, date, title } = req.body;
+    const userId = req.user?.id || req.user?._id;
 
     if (!date) {
       return res.status(400).json({
@@ -425,6 +427,23 @@ export const summarizeMeeting = async (req, res) => {
       });
     }
 
+    if (aiQueue) {
+      console.log(`🚀 Queueing MoM generation job for ${meetingId || "transcript-only"}...`);
+      await aiQueue.add("generate-mom", {
+        meetingId,
+        transcript: textToSummarize,
+        date,
+        title,
+        userId
+      });
+      
+      return res.status(202).json({
+        success: true,
+        message: "Minutes generation started in the background. Please wait...",
+      });
+    }
+
+    // Fallback if redis is disabled (sync generation)
     console.log(`🧠 Generating MoM for ${meetingId || "transcript-only"}...`);
 
     // ======= Build Professional MoM Prompt =======

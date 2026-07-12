@@ -1,4 +1,4 @@
-import React, { useState, useContext, useRef } from "react";
+import React, { useState, useContext, useRef, useEffect } from "react";
 import { toast } from "react-toastify";
 import {
   UploadCloud,
@@ -16,6 +16,7 @@ import {
   Clock,
   X,
 } from "lucide-react";
+import { io } from "socket.io-client";
 import Navbar from "../components/Navbar.jsx";
 import AppContent from "../context/AppContent";
 import useExport from "../hooks/useExport.js";
@@ -37,6 +38,29 @@ const UploadMeeting = () => {
   const { exportMeeting, isExporting } = useExport();
 
   const fileInputRef = useRef(null);
+
+  // Real-time listener for MoM completion
+  const { backendUrl } = useContext(AppContent);
+  useEffect(() => {
+    if (userData && backendUrl) {
+      const socket = io(backendUrl, { withCredentials: true });
+      socket.on("mom-generation-complete", (data) => {
+        if (data && data.meetingId) {
+          // If the completed meeting matches our current meeting, update UI
+          setSummary(
+            data.summary ||
+              data.momText ||
+              JSON.stringify(data.mom || data)
+          );
+          toast.success("Minutes of Meeting created!");
+          setIsSummarizing(false);
+        }
+      });
+      return () => {
+        socket.disconnect();
+      };
+    }
+  }, [userData, backendUrl]);
 
   // New fields for required date + optional title
   const [meetingDate, setMeetingDate] = useState(() => {
@@ -190,16 +214,20 @@ const UploadMeeting = () => {
 
       const res = await meetingApi.summarizeMeeting(payload);
 
-      if (res.data?.success) {
-        // backend returns structured object plus a human readable summary text
+      if (res.status === 202 || (res.data?.success && res.data?.message?.includes("background"))) {
+        toast.info("Minutes generation started in the background. Please wait...");
+        // Keep isSummarizing true until socket event completes it
+      } else if (res.data?.success) {
         setSummary(
           res.data.momText ||
             res.data.summary ||
             JSON.stringify(res.data.mom || res.data),
         );
         toast.success("Minutes of Meeting created!");
+        setIsSummarizing(false);
       } else {
         toast.error(res.data?.message || "Failed to generate summary");
+        setIsSummarizing(false);
       }
     } catch (err) {
       console.error("Summarize error:", err);
@@ -209,7 +237,6 @@ const UploadMeeting = () => {
           err.message ||
           "AI summarization failed",
       );
-    } finally {
       setIsSummarizing(false);
     }
   };

@@ -25,6 +25,7 @@ import notificationRoutes from "./routes/notificationRoutes.js";
 import { initVectorStore } from "./utils/embeddingUtils.js";
 import meetingSocket from "./socket/meetingSocket.js";
 import { initRedis } from "./services/redisService.js";
+import { initAIWorker } from "./services/queueService.js";
 import { globalLimiter } from "./middleware/rateLimiter.js";
 import knowledgeRoutes from "./routes/knowledgeRoutes.js";
 import path from "path";
@@ -197,6 +198,7 @@ const io = new Server(server, {
 app.set("io", io);
 
 meetingSocket(io);
+initAIWorker(app);
 
 // ================================
 // ERROR HANDLER

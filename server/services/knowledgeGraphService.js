@@ -90,10 +90,13 @@ export async function processStructuredMoM(meeting, mom) {
 
     const owner =
       typeof item === "object" ? item.owner || "Unassigned" : "Unassigned";
-    const dueDate =
-      typeof item === "object" && item.due_date
-        ? new Date(item.due_date)
-        : null;
+    let dueDate = null;
+    if (typeof item === "object" && item.due_date) {
+      const parsedDate = new Date(item.due_date);
+      if (!isNaN(parsedDate.getTime())) {
+        dueDate = parsedDate;
+      }
+    }
 
     const embedding = await embedText(text);
     const match = await findBestMatch(

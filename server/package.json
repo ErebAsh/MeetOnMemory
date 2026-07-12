@@ -19,6 +19,7 @@
     "@xenova/transformers": "^2.17.2",
     "axios": "^1.13.1",
     "bcryptjs": "^3.0.2",
+    "bullmq": "^5.80.2",
     "chromadb": "^3.1.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -31,6 +32,7 @@
     "fs": "^0.0.1-security",
     "googleapis": "^165.0.0",
     "ical-generator": "^10.0.0",
+    "ioredis": "^5.11.1",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.19.3",
     "multer": "^2.0.2",
@@ -41,7 +43,8 @@
     "pdfkit": "^0.19.1",
     "pptx2json": "^0.0.10",
     "redis": "^6.1.0",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
