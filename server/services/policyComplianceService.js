@@ -9,7 +9,9 @@
 //   2. When a meeting's decisions are extracted, each decision is embedded
 //      and matched against that namespace (subject-matter overlap).
 //   3. High-similarity matches get a narrow, separate LLM classification
-//      pass (aligned / references / potential_conflict / unrelated).
+//      pass (aligned / references / potential_conflict / unrelated), with
+//      an "unclassified" state reserved for when the LLM call itself fails
+//      (kept distinct from a genuine "unrelated" result).
 //
 // This module never blocks meeting summarization: callers (meetingController)
 // wrap invocations in try/catch and treat failures here as non-fatal.
@@ -120,34 +122,57 @@ Return ONLY valid JSON, no commentary, no markdown fences:
 }
 
 /**
+ * Single attempt at the Gemini call. Throws on any failure — retry/fallback
+ * handling lives in the caller so this stays a plain, testable unit.
+ */
+async function callGeminiClassifier(prompt) {
+  if (!GEMINI_API_KEY) {
+    throw new Error("GEMINI_API_KEY is not configured");
+  }
+
+  const response = await axios.post(
+    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
+    { contents: [{ parts: [{ text: prompt }] }] },
+    { timeout: 20000 },
+  );
+
+  return response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+}
+
+/**
  * Narrow, isolated Gemini call for a single decision/policy pair.
  * Deliberately separate from the general meeting-summarization LLM pass
  * (per the issue's technical considerations) so a failure here is contained.
+ *
+ * Retries once on transient failure (network blip, rate limit). If both
+ * attempts fail, the result is "unclassified" — NOT "unrelated". Those two
+ * must stay distinguishable: "unrelated" means the LLM looked at the pair
+ * and found no connection; "unclassified" means we never got an answer.
+ * Collapsing them would hide real API outages inside what looks like a
+ * clean negative result, and "unclassified" rows are excluded from the
+ * default flags dashboard (?classification=potential_conflict) so they
+ * don't show up as false conflicts either — they need a separate retry
+ * pass, not a review action.
  */
 async function classifyRelationship(decisionText, policy) {
-  try {
-    if (!GEMINI_API_KEY) {
-      throw new Error("GEMINI_API_KEY is not configured");
+  const prompt = buildClassificationPrompt(decisionText, policy);
+
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const rawText = await callGeminiClassifier(prompt);
+      return parseClassification(rawText);
+    } catch (error) {
+      console.error(
+        `❌ Policy compliance classification failed (attempt ${attempt}/2):`,
+        error.message,
+      );
+      if (attempt === 2) {
+        return {
+          classification: "unclassified",
+          reasoning: "Classification unavailable after retry (LLM call failed).",
+        };
+      }
     }
-
-    const prompt = buildClassificationPrompt(decisionText, policy);
-
-    const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
-      { contents: [{ parts: [{ text: prompt }] }] },
-      { timeout: 20000 },
-    );
-
-    const rawText =
-      response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-    return parseClassification(rawText);
-  } catch (error) {
-    console.error("❌ Policy compliance classification failed:", error.message);
-    // Conservative fallback — never surface a conflict flag off a failed call.
-    return {
-      classification: "unrelated",
-      reasoning: "Classification unavailable (LLM call failed).",
-    };
   }
 }
 
@@ -238,6 +263,56 @@ async function findCandidatePolicies(decisionEmbedding, organizationId) {
 }
 
 /**
+ * Processes one decision↔policy candidate: fetch the policy, classify the
+ * relationship, and upsert the compliance record. Isolated into its own
+ * function (rather than inline in a loop) so candidates can run in
+ * parallel via Promise.allSettled — each is an independent Gemini call and
+ * there's no reason to serialize them.
+ */
+async function evaluateCandidate(candidate, decision, meeting, organizationId) {
+  const policy = await Policy.findById(candidate.policyId);
+  if (!policy || policy.organization?.toString() !== organizationId.toString()) {
+    return null; // stale vector or cross-org leak guard
+  }
+
+  const [{ classification, reasoning }, existing] = await Promise.all([
+    classifyRelationship(decision.text, policy),
+    PolicyCompliance.findOne({ decisionId: decision._id, policyId: policy._id }),
+  ]);
+
+  // Reopen the review workflow only when the classification actually
+  // changed (e.g. aligned -> potential_conflict on re-run/re-evaluation).
+  // A re-confirmed classification leaves an existing acknowledge/dismiss
+  // untouched; a newly-detected conflict must not stay silently resolved.
+  const classificationChanged =
+    !existing || existing.classification !== classification;
+
+  const update = {
+    decisionId: decision._id,
+    policyId: policy._id,
+    sourceMeetingId: meeting._id,
+    organization: organizationId,
+    policyVersion: policy.version,
+    similarityScore: candidate.similarityScore,
+    classification,
+    reasoning,
+    lastEvaluatedAt: new Date(),
+  };
+
+  if (classificationChanged) {
+    update.status = "unresolved";
+    update.reviewedBy = null;
+    update.reviewedAt = null;
+  }
+
+  return PolicyCompliance.findOneAndUpdate(
+    { decisionId: decision._id, policyId: policy._id },
+    update,
+    { upsert: true, new: true, setDefaultsOnInsert: true },
+  );
+}
+
+/**
  * Main entry point: given a single freshly-created/updated Decision doc,
  * find subject-matter-overlapping policies and classify each relationship.
  * Called from the meeting knowledge-graph hook — one call per decision.
@@ -256,42 +331,19 @@ export async function checkDecisionAgainstPolicies(decision, meeting) {
     const candidates = await findCandidatePolicies(embedding, organizationId);
     if (!candidates.length) return [];
 
-    const flags = [];
+    // Run candidate evaluations (each up to one Gemini call + a retry) in
+    // parallel rather than serially — this is the dominant cost when a
+    // decision matches several policies, and each candidate is independent.
+    // allSettled so one candidate's failure doesn't discard the others.
+    const settled = await Promise.allSettled(
+      candidates.map((candidate) =>
+        evaluateCandidate(candidate, decision, meeting, organizationId),
+      ),
+    );
 
-    for (const candidate of candidates) {
-      const policy = await Policy.findById(candidate.policyId);
-      if (!policy || policy.organization?.toString() !== organizationId.toString()) {
-        continue; // stale vector or cross-org leak guard
-      }
-
-      const { classification, reasoning } = await classifyRelationship(
-        decision.text,
-        policy,
-      );
-
-      const record = await PolicyCompliance.findOneAndUpdate(
-        { decisionId: decision._id, policyId: policy._id },
-        {
-          decisionId: decision._id,
-          policyId: policy._id,
-          sourceMeetingId: meeting._id,
-          organization: organizationId,
-          policyVersion: policy.version,
-          similarityScore: candidate.similarityScore,
-          classification,
-          reasoning,
-          lastEvaluatedAt: new Date(),
-          // Only reset the review workflow if this is a new conflict signal;
-          // an already-acknowledged/dismissed flag being re-confirmed as the
-          // same classification shouldn't silently reopen without reason.
-        },
-        { upsert: true, new: true, setDefaultsOnInsert: true },
-      );
-
-      flags.push(record);
-    }
-
-    return flags;
+    return settled
+      .filter((result) => result.status === "fulfilled" && result.value)
+      .map((result) => result.value);
   } catch (error) {
     console.error("❌ Policy compliance check failed for decision:", error.message);
     return [];
@@ -302,14 +354,20 @@ export async function checkDecisionAgainstPolicies(decision, meeting) {
  * Runs checkDecisionAgainstPolicies for every decision produced by a
  * meeting's structuredMoM. Called from meetingController right after
  * processStructuredMoM() so it shares the same non-fatal try/catch wrapper.
+ * Decisions are independent of one another, so they run in parallel too —
+ * a meeting with several decisions no longer pays for their Gemini calls
+ * serially on the request path.
  */
 export async function checkMeetingDecisionsAgainstPolicies(meeting, decisions) {
-  const results = [];
-  for (const decision of decisions || []) {
-    const flags = await checkDecisionAgainstPolicies(decision, meeting);
-    results.push(...flags);
-  }
-  return results;
+  if (!decisions?.length) return [];
+
+  const settled = await Promise.allSettled(
+    decisions.map((decision) => checkDecisionAgainstPolicies(decision, meeting)),
+  );
+
+  return settled
+    .filter((result) => result.status === "fulfilled")
+    .flatMap((result) => result.value);
 }
 
 /**
@@ -324,31 +382,37 @@ export async function reevaluatePolicyDecisions(policy) {
     if (!records.length) return [];
 
     const Decision = (await import("../models/decisionModel.js")).default;
-    const updated = [];
 
-    for (const record of records) {
-      const decision = await Decision.findById(record.decisionId);
-      if (!decision) continue;
+    const settled = await Promise.allSettled(
+      records.map(async (record) => {
+        const decision = await Decision.findById(record.decisionId);
+        if (!decision) return null;
 
-      const { classification, reasoning } = await classifyRelationship(
-        decision.text,
-        policy,
-      );
+        const { classification, reasoning } = await classifyRelationship(
+          decision.text,
+          policy,
+        );
 
-      record.policyVersion = policy.version;
-      record.classification = classification;
-      record.reasoning = reasoning;
-      record.lastEvaluatedAt = new Date();
-      // A version change is a material update — put it back in front of a
-      // reviewer rather than leaving a stale acknowledge/dismiss in place.
-      record.status = "unresolved";
-      record.reviewedBy = null;
-      record.reviewedAt = null;
-      await record.save();
-      updated.push(record);
-    }
+        record.policyVersion = policy.version;
+        record.classification = classification;
+        record.reasoning = reasoning;
+        record.lastEvaluatedAt = new Date();
+        // A version change is a material update — put it back in front of a
+        // reviewer rather than leaving a stale acknowledge/dismiss in place,
+        // regardless of whether the reclassification happens to match the
+        // old one (the policy text itself changed, so the prior review no
+        // longer speaks to what's actually in effect now).
+        record.status = "unresolved";
+        record.reviewedBy = null;
+        record.reviewedAt = null;
+        await record.save();
+        return record;
+      }),
+    );
 
-    return updated;
+    return settled
+      .filter((result) => result.status === "fulfilled" && result.value)
+      .map((result) => result.value);
   } catch (error) {
     console.error("❌ Failed to re-evaluate policy decisions:", error.message);
     return [];

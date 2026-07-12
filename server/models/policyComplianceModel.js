@@ -37,9 +37,14 @@ const policyComplianceSchema = new mongoose.Schema(
 
     similarityScore: { type: Number, required: true },
 
+    // Note: "unclassified" means the LLM call itself failed (network error,
+    // missing key, timeout) — distinct from "unrelated", which means the
+    // LLM successfully evaluated the pair and found no real connection.
+    // Keeping these separate stops transient API failures from being
+    // silently indistinguishable from genuine negatives.
     classification: {
       type: String,
-      enum: ["aligned", "references", "potential_conflict", "unrelated"],
+      enum: ["aligned", "references", "potential_conflict", "unrelated", "unclassified"],
       required: true,
     },
     reasoning: { type: String, default: "" },

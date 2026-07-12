@@ -109,12 +109,29 @@ export const getPolicyRelatedDecisions = async (req, res) => {
 };
 
 // ─────────────────────────────────────────────────────────────
-// GET /api/policy-compliance/flags?status=potential_conflict
+// GET /api/policy-compliance/flags?status=unresolved&classification=potential_conflict
 // Dashboard of unresolved (or filtered) flags for the caller's organization.
 // Note: the organization scope always comes from the authenticated user,
 // never from a client-supplied query param — that would be a multi-tenant
 // data leak vector.
 // ─────────────────────────────────────────────────────────────
+
+// Whitelists below are the only values ever assigned into a Mongo filter
+// object built from req.query. Express's query parser turns bracket
+// notation (e.g. ?classification[$ne]=null) into nested objects, so any
+// unvalidated req.query value used directly as a filter is a NoSQL
+// injection vector — every user-supplied filter value must be checked
+// against one of these lists (or validated as an ObjectId) before use.
+const ALLOWED_STATUSES = ["unresolved", "acknowledged", "dismissed", "all"];
+const ALLOWED_CLASSIFICATIONS = [
+  "aligned",
+  "references",
+  "potential_conflict",
+  "unrelated",
+  "unclassified",
+  "all",
+];
+
 export const getComplianceFlags = async (req, res) => {
   try {
     const organization = req.user.organization;
@@ -125,42 +142,24 @@ export const getComplianceFlags = async (req, res) => {
       });
     }
 
-    const { status = "potential_conflict", classification } = req.query;
+    const { status = "unresolved", classification = "potential_conflict" } =
+      req.query;
 
-    const allowedStatuses = [
-       "unresolved",
-       "acknowledged",
-       "dismissed",
-       "all",
-    ];
-
-    const allowedClassifications = [
-       "potential_conflict",
-       "aligned",
-       "reference",
-       "unrelated",
-        "all",
-      ];
-
-    if (!allowedStatuses.includes(status)) {
+    if (typeof status !== "string" || !ALLOWED_STATUSES.includes(status)) {
       return res.status(400).json({ success: false, message: "Invalid status" });
     }
-
     if (
-     classification &&
-     !allowedClassifications.includes(classification)
+      typeof classification !== "string" ||
+      !ALLOWED_CLASSIFICATIONS.includes(classification)
     ) {
-      return res.status(400).json({
-       success: false,
-       message: "Invalid classification",
-      });
-      }
-      
-    if (classification && classification !== "all") {
-      query.classification = classification;
-    } else if (!classification) {
-      query.classification = "potential_conflict";
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid classification" });
     }
+
+    const query = { organization };
+    if (status !== "all") query.status = status;
+    if (classification !== "all") query.classification = classification;
 
     const flags = await PolicyCompliance.find(query)
       .populate("decisionId", "text")
@@ -193,8 +192,8 @@ export const updateFlagStatus = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid flag id" });
     }
 
-    const allowedStatuses = ["acknowledged", "dismissed", "unresolved"];
-    if (!allowedStatuses.includes(status)) {
+    const allowedStatuses = ALLOWED_STATUSES.filter((s) => s !== "all");
+    if (typeof status !== "string" || !allowedStatuses.includes(status)) {
       return res.status(400).json({ success: false, message: "Invalid status" });
     }
 
