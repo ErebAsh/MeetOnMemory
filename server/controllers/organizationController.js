@@ -287,7 +287,10 @@ export const selectOrganization = async (req, res) => {
     if (!isMember) {
       return res
         .status(403)
-        .json({ success: false, message: "You are not a member of this organization." });
+        .json({
+          success: false,
+          message: "You are not a member of this organization.",
+        });
     }
 
     // Update user's selected organization
@@ -405,23 +408,21 @@ export const getPublicOrganizationBySlug = async (req, res) => {
       tags: metadata.tags || [],
     };
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       organization: publicData,
     });
   } catch (error) {
     console.error("❌ Error fetching public organization:", error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Server error while fetching organization profile.",
+      message: "Server error",
     });
   }
 };
 
 /**
  * ✅ Browse public organizations with pagination and filters
- * Query params: page, limit, search, sortBy, filter
- * Returns: { success: true, organizations: [...], pagination: {...} }
  */
 export const browsePublicOrganizations = async (req, res) => {
   try {
@@ -435,7 +436,8 @@ export const browsePublicOrganizations = async (req, res) => {
     if (page < 1 || limit < 1 || limit > 50) {
       return res.status(400).json({
         success: false,
-        message: "Invalid pagination parameters. Page must be >= 1 and limit must be between 1 and 50.",
+        message:
+          "Invalid pagination parameters. Page must be >= 1 and limit must be between 1 and 50.",
       });
     }
 
@@ -447,6 +449,7 @@ export const browsePublicOrganizations = async (req, res) => {
     if (search && search.trim()) {
       const escapedSearch = escapeRegex(search.trim());
       const searchRegex = new RegExp(escapedSearch, "i");
+
       searchQuery = {
         ...baseQuery,
         $or: [
@@ -463,9 +466,11 @@ export const browsePublicOrganizations = async (req, res) => {
       case "name":
         sortObj = { name: 1 };
         break;
+
       case "members":
         sortObj = { "members.length": -1 };
         break;
+
       case "createdAt":
       default:
         sortObj = { createdAt: -1 };
@@ -474,22 +479,30 @@ export const browsePublicOrganizations = async (req, res) => {
 
     // Apply additional filters
     let finalQuery = { ...searchQuery };
+
     if (filter === "recent") {
-      // Filter organizations created in the last 30 days
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      finalQuery = { ...searchQuery, createdAt: { $gte: thirtyDaysAgo } };
+
+      finalQuery = {
+        ...searchQuery,
+        createdAt: { $gte: thirtyDaysAgo },
+      };
     }
 
     // Execute query with pagination
     const skip = (page - 1) * limit;
+
     const [organizations, total] = await Promise.all([
       Organization.find(finalQuery)
-        .select("name slug description logo visibility createdAt members metadata")
+        .select(
+          "name slug description logo visibility createdAt members metadata",
+        )
         .sort(sortObj)
         .skip(skip)
         .limit(limit)
         .lean(),
+
       Organization.countDocuments(finalQuery),
     ]);
 
@@ -499,7 +512,7 @@ export const browsePublicOrganizations = async (req, res) => {
       memberCount: org.members ? org.members.length : 0,
     }));
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       organizations: organizationsWithCounts,
       pagination: {
@@ -513,7 +526,11 @@ export const browsePublicOrganizations = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Error browsing public organizations:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
   }
 };
 
@@ -566,7 +583,9 @@ export const searchOrganizations = async (req, res) => {
 
     const [organizations, total] = await Promise.all([
       Organization.find(query)
-        .select("name slug description logo visibility createdAt members metadata")
+        .select(
+          "name slug description logo visibility createdAt members metadata",
+        )
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
