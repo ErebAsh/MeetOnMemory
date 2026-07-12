@@ -9,8 +9,9 @@ import {
   sendResetOtp,
   resetPassword,
   getUserData,
+  googleCalendarAuth,
+  googleCalendarCallback,
 } from "../controllers/authControllers.js";
-
 import userAuth from "../middleware/userAuth.js";
 import {
   loginLimiter,
@@ -19,6 +20,7 @@ import {
 } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
+console.log("HELLOOOOO AUTH ROUTES LOADED", new Date());
 
 // ✅ Auth routes with rate limiting
 router.post("/register", registerLimiter, register);
@@ -47,5 +49,10 @@ router.get("/csrf", (req, res) => {
     res.json({ success: true, csrfToken: null, message: "CSRF bypassed in development" });
   }
 });
+
+// ✅ Google Calendar Auth
+router.get("/test-123", (req, res) => res.send("working"));
+router.get("/google-calendar", googleCalendarAuth);
+router.get("/google-calendar/callback", googleCalendarCallback);
 
 export default router;

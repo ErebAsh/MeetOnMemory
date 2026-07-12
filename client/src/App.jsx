@@ -33,6 +33,7 @@ import Calendar from "./pages/Calendar.jsx";
 import Notifications from "./pages/Notifications.jsx";
 import Tasks from "./pages/Tasks.jsx";
 import KnowledgeTimeline from "./pages/KnowledgeTimeline.jsx";
+import PolicyCompliance from "./pages/PolicyCompliance.jsx";
 import Settings from "./pages/Settings.jsx";
 import Navbar from "./components/Navbar";
 import ScrollNavigator from "./components/ScrollNavigator";
@@ -287,6 +288,14 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <Tasks />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/policy-compliance"
+            element={
+              <ProtectedRoute>
+                <PolicyCompliance />
               </ProtectedRoute>
             }
           />

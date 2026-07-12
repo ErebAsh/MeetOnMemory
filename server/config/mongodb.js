@@ -6,10 +6,14 @@ const connectDB = async () => {
       console.log("Database connected"),
     );
 
-    let dbUri = process.env.MONGODB_URI;
-    if (dbUri.endsWith("/")) {
-      dbUri = dbUri.slice(0, -1);
-    }
+    const rawUri =
+      process.env.NODE_ENV === 'test' && process.env.TEST_MONGODB_URI
+        ? process.env.TEST_MONGODB_URI
+        : process.env.MONGODB_URI;
+
+    // Strip trailing slash to avoid double-slash database name like //mern_auth
+    const dbUri = rawUri.endsWith("/") ? rawUri.slice(0, -1) : rawUri;
+
     await mongoose.connect(`${dbUri}/mern_auth`);
     console.log("Mongo URI:", dbUri);
   } catch (error) {

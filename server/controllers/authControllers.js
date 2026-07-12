@@ -7,6 +7,7 @@ import {
   EMAIL_VERIFY_TEMPLATE,
   PASSWORD_RESET_TEMPLATE,
 } from "../config/emailTemplates.js";
+import { getAuthUrl, getTokens } from "../services/calendarService.js";
 
 // --------------------------- HELPERS ---------------------------
 const sendBackgroundEmail = (mailOptions, flowName) => {
@@ -69,7 +70,7 @@ export const register = async (req, res) => {
       "Register",
     );
 
-    return res.json({ success: true, message: "Registration successful" });
+    return res.status(201).json({ success: true, message: "Registration successful" });
   } catch (error) {
     console.error("Register error:", error);
     res.json({ success: false, message: error.message });
@@ -281,5 +282,38 @@ export const getUserData = async (req, res) => {
   } catch (error) {
     console.error("Error fetching user data:", error);
     res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+// --------------------------- GOOGLE CALENDAR AUTH ---------------------------
+export const googleCalendarAuth = (req, res) => {
+  const url = getAuthUrl();
+  res.redirect(url);
+};
+
+export const googleCalendarCallback = async (req, res) => {
+  const { code } = req.query;
+  try {
+    const tokens = await getTokens(code);
+    
+    const token = req.cookies?.token;
+    if (!token) return res.status(401).json({ success: false, message: "Not authenticated" });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id;
+
+    const user = await userModel.findById(userId);
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+    user.googleAccessToken = tokens.access_token;
+    if (tokens.refresh_token) {
+      user.googleRefreshToken = tokens.refresh_token;
+    }
+    user.calendarSyncEnabled = true;
+    await user.save();
+
+    res.redirect("http://localhost:5173/profile?sync=success");
+  } catch (error) {
+    console.error("Google Calendar Callback error:", error);
+    res.redirect("http://localhost:5173/profile?sync=error");
   }
 };

@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import csrf from "csurf";
 import { Server } from "socket.io";
+import http from "http";
 
 import connectDB from "./config/mongodb.js";
 
@@ -22,6 +23,7 @@ import geminiRoutes from "./routes/geminiRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import knowledgeRoutes from "./routes/knowledgeRoutes.js";
+import policyComplianceRoutes from "./routes/policyComplianceRoutes.js";
 import sessionRoutes from "./routes/sessionRoutes.js";
 
 import { initVectorStore } from "./utils/embeddingUtils.js";
@@ -30,6 +32,7 @@ import documentSync from "./socket/documentSync.js";
 import { initRedis, getRedisClient } from "./services/redisService.js";
 import { createAdapter } from "@socket.io/redis-adapter";
 import { createClient } from "redis";
+import { initAIWorker } from "./services/queueService.js";
 import { globalLimiter } from "./middleware/rateLimiter.js";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -47,7 +50,9 @@ const PORT = process.env.PORT || 4000;
 
 // DATABASE & CACHE
 await connectDB();
-initRedis(); // Non-blocking: allows server to start even if Redis is unavailable
+if (process.env.NODE_ENV !== "test") {
+  initRedis(); // Non-blocking: allows server to start even if Redis is unavailable
+}
 
 // MIDDLEWARES
 app.use(express.json({ limit: "10mb" }));
@@ -154,21 +159,30 @@ app.use("/api/gemini", geminiRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/knowledge", knowledgeRoutes);
+app.use("/api/policy-compliance", policyComplianceRoutes);
 app.use("/api/sessions", sessionRoutes);
 
 // VECTOR STORE INIT (Non-blocking)
 // Initialize vector store in background to avoid blocking server startup
-initVectorStore()
-  .then(() => console.log("✅ Vector store initialized"))
-  .catch((error) =>
-    console.error("Vector store initialization failed:", error.message),
-  );
+if (process.env.NODE_ENV !== "test") {
+  initVectorStore()
+    .then(() => console.log("✅ Vector store initialized"))
+    .catch((error) =>
+      console.error("⚠️ Vector store initialization failed:", error.message),
+    );
+}
 
 // START SERVER
-const server = app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Allowed Origins: ${allowedOrigins.join(", ")}`);
-});
+let server;
+if (process.env.NODE_ENV !== "test") {
+  server = app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`🌐 Allowed Origins: ${allowedOrigins.join(", ")}`);
+  });
+} else {
+  // In test mode, create server without listening
+  server = http.createServer(app);
+}
 
 // SOCKET.IO
 const io = new Server(server, {
@@ -211,6 +225,9 @@ app.set("io", io);
 
 meetingSocket(io);
 documentSync(io);
+if (process.env.NODE_ENV !== "test") {
+  initAIWorker(app);
+}
 
 // ERROR HANDLER
 app.use((err, req, res, next) => {
@@ -243,3 +260,5 @@ process.on("SIGINT", () => {
     process.exit(0);
   });
 });
+
+export { app, server };

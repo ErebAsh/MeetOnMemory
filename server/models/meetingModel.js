@@ -97,6 +97,12 @@ const meetingSchema = new mongoose.Schema(
     },
     tags: [String], // e.g., ["policy", "finance", "staff"]
 
+    // Google Calendar integration
+    googleEventId: {
+      type: String,
+      default: null,
+    },
+
     // CRDT Collaborative Editing (Yjs)
     crdtState: {
       type: Buffer, // Serialized Yjs document binary state (Y.encodeStateAsUpdate)

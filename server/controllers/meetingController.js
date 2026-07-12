@@ -1,6 +1,7 @@
 import fs from "fs";
 import axios from "axios";
 import FormData from "form-data";
+import mongoose from "mongoose";
 import Meeting from "../models/meetingModel.js";
 import User from "../models/userModel.js";
 import { indexMeeting } from "../utils/embeddingUtils.js";
@@ -9,7 +10,21 @@ import {
   processStructuredMoM,
   detectResolutions,
 } from "../services/knowledgeGraphService.js";
+import { checkMeetingDecisionsAgainstPolicies } from "../services/policyComplianceService.js";
 import { createAndPushNotification } from "../services/notificationService.js";
+
+// Validates any id pulled from req.body/req.params/req.query before it
+// reaches a Mongoose query. Without this, a JSON body like
+// { "meetingId": { "$gt": "" } } would pass a raw Mongo operator object
+// straight into Meeting.findById(), letting an attacker bypass the
+// intended id lookup (CodeQL: js/sql-injection — "Database query built
+// from user-controlled sources"). isValid() also rejects non-ObjectId
+// strings, so callers get a clean 400 instead of a Mongoose CastError.
+const isValidObjectId = (id) =>
+  typeof id === "string" && mongoose.Types.ObjectId.isValid(id);
+
+import * as calendarService from "../services/calendarService.js";
+import { aiQueue } from "../services/queueService.js";
 /**
  * Meeting Controller - Handles all meeting operations
  *
@@ -114,6 +129,20 @@ export const createMeeting = async (req, res) => {
       } catch (notifErr) {
         console.error("⚠️ Notification error (continuing):", notifErr.message);
       }
+    }
+
+    // Sync with Google Calendar if enabled
+    try {
+      const user = await User.findById(uploaderId);
+      if (user && user.calendarSyncEnabled) {
+        const eventId = await calendarService.createEvent(user, meeting);
+        if (eventId) {
+          meeting.googleEventId = eventId;
+          await meeting.save();
+        }
+      }
+    } catch (calErr) {
+      console.error("⚠️ Google Calendar sync error (continuing):", calErr.message);
     }
 
     return res.status(200).json({
@@ -279,6 +308,11 @@ export const uploadAudioForMeeting = async (req, res) => {
         .status(400)
         .json({ success: false, message: "Meeting ID is required" });
     }
+    if (!isValidObjectId(meetingId)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid meeting ID" });
+    }
 
     const uploaderId = req.user?.id || req.user?._id;
     if (!uploaderId) {
@@ -397,6 +431,13 @@ export const uploadAudioForMeeting = async (req, res) => {
 export const summarizeMeeting = async (req, res) => {
   try {
     const { meetingId, transcript, date, title } = req.body;
+    const userId = req.user?.id || req.user?._id;
+
+    if (meetingId && !isValidObjectId(meetingId)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid meeting ID" });
+    }
 
     if (!date) {
       return res.status(400).json({
@@ -425,6 +466,23 @@ export const summarizeMeeting = async (req, res) => {
       });
     }
 
+    if (aiQueue) {
+      console.log(`🚀 Queueing MoM generation job for ${meetingId || "transcript-only"}...`);
+      await aiQueue.add("generate-mom", {
+        meetingId,
+        transcript: textToSummarize,
+        date,
+        title,
+        userId
+      });
+      
+      return res.status(202).json({
+        success: true,
+        message: "Minutes generation started in the background. Please wait...",
+      });
+    }
+
+    // Fallback if redis is disabled (sync generation)
     console.log(`🧠 Generating MoM for ${meetingId || "transcript-only"}...`);
 
     // ======= Build Professional MoM Prompt =======
@@ -656,7 +714,23 @@ ${textToSummarize}
       if (meetingToUpdate) {
         try {
           await detectResolutions(meetingToUpdate, mom);
-          await processStructuredMoM(meetingToUpdate, mom);
+          const kgResults = await processStructuredMoM(meetingToUpdate, mom);
+
+          // Policy compliance cross-reference — hooks in right after decisions
+          // are extracted/embedded by the knowledge graph pass. Kept in its
+          // own try/catch so a compliance-check failure never affects
+          // knowledge-graph processing that already succeeded above.
+          try {
+            await checkMeetingDecisionsAgainstPolicies(
+              meetingToUpdate,
+              kgResults?.decisions,
+            );
+          } catch (complianceError) {
+            console.error(
+              "⚠️ Policy compliance check failed (non-fatal):",
+              complianceError,
+            );
+          }
         } catch (kgError) {
           console.error(
             "⚠️ Knowledge graph processing failed (non-fatal):",
@@ -719,19 +793,44 @@ export const getAllMeetings = async (req, res) => {
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
+    const { page = 1, limit = 10, startDate, endDate } = req.query;
+
     const queryOptions = [{ uploadedBy: userId }];
     if (req.user?.organization) {
       queryOptions.push({ organization: req.user.organization });
     }
 
-    const meetings = await Meeting.find({ $or: queryOptions })
+    const query = { $or: queryOptions };
+
+    if (startDate || endDate) {
+      query.date = {};
+      if (startDate) query.date.$gte = new Date(startDate);
+      if (endDate) query.date.$lte = new Date(endDate);
+    }
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const meetings = await Meeting.find(query)
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
       .select(
         "title summary structuredMoM createdAt date meetingType status time duration recordingType organization",
       )
       .populate("organization", "name");
 
-    return res.status(200).json({ success: true, meetings });
+    const totalMeetings = await Meeting.countDocuments(query);
+
+    return res.status(200).json({ 
+      success: true, 
+      meetings,
+      pagination: {
+        total: totalMeetings,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(totalMeetings / parseInt(limit))
+      }
+    });
   } catch (error) {
     console.error("❌ getAllMeetings Error:", error.message);
     return res
@@ -745,14 +844,37 @@ export const deleteMeeting = async (req, res) => {
     const meeting = req.doc; // from requireOwnerOrAdmin middleware
     if (!meeting) {
       // Fallback if middleware isn't used
+      if (!isValidObjectId(req.params.id)) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid meeting ID" });
+      }
       const deleted = await Meeting.findByIdAndDelete(req.params.id);
       if (!deleted) {
         return res
           .status(404)
           .json({ success: false, message: "Meeting not found" });
       }
+
+      // Sync deletion with Google Calendar
+      if (deleted.googleEventId) {
+        const user = await User.findById(deleted.uploadedBy);
+        if (user && user.calendarSyncEnabled) {
+          await calendarService.deleteEvent(user, deleted.googleEventId);
+        }
+      }
     } else {
+      const uploaderId = meeting.uploadedBy;
+      const googleEventId = meeting.googleEventId;
       await meeting.deleteOne();
+
+      // Sync deletion with Google Calendar
+      if (googleEventId) {
+        const user = await User.findById(uploaderId);
+        if (user && user.calendarSyncEnabled) {
+          await calendarService.deleteEvent(user, googleEventId);
+        }
+      }
     }
 
     res
@@ -776,6 +898,12 @@ export const getMeetingById = async (req, res) => {
     const userId = req.user?.id || req.user?._id;
     if (!userId) {
       return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    if (!isValidObjectId(req.params.id)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid meeting ID" });
     }
 
     const meeting = await Meeting.findById(req.params.id);
@@ -804,6 +932,12 @@ export const updateMeeting = async (req, res) => {
     const userId = req.user?.id || req.user?._id;
     if (!userId) {
       return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    if (!req.doc && !isValidObjectId(req.params.id)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid meeting ID" });
     }
 
     // `req.doc` is provided by the `requireOwner` middleware
@@ -847,6 +981,18 @@ export const updateMeeting = async (req, res) => {
       await indexMeeting(meeting);
     } catch (idxErr) {
       console.error("⚠️ indexMeeting error (continuing):", idxErr.message);
+    }
+
+    // Sync update with Google Calendar
+    if (meeting.googleEventId) {
+      try {
+        const user = await User.findById(userId);
+        if (user && user.calendarSyncEnabled) {
+          await calendarService.updateEvent(user, meeting);
+        }
+      } catch (calErr) {
+        console.error("⚠️ Google Calendar update sync error:", calErr.message);
+      }
     }
 
     return res.status(200).json({
