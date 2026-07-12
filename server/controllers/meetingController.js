@@ -719,19 +719,44 @@ export const getAllMeetings = async (req, res) => {
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
+    const { page = 1, limit = 10, startDate, endDate } = req.query;
+
     const queryOptions = [{ uploadedBy: userId }];
     if (req.user?.organization) {
       queryOptions.push({ organization: req.user.organization });
     }
 
-    const meetings = await Meeting.find({ $or: queryOptions })
+    const query = { $or: queryOptions };
+
+    if (startDate || endDate) {
+      query.date = {};
+      if (startDate) query.date.$gte = new Date(startDate);
+      if (endDate) query.date.$lte = new Date(endDate);
+    }
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const meetings = await Meeting.find(query)
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
       .select(
         "title summary structuredMoM createdAt date meetingType status time duration recordingType organization",
       )
       .populate("organization", "name");
 
-    return res.status(200).json({ success: true, meetings });
+    const totalMeetings = await Meeting.countDocuments(query);
+
+    return res.status(200).json({ 
+      success: true, 
+      meetings,
+      pagination: {
+        total: totalMeetings,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(totalMeetings / parseInt(limit))
+      }
+    });
   } catch (error) {
     console.error("❌ getAllMeetings Error:", error.message);
     return res
