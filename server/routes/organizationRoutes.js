@@ -11,7 +11,6 @@ import {
   searchOrganizations,
 } from "../controllers/organizationController.js";
 import userAuth from "../middleware/userAuth.js";
-import { apiLimiter } from "../middleware/rateLimiter.js";
 import { requireAdmin } from "../middleware/rbac.js";
 import { apiLimiter, writeLimiter } from "../middleware/rateLimiter.js";
 import {
