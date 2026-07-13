@@ -1,5 +1,26 @@
 import mongoose from "mongoose";
 
+const relationshipSchema = new mongoose.Schema(
+  {
+    target: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "ActionItem",
+      required: true,
+    },
+    confidence: {
+      type: Number,
+      default: 100,
+      min: 0,
+      max: 100,
+    },
+    computedAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { _id: false },
+);
+
 const actionItemSchema = new mongoose.Schema(
   {
     text: { type: String, required: true, trim: true },
@@ -19,10 +40,24 @@ const actionItemSchema = new mongoose.Schema(
       ref: "Organization",
       default: null,
     },
-    dueDate: { type: Date, default: null },
-    embedding: { type: [Number], default: [] },
-    relatesTo: [{ type: mongoose.Schema.Types.ObjectId, ref: "ActionItem" }],
-    resolvedAt: { type: Date, default: null },
+    dueDate: {
+      type: Date,
+      default: null,
+    },
+    embedding: {
+      type: [Number],
+      default: [],
+    },
+
+    relatesTo: {
+      type: [relationshipSchema],
+      default: [],
+    },
+
+    resolvedAt: {
+      type: Date,
+      default: null,
+    },
     resolvedInMeetingId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Meeting",
@@ -33,5 +68,7 @@ const actionItemSchema = new mongoose.Schema(
 );
 
 const ActionItem =
-  mongoose.models.ActionItem || mongoose.model("ActionItem", actionItemSchema);
+  mongoose.models.ActionItem ||
+  mongoose.model("ActionItem", actionItemSchema);
+
 export default ActionItem;
