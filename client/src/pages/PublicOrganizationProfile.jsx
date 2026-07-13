@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { organizationApi } from "../services";
+import { organizationApi, membershipRequestApi } from "../services";
 import { toast } from "react-toastify";
 import {
   Building2,
@@ -12,6 +12,9 @@ import {
   ExternalLink,
   Loader2,
   AlertCircle,
+  X,
+  Check,
+  Clock,
 } from "lucide-react";
 
 const PublicOrganizationProfile = () => {
@@ -20,6 +23,10 @@ const PublicOrganizationProfile = () => {
   const [organization, setOrganization] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [requestStatus, setRequestStatus] = useState(null);
+  const [requestLoading, setRequestLoading] = useState(false);
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [requestMessage, setRequestMessage] = useState("");
 
   useEffect(() => {
     const fetchOrganization = async () => {
@@ -30,6 +37,8 @@ const PublicOrganizationProfile = () => {
         
         if (data.success) {
           setOrganization(data.organization);
+          // Check for existing request
+          await checkExistingRequest(data.organization._id);
         } else {
           setError(data.message || "Failed to load organization");
         }
@@ -50,6 +59,22 @@ const PublicOrganizationProfile = () => {
     }
   }, [slug]);
 
+  const checkExistingRequest = async (organizationId) => {
+    try {
+      const { data } = await membershipRequestApi.getUserRequests();
+      if (data.success && data.requests) {
+        const existingRequest = data.requests.find(
+          (req) => req.organization._id === organizationId && req.status === "pending"
+        );
+        if (existingRequest) {
+          setRequestStatus("pending");
+        }
+      }
+    } catch (err) {
+      console.error("Error checking existing request:", err);
+    }
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -60,10 +85,61 @@ const PublicOrganizationProfile = () => {
   };
 
   const handleRequestAccess = () => {
-    // Navigate to membership request flow (to be implemented in future issue)
-    toast.info("Membership request flow coming soon");
-    // For now, navigate to join organization page
-    navigate("/join-organization");
+    if (requestStatus === "pending") {
+      toast.info("You already have a pending request for this organization");
+      return;
+    }
+    setShowRequestModal(true);
+  };
+
+  const handleSubmitRequest = async () => {
+    if (!organization) return;
+
+    try {
+      setRequestLoading(true);
+      const { data } = await membershipRequestApi.createRequest({
+        organizationId: organization._id,
+        message: requestMessage,
+      });
+
+      if (data.success) {
+        toast.success("Membership request submitted successfully");
+        setRequestStatus("pending");
+        setShowRequestModal(false);
+        setRequestMessage("");
+      } else {
+        toast.error(data.message || "Failed to submit request");
+      }
+    } catch (err) {
+      console.error("Error submitting request:", err);
+      toast.error(err.response?.data?.message || "Failed to submit request");
+    } finally {
+      setRequestLoading(false);
+    }
+  };
+
+  const handleCancelRequest = async () => {
+    if (!organization) return;
+
+    try {
+      setRequestLoading(true);
+      const { data } = await membershipRequestApi.getUserRequests();
+      if (data.success && data.requests) {
+        const pendingRequest = data.requests.find(
+          (req) => req.organization._id === organization._id && req.status === "pending"
+        );
+        if (pendingRequest) {
+          await membershipRequestApi.cancelRequest(pendingRequest._id);
+          toast.success("Request cancelled successfully");
+          setRequestStatus(null);
+        }
+      }
+    } catch (err) {
+      console.error("Error cancelling request:", err);
+      toast.error(err.response?.data?.message || "Failed to cancel request");
+    } finally {
+      setRequestLoading(false);
+    }
   };
 
   // Loading Skeleton
@@ -236,12 +312,33 @@ const PublicOrganizationProfile = () => {
 
               {/* Request Access Button */}
               <div className="flex-shrink-0">
-                <button
-                  onClick={handleRequestAccess}
-                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors shadow-lg hover:shadow-xl"
-                >
-                  Request Access
-                </button>
+                {requestStatus === "pending" ? (
+                  <div className="flex items-center gap-2">
+                    <span className="px-4 py-2 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-lg text-sm font-medium flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      Pending
+                    </span>
+                    <button
+                      onClick={handleCancelRequest}
+                      disabled={requestLoading}
+                      className="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors flex items-center gap-2"
+                    >
+                      {requestLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <X className="w-4 h-4" />
+                      )}
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleRequestAccess}
+                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors shadow-lg hover:shadow-xl"
+                  >
+                    Request Access
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -331,17 +428,105 @@ const PublicOrganizationProfile = () => {
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                   Join this organization to collaborate with team members and access shared resources.
                 </p>
-                <button
-                  onClick={handleRequestAccess}
-                  className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
-                >
-                  Request to Join
-                </button>
+                {requestStatus === "pending" ? (
+                  <div className="flex items-center gap-2">
+                    <span className="px-3 py-2 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-lg text-sm font-medium flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      Pending
+                    </span>
+                    <button
+                      onClick={handleCancelRequest}
+                      disabled={requestLoading}
+                      className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                    >
+                      {requestLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <X className="w-4 h-4" />
+                      )}
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleRequestAccess}
+                    className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+                  >
+                    Request to Join
+                  </button>
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Request Access Modal */}
+      {showRequestModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                Request Access
+              </h3>
+              <button
+                onClick={() => setShowRequestModal(false)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              Send a membership request to join <strong>{organization?.name}</strong>
+            </p>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Message (optional)
+              </label>
+              <textarea
+                value={requestMessage}
+                onChange={(e) => setRequestMessage(e.target.value)}
+                placeholder="Tell the organization why you'd like to join..."
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 resize-none"
+                rows={3}
+                maxLength={500}
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {requestMessage.length}/500 characters
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowRequestModal(false);
+                  setRequestMessage("");
+                }}
+                disabled={requestLoading}
+                className="flex-1 px-4 py-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmitRequest}
+                disabled={requestLoading}
+                className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
+              >
+                {requestLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  "Submit Request"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

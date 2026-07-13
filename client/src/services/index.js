@@ -8,3 +8,4 @@ export * from "./policyApi";
 export * from "./policyComplianceApi";
 export * from "./notificationApi";
 export * from "./analyticsApi";
+export * from "./membershipRequestApi";
