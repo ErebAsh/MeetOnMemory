@@ -36,6 +36,7 @@ import { createClient } from "redis";
 import { initAIWorker } from "./services/queueService.js";
 import { initWebhookWorker } from "./services/webhookDispatcherService.js";
 import { globalLimiter } from "./middleware/rateLimiter.js";
+import errorHandler from "./middleware/errorHandler.js";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -57,134 +58,99 @@ if (process.env.NODE_ENV !== "test") {
 }
 
 // MIDDLEWARES
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
-
-// CORS (must be before CSRF)
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://localhost:5173",
-  process.env.CLIENT_URL,
+  "http://localhost:5174",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:5174",
+  process.env.FRONTEND_URL,
 ].filter(Boolean);
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      return callback(new Error(`CORS blocked: ${origin}`));
-    },
+    origin: allowedOrigins,
     credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "X-Requested-With",
-      "X-CSRF-Token",
-    ],
   }),
 );
 
-// CSRF PROTECTION (CodeQL Fix)
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+app.use(cookieParser());
+
+// Enforce CSRF protection on mutation routes
 const csrfProtection = csrf({
   cookie: {
     key: "_csrf",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    secure: process.env.NODE_ENV === "production",
     httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
   },
 });
 
 app.use((req, res, next) => {
-  // Bypass CSRF in development to avoid localhost cross-origin cookie blocking
-  if (process.env.NODE_ENV !== "production") {
+  const isSafeMethod = ["GET", "HEAD", "OPTIONS"].includes(req.method);
+  const isAuthRoute = req.path.startsWith("/api/auth");
+  const isSyncPath = req.path.startsWith("/sync");
+
+  if (isSafeMethod || isAuthRoute || isSyncPath || process.env.NODE_ENV === "test") {
     return next();
   }
-
-  // Exclude authentication endpoints from CSRF validation
-  // These endpoints handle initial authentication and shouldn't require CSRF tokens
-  if (req.path.startsWith("/api/auth/")) {
-    return next();
-  }
-
-  if (req.method === "GET") {
-    csrfProtection(req, res, (err) => {
-      if (err) return next(err);
-      next();
-    });
-  } else {
-    // For non-auth POST/PUT/PATCH/DELETE requests, require CSRF validation
-    csrfProtection(req, res, next);
-  }
+  return csrfProtection(req, res, next);
 });
 
-// Apply global rate limit after CORS
-app.use(globalLimiter);
+// CSRF token provider
+app.get("/api/csrf-token", csrfProtection, (req, res) => {
+  res.json({ csrfToken: req.csrfToken() });
+});
 
-// STATIC FILES
-app.use("/uploads", express.static("uploads"));
-
-// HEALTH CHECK
-app.get("/", (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "MeetOnMemory API is running",
+// VECTOR DB WARMUP
+// Vector store initializes lazily in the background. It won't block the app start
+// but ensures early readiness.
+if (process.env.NODE_ENV !== "test") {
+  initVectorStore().catch((err) => {
+    console.error("⚠️ Failed to pre-warm vector store:", err.message);
   });
-});
-
-app.get("/api/health", (req, res) => {
-  res.status(200).json({
-    success: true,
-    status: "healthy",
-    timestamp: new Date().toISOString(),
-  });
-});
+}
 
 // ROUTES
 app.use("/api/auth", authRoutes);
-app.use("/api/organizations", organizationRoutes);
-app.use("/api/organizations-new", organizationRoutesNew);
-app.use("/api/memberships", membershipRoutes);
-app.use("/api/membership-requests", membershipRequestRoutes);
-app.use("/api/invitations", invitationRoutes);
+app.use("/api/organization", organizationRoutes);
+app.use("/api/organization/new", organizationRoutesNew);
+app.use("/api/membership", membershipRoutes);
+app.use("/api/membership-request", membershipRequestRoutes);
+app.use("/api/invitation", invitationRoutes);
 app.use("/api/meetings", meetingRoutes);
 app.use("/api/search", searchRoutes);
-app.use("/api/ai-search", aiRoutes);
+app.use("/api/ai", aiRoutes);
 app.use("/api/policies", policyRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/gemini", geminiRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/knowledge", knowledgeRoutes);
-app.use("/api/policy-compliance", policyComplianceRoutes);
+app.use("/api/compliance", policyComplianceRoutes);
 app.use("/api/sessions", sessionRoutes);
 app.use("/api/webhooks", webhookRoutes);
 
-// VECTOR STORE INIT (Non-blocking)
-// Initialize vector store in background to avoid blocking server startup
-if (process.env.NODE_ENV !== "test") {
-  initVectorStore()
-    .then(() => console.log("✅ Vector store initialized"))
-    .catch((error) =>
-      console.error("⚠️ Vector store initialization failed:", error.message),
-    );
-}
+// GLOBAL RATE LIMITER
+app.use(globalLimiter);
 
-// START SERVER
-let server;
-if (process.env.NODE_ENV !== "test") {
-  server = app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`🌐 Allowed Origins: ${allowedOrigins.join(", ")}`);
+// Health check endpoint
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "UP",
+    timestamp: new Date().toISOString(),
+    env: process.env.NODE_ENV,
   });
-} else {
-  // In test mode, create server without listening
-  server = http.createServer(app);
+});
+
+const server = http.createServer(app);
+
+// SERVER START (Skipped during Jest test execution)
+if (process.env.NODE_ENV !== "test") {
+  server.listen(PORT, () => {
+    console.log(`🚀 MeetOnMemory Server running on port ${PORT}`);
+  });
 }
 
 // SOCKET.IO
@@ -241,21 +207,7 @@ if (process.env.NODE_ENV !== "test") {
 }
 
 // ERROR HANDLER
-app.use((err, req, res, next) => {
-  console.error(err);
-
-  if (err.code === "EBADCSRFTOKEN") {
-    return res.status(403).json({
-      success: false,
-      message: "CSRF token validation failed.",
-    });
-  }
-
-  res.status(500).json({
-    success: false,
-    message: err.message || "Internal Server Error",
-  });
-});
+app.use(errorHandler);
 
 // GRACEFUL SHUTDOWN
 process.on("SIGTERM", () => {

@@ -1,8 +1,10 @@
 import mongoose from "mongoose";
 import { URL } from "url";
+import { z } from "zod";
 import Webhook from "../models/Webhook.js";
 import Membership from "../models/membershipModel.js";
 import Organization from "../models/organizationModel.js";
+import { ValidationError, UnauthorizedError, ForbiddenError, NotFoundError } from "../utils/errors.js";
 
 const isSafeWebhookUrl = (urlStr) => {
   try {
@@ -81,66 +83,91 @@ const hasAdminPermission = async (userId, organizationId) => {
   }
 };
 
+// ═══════════════════════════════════════════════════════════════
+// Zod schemas for payload validation
+// ═══════════════════════════════════════════════════════════════
+
+const createWebhookSchema = z.object({
+  targetUrl: z
+    .string({ required_error: "Target URL is required." })
+    .trim()
+    .min(1, "Target URL cannot be empty.")
+    .refine((url) => url.startsWith("http://") || url.startsWith("https://"), {
+      message: "Target URL must start with http:// or https://.",
+    })
+    .refine((url) => isSafeWebhookUrl(url), {
+      message: "Target URL must be a public, safe address. Local/private addresses are not permitted.",
+    }),
+  events: z
+    .array(z.enum(["meeting.created", "mom.generated", "policy.updated"]), {
+      required_error: "At least one event trigger must be specified.",
+    })
+    .min(1, "At least one event trigger must be specified."),
+  secret: z.string().trim().optional(),
+  organizationId: z
+    .string({ required_error: "Valid Organization ID is required." })
+    .refine((val) => mongoose.Types.ObjectId.isValid(val), {
+      message: "Valid Organization ID is required.",
+    }),
+});
+
+const updateWebhookSchema = z.object({
+  targetUrl: z
+    .string()
+    .trim()
+    .min(1, "Target URL cannot be empty.")
+    .refine((url) => url.startsWith("http://") || url.startsWith("https://"), {
+      message: "Target URL must start with http:// or https://.",
+    })
+    .refine((url) => isSafeWebhookUrl(url), {
+      message: "Target URL must be a public, safe address. Local/private addresses are not permitted.",
+    })
+    .optional(),
+  events: z
+    .array(z.enum(["meeting.created", "mom.generated", "policy.updated"]))
+    .min(1, "At least one event trigger must be specified.")
+    .optional(),
+  secret: z.string().trim().min(1, "Secret key cannot be empty.").optional(),
+  isActive: z.boolean().optional(),
+});
+
+// Helper to get authenticated user ID
+const getUserId = (req) => {
+  const id = req.user?.id || req.user?._id;
+  if (!id) throw new UnauthorizedError();
+  return id.toString();
+};
+
 /**
  * 🟢 Register a new Webhook subscription
  * POST /api/webhooks
  */
-export const createWebhook = async (req, res) => {
+export const createWebhook = async (req, res, next) => {
   try {
-    const { targetUrl, events, secret, organizationId } = req.body;
-    const userId = req.user?.id || req.user?._id;
+    const userId = getUserId(req);
 
-    if (!targetUrl || !targetUrl.trim()) {
-      return res.status(400).json({ success: false, message: "Target URL is required." });
-    }
-
-    if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
-      return res.status(400).json({ success: false, message: "Target URL must start with http:// or https://." });
-    }
-
-    if (!isSafeWebhookUrl(targetUrl.trim())) {
-      return res.status(400).json({
-        success: false,
-        message: "Target URL must be a public, safe address. Local/private addresses are not permitted.",
-      });
-    }
-
-    if (!organizationId || !mongoose.Types.ObjectId.isValid(organizationId)) {
-      return res.status(400).json({ success: false, message: "Valid Organization ID is required." });
-    }
-
-    if (!Array.isArray(events) || events.length === 0) {
-      return res.status(400).json({ success: false, message: "At least one event trigger must be specified." });
-    }
-
-    // Validate events list
-    const validEvents = ["meeting.created", "mom.generated", "policy.updated"];
-    const invalidEvents = events.filter((e) => !validEvents.includes(e));
-    if (invalidEvents.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: `Invalid event triggers: ${invalidEvents.join(", ")}. Valid triggers: ${validEvents.join(", ")}`,
-      });
+    let validated;
+    try {
+      validated = createWebhookSchema.parse(req.body);
+    } catch (zodErr) {
+      return next(zodErr);
     }
 
     // Authorization check
-    const isAuthorized = await hasAdminPermission(userId, organizationId);
+    const isAuthorized = await hasAdminPermission(userId, validated.organizationId);
     if (!isAuthorized) {
-      return res.status(403).json({
-        success: false,
-        message: "Forbidden. Only organization owners and admins can configure webhooks.",
-      });
+      throw new ForbiddenError("Forbidden. Only organization owners and admins can configure webhooks.");
     }
 
     const webhookData = {
-      organizationId,
-      targetUrl: targetUrl.trim(),
-      events,
+      organizationId: validated.organizationId,
+      targetUrl: validated.targetUrl,
+      events: validated.events,
       isActive: true,
     };
 
-    if (secret && secret.trim()) {
-      webhookData.secret = secret.trim();
+    if (validated.secret) {
+      webhookData.secret = validated.secret;
     }
 
     const webhook = await Webhook.create(webhookData);
@@ -158,8 +185,7 @@ export const createWebhook = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("❌ createWebhook Error:", error);
-    return res.status(500).json({ success: false, message: "Failed to create webhook." });
+    next(error);
   }
 };
 
@@ -167,30 +193,26 @@ export const createWebhook = async (req, res) => {
  * 🟢 Get webhook subscriptions for an organization
  * GET /api/webhooks?organizationId=xxx
  */
-export const getWebhooks = async (req, res) => {
+export const getWebhooks = async (req, res, next) => {
   try {
     const { organizationId } = req.query;
-    const userId = req.user?.id || req.user?._id;
+    const userId = getUserId(req);
 
     if (!organizationId || !mongoose.Types.ObjectId.isValid(organizationId)) {
-      return res.status(400).json({ success: false, message: "Valid Organization ID is required." });
+      throw new ValidationError("Valid Organization ID is required.");
     }
 
     // Authorization check
     const isAuthorized = await hasAdminPermission(userId, organizationId);
     if (!isAuthorized) {
-      return res.status(403).json({
-        success: false,
-        message: "Forbidden. Only organization owners and admins can view webhooks.",
-      });
+      throw new ForbiddenError("Forbidden. Only organization owners and admins can view webhooks.");
     }
 
     const webhooks = await Webhook.find({ organizationId }).sort({ createdAt: -1 });
 
     return res.status(200).json({ success: true, webhooks });
   } catch (error) {
-    console.error("❌ getWebhooks Error:", error);
-    return res.status(500).json({ success: false, message: "Failed to fetch webhooks." });
+    next(error);
   }
 };
 
@@ -198,71 +220,44 @@ export const getWebhooks = async (req, res) => {
  * 🟢 Update webhook subscription details
  * PATCH /api/webhooks/:id
  */
-export const updateWebhook = async (req, res) => {
+export const updateWebhook = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { targetUrl, events, secret, isActive } = req.body;
-    const userId = req.user?.id || req.user?._id;
+    const userId = getUserId(req);
 
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ success: false, message: "Valid Webhook ID is required." });
+      throw new ValidationError("Valid Webhook ID is required.");
     }
 
     const webhook = await Webhook.findById(id);
     if (!webhook) {
-      return res.status(404).json({ success: false, message: "Webhook subscription not found." });
+      throw new NotFoundError("Webhook subscription not found.");
     }
 
     // Authorization check
     const isAuthorized = await hasAdminPermission(userId, webhook.organizationId);
     if (!isAuthorized) {
-      return res.status(403).json({
-        success: false,
-        message: "Forbidden. Only organization owners and admins can modify webhooks.",
-      });
+      throw new ForbiddenError("Forbidden. Only organization owners and admins can modify webhooks.");
     }
 
-    // Validations
-    if (targetUrl !== undefined) {
-      if (!targetUrl.trim()) {
-        return res.status(400).json({ success: false, message: "Target URL cannot be empty." });
-      }
-      if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
-        return res.status(400).json({ success: false, message: "Target URL must start with http:// or https://." });
-      }
-      if (!isSafeWebhookUrl(targetUrl.trim())) {
-        return res.status(400).json({
-          success: false,
-          message: "Target URL must be a public, safe address. Local/private addresses are not permitted.",
-        });
-      }
-      webhook.targetUrl = targetUrl.trim();
+    let validated;
+    try {
+      validated = updateWebhookSchema.parse(req.body);
+    } catch (zodErr) {
+      return next(zodErr);
     }
 
-    if (events !== undefined) {
-      if (!Array.isArray(events) || events.length === 0) {
-        return res.status(400).json({ success: false, message: "At least one event trigger must be specified." });
-      }
-      const validEvents = ["meeting.created", "mom.generated", "policy.updated"];
-      const invalidEvents = events.filter((e) => !validEvents.includes(e));
-      if (invalidEvents.length > 0) {
-        return res.status(400).json({
-          success: false,
-          message: `Invalid event triggers: ${invalidEvents.join(", ")}`,
-        });
-      }
-      webhook.events = events;
+    if (validated.targetUrl !== undefined) {
+      webhook.targetUrl = validated.targetUrl;
     }
-
-    if (secret !== undefined) {
-      if (!secret.trim()) {
-        return res.status(400).json({ success: false, message: "Secret key cannot be empty." });
-      }
-      webhook.secret = secret.trim();
+    if (validated.events !== undefined) {
+      webhook.events = validated.events;
     }
-
-    if (isActive !== undefined) {
-      webhook.isActive = !!isActive;
+    if (validated.secret !== undefined) {
+      webhook.secret = validated.secret;
+    }
+    if (validated.isActive !== undefined) {
+      webhook.isActive = validated.isActive;
     }
 
     await webhook.save();
@@ -273,8 +268,7 @@ export const updateWebhook = async (req, res) => {
       webhook,
     });
   } catch (error) {
-    console.error("❌ updateWebhook Error:", error);
-    return res.status(500).json({ success: false, message: "Failed to update webhook." });
+    next(error);
   }
 };
 
@@ -282,27 +276,24 @@ export const updateWebhook = async (req, res) => {
  * 🟢 Delete webhook subscription
  * DELETE /api/webhooks/:id
  */
-export const deleteWebhook = async (req, res) => {
+export const deleteWebhook = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const userId = req.user?.id || req.user?._id;
+    const userId = getUserId(req);
 
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ success: false, message: "Valid Webhook ID is required." });
+      throw new ValidationError("Valid Webhook ID is required.");
     }
 
     const webhook = await Webhook.findById(id);
     if (!webhook) {
-      return res.status(404).json({ success: false, message: "Webhook subscription not found." });
+      throw new NotFoundError("Webhook subscription not found.");
     }
 
     // Authorization check
     const isAuthorized = await hasAdminPermission(userId, webhook.organizationId);
     if (!isAuthorized) {
-      return res.status(403).json({
-        success: false,
-        message: "Forbidden. Only organization owners and admins can delete webhooks.",
-      });
+      throw new ForbiddenError("Forbidden. Only organization owners and admins can delete webhooks.");
     }
 
     await webhook.deleteOne();
@@ -312,7 +303,6 @@ export const deleteWebhook = async (req, res) => {
       message: "Webhook deleted successfully.",
     });
   } catch (error) {
-    console.error("❌ deleteWebhook Error:", error);
-    return res.status(500).json({ success: false, message: "Failed to delete webhook." });
+    next(error);
   }
 };
