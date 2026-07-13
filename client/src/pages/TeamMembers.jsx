@@ -19,8 +19,8 @@ import {
 import { toast } from "react-toastify";
 
 const ROLE_STYLES = {
-  admin: "bg-violet-50 text-violet-700 border-violet-200",
-  member: "bg-sky-50 text-sky-700 border-sky-200",
+  admin: "bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400 border-violet-200 dark:border-violet-800",
+  member: "bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-800",
 };
 
 const ROLE_LABELS = {
@@ -140,7 +140,7 @@ const TeamMembers = () => {
         <Navbar />
         <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-blue-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 dark:border-slate-700 border-t-blue-600"></div>
           </div>
         </main>
       </div>
@@ -196,7 +196,7 @@ const TeamMembers = () => {
         {/* Search and Filters */}
         <div className="mb-6 space-y-4">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 dark:text-slate-500" />
             <input
               type="text"
               placeholder="Search by name, email, or role..."
@@ -237,7 +237,7 @@ const TeamMembers = () => {
         {/* Members List */}
         {filteredMembers.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <Users className="h-16 w-16 text-slate-300 mb-4" />
+            <Users className="h-16 w-16 text-slate-300 dark:text-slate-600 mb-4" />
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
               No members found
             </h3>
@@ -304,7 +304,7 @@ const TeamMembers = () => {
                     className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     title="Copy email"
                   >
-                    <Copy className="h-4 w-4 text-slate-500" />
+                    <Copy className="h-4 w-4 text-slate-500 dark:text-slate-400" />
                   </button>
                 </div>
               </div>
@@ -328,7 +328,7 @@ const TeamMembers = () => {
               onClick={() => setSelectedMember(null)}
               className="absolute right-4 top-4 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
-              <X className="h-5 w-5 text-slate-500" />
+              <X className="h-5 w-5 text-slate-500 dark:text-slate-400" />
             </button>
 
             {/* Modal Content */}
@@ -348,7 +348,7 @@ const TeamMembers = () => {
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800">
                   <div className="flex items-center gap-3">
-                    <Shield className="h-5 w-5 text-slate-500" />
+                    <Shield className="h-5 w-5 text-slate-500 dark:text-slate-400" />
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                       Role
                     </span>
@@ -364,14 +364,14 @@ const TeamMembers = () => {
 
                 <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800">
                   <div className="flex items-center gap-3">
-                    <Mail className="h-5 w-5 text-slate-500" />
+                    <Mail className="h-5 w-5 text-slate-500 dark:text-slate-400" />
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                       Email
                     </span>
                   </div>
                   <button
                     onClick={() => handleCopyEmail(selectedMember.email)}
-                    className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700"
+                    className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
                   >
                     <span className="truncate max-w-[150px]">
                       {selectedMember.email}
@@ -382,7 +382,7 @@ const TeamMembers = () => {
 
                 <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800">
                   <div className="flex items-center gap-3">
-                    <Clock className="h-5 w-5 text-slate-500" />
+                    <Clock className="h-5 w-5 text-slate-500 dark:text-slate-400" />
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                       Joined
                     </span>
@@ -394,7 +394,7 @@ const TeamMembers = () => {
 
                 <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800">
                   <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-slate-500" />
+                    <CheckCircle className="h-5 w-5 text-slate-500 dark:text-slate-400" />
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                       Status
                     </span>

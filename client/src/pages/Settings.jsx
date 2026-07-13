@@ -52,11 +52,11 @@ const Settings = () => {
 
   if (!userData) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col">
         <Navbar />
         <div className="flex-1 flex justify-center items-center">
-          <Loader2 className="animate-spin w-8 h-8 text-blue-500" />
-          <span className="ml-3 text-slate-500 font-medium">
+          <Loader2 className="animate-spin w-8 h-8 text-blue-500 dark:text-blue-400" />
+          <span className="ml-3 text-slate-500 dark:text-slate-400 font-medium">
             Loading settings...
           </span>
         </div>
@@ -115,7 +115,7 @@ const Settings = () => {
           <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-sm fade-in-up stagger-2">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-xl">
-                <User className="w-5 h-5 text-blue-600" />
+                <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-slate-900 dark:text-white">
@@ -197,7 +197,7 @@ const Settings = () => {
           <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-sm fade-in-up stagger-3">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 bg-purple-50 dark:bg-purple-900/30 rounded-xl">
-                <Palette className="w-5 h-5 text-purple-600" />
+                <Palette className="w-5 h-5 text-purple-600 dark:text-purple-400" />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-slate-900 dark:text-white">Appearance</h2>
@@ -245,7 +245,7 @@ const Settings = () => {
           <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-sm fade-in-up stagger-4">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 bg-amber-50 dark:bg-amber-900/30 rounded-xl">
-                <Bell className="w-5 h-5 text-amber-600" />
+                <Bell className="w-5 h-5 text-amber-600 dark:text-amber-400" />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-slate-900 dark:text-white">
@@ -274,7 +274,7 @@ const Settings = () => {
                   className={`relative w-11 h-6 rounded-full transition-colors cursor-pointer ${
                     notificationPrefs.meetingNotifications
                       ? "bg-blue-600"
-                      : "bg-slate-200"
+                      : "bg-slate-200 dark:bg-slate-700"
                   }`}
                   aria-pressed={notificationPrefs.meetingNotifications}
                 >
@@ -304,7 +304,7 @@ const Settings = () => {
                   className={`relative w-11 h-6 rounded-full transition-colors cursor-pointer ${
                     notificationPrefs.organizationUpdates
                       ? "bg-blue-600"
-                      : "bg-slate-200"
+                      : "bg-slate-200 dark:bg-slate-700"
                   }`}
                   aria-pressed={notificationPrefs.organizationUpdates}
                 >
@@ -382,7 +382,7 @@ const Settings = () => {
           <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-sm fade-in-up stagger-5">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 bg-red-50 dark:bg-red-900/30 rounded-xl">
-                <Shield className="w-5 h-5 text-red-600" />
+                <Shield className="w-5 h-5 text-red-600 dark:text-red-400" />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-slate-900 dark:text-white">Security</h2>
@@ -398,7 +398,7 @@ const Settings = () => {
                 className="w-full flex items-center justify-between py-3 px-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer group"
               >
                 <div className="flex items-center gap-3">
-                  <Lock className="w-4 h-4 text-slate-400 group-hover:text-slate-600" />
+                  <Lock className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300" />
                   <div className="text-left">
                     <p className="text-sm font-semibold text-slate-900 dark:text-slate-200">
                       Change Password
@@ -408,7 +408,7 @@ const Settings = () => {
                     </p>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600" />
+                <ChevronRight className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300" />
               </button>
 
               <div className="w-full flex items-center justify-between py-3 px-4 rounded-xl opacity-50 cursor-not-allowed">
@@ -421,7 +421,7 @@ const Settings = () => {
                     <p className="text-xs text-slate-500 dark:text-slate-400">Coming soon</p>
                   </div>
                 </div>
-                <span className="text-xs font-semibold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-full">
+                <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-full">
                   Soon
                 </span>
               </div>
@@ -438,7 +438,7 @@ const Settings = () => {
                     </p>
                   </div>
                 </div>
-                <span className="text-xs font-semibold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-full">
+                <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-full">
                   Soon
                 </span>
               </div>
@@ -469,7 +469,7 @@ const Settings = () => {
           <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-sm fade-in-up stagger-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 bg-green-50 dark:bg-green-900/30 rounded-xl">
-                <Globe className="w-5 h-5 text-green-600" />
+                <Globe className="w-5 h-5 text-green-600 dark:text-green-400" />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-slate-900 dark:text-white">
