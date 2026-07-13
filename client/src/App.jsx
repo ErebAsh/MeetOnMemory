@@ -35,6 +35,7 @@ import Tasks from "./pages/Tasks.jsx";
 import KnowledgeTimeline from "./pages/KnowledgeTimeline.jsx";
 import PolicyCompliance from "./pages/PolicyCompliance.jsx";
 import Settings from "./pages/Settings.jsx";
+import MembershipRequests from "./pages/MembershipRequests.jsx";
 import Navbar from "./components/Navbar";
 import ScrollNavigator from "./components/ScrollNavigator";
 
@@ -304,6 +305,14 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <Settings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/membership-requests"
+            element={
+              <ProtectedRoute>
+                <MembershipRequests />
               </ProtectedRoute>
             }
           />
