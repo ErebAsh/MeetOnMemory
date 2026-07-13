@@ -140,7 +140,7 @@ const App = () => {
           <Route
             path="/meetings"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute resource="meetings" action="view">
                 <MeetingListPage />
               </ProtectedRoute>
             }
@@ -198,7 +198,7 @@ const App = () => {
           <Route
             path="/create-meeting"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute resource="meetings" action="create">
                 <CreateMeeting />
               </ProtectedRoute>
             }
@@ -206,7 +206,7 @@ const App = () => {
           <Route
             path="/upload-meeting"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute resource="meetings" action="create">
                 <UploadMeeting />
               </ProtectedRoute>
             }
@@ -214,7 +214,7 @@ const App = () => {
           <Route
             path="/policies"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute resource="policies" action="view">
                 <Policies />
               </ProtectedRoute>
             }
@@ -222,7 +222,7 @@ const App = () => {
           <Route
             path="/summaries"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute resource="meetings" action="view">
                 <Summaries />
               </ProtectedRoute>
             }
@@ -230,7 +230,7 @@ const App = () => {
           <Route
             path="/reports"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute resource="reports" action="view">
                 <Reports />
               </ProtectedRoute>
             }
@@ -238,7 +238,7 @@ const App = () => {
           <Route
             path="/ai-search"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute resource="ai_search" action="search">
                 <AiSearch />
               </ProtectedRoute>
             }
@@ -247,7 +247,7 @@ const App = () => {
           <Route
             path="/meeting/:id"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute resource="meetings" action="view">
                 <MeetingDetails />
               </ProtectedRoute>
             }
@@ -255,7 +255,7 @@ const App = () => {
           <Route
             path="/team-members"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute resource="team_members" action="view">
                 <TeamMembers />
               </ProtectedRoute>
             }
@@ -271,7 +271,7 @@ const App = () => {
           <Route
             path="/calendar"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute resource="calendar" action="view">
                 <Calendar />
               </ProtectedRoute>
             }
@@ -279,7 +279,7 @@ const App = () => {
           <Route
             path="/notifications"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute resource="notifications" action="view">
                 <Notifications />
               </ProtectedRoute>
             }
@@ -287,7 +287,7 @@ const App = () => {
           <Route
             path="/tasks"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute resource="tasks" action="view">
                 <Tasks />
               </ProtectedRoute>
             }
@@ -295,7 +295,7 @@ const App = () => {
           <Route
             path="/policy-compliance"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute resource="policies" action="view">
                 <PolicyCompliance />
               </ProtectedRoute>
             }
@@ -303,7 +303,7 @@ const App = () => {
           <Route
             path="/settings"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute resource="settings" action="view">
                 <Settings />
               </ProtectedRoute>
             }
@@ -311,7 +311,7 @@ const App = () => {
           <Route
             path="/membership-requests"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute resource="team_members" action="view">
                 <MembershipRequests />
               </ProtectedRoute>
             }

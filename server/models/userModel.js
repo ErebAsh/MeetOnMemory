@@ -15,7 +15,7 @@ const userSchema = new mongoose.Schema(
     // --- NEW FIELDS ADDED ---
     role: {
       type: String,
-      enum: ["admin", "member"],
+      enum: ["owner", "admin", "moderator", "member", "guest"],
       default: null, // Will be null until they complete onboarding
     },
     organization: {

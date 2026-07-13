@@ -2,13 +2,14 @@
 import express from "express";
 import { searchVectorStore } from "../utils/embeddingUtils.js";
 import userAuth from "../middleware/userAuth.js";
+import { requirePermission } from "../middleware/rbac.js";
 import Membership from "../models/membershipModel.js";
 import Meeting from "../models/meetingModel.js";
 
 const router = express.Router();
 
 // POST /api/ai-search
-router.post("/", userAuth, async (req, res) => {
+router.post("/", userAuth, requirePermission("ai_search", "search"), async (req, res) => {
   try {
     const { query, filters } = req.body;
 

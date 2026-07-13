@@ -5,6 +5,8 @@ import {
   requireOwnerOrAdmin,
   requireOwner,
   requireOrgAccess,
+  requirePermission,
+  requireOrgMembership,
 } from "../middleware/rbac.js";
 import userAuth from "../middleware/userAuth.js";
 import {
@@ -39,24 +41,26 @@ router.post(
   "/upload",
   userAuth,
   uploadLimiter,
+  requireOrgMembership,
+  requirePermission("meetings", "create"),
   upload.single("file"),
   uploadMeeting,
 );
 
 // ✅ Summarize Transcript (send meetingId or transcript)
-router.post("/summarize", userAuth, writeLimiter, summarizeMeeting);
+router.post("/summarize", userAuth, writeLimiter, requirePermission("meetings", "transcribe"), summarizeMeeting);
 
 // ✅ Fetch All Meetings (for Summaries Page)
-router.get("/all", userAuth, getAllMeetings);
+router.get("/all", userAuth, requireOrgMembership, requirePermission("meetings", "view"), getAllMeetings);
 
 // ✅ Get Single Meeting Details (for Meeting Details Page)
-router.get("/:id", userAuth, getMeetingById);
+router.get("/:id", userAuth, requireOrgAccess(Meeting), requirePermission("meetings", "view"), getMeetingById);
 
 // ✅ Update Meeting (for Meeting Details Page - rename)
-router.patch("/:id", userAuth, requireOwner(Meeting), updateMeeting);
+router.patch("/:id", userAuth, requireOwner(Meeting), requirePermission("meetings", "edit"), updateMeeting);
 
 // ✅ Export Meeting
-router.get("/:id/export", userAuth, requireOrgAccess(Meeting), exportMeeting);
+router.get("/:id/export", userAuth, requireOrgAccess(Meeting), requirePermission("meetings", "export"), exportMeeting);
 
 // ✅ Delete Meeting
 router.delete(
@@ -64,25 +68,28 @@ router.delete(
   userAuth,
   writeLimiter,
   requireOwnerOrAdmin(Meeting),
+  requirePermission("meetings", "delete"),
   deleteMeeting,
 );
 
 // ========== NEW ROUTES (for CreateMeeting.jsx) ==========
 
 // ✅ Create/Schedule Meeting (from CreateMeeting Schedule section)
-router.post("/create", userAuth, writeLimiter, createMeeting);
+router.post("/create", userAuth, writeLimiter, requireOrgMembership, requirePermission("meetings", "create"), createMeeting);
 
 // ✅ Upload Audio for existing meeting (from CreateMeeting Upload section)
 router.post(
   "/upload-audio",
   userAuth,
   uploadLimiter,
+  requireOrgMembership,
+  requirePermission("meetings", "create"),
   upload.single("audio"),
   uploadAudioForMeeting,
 );
 
 // 🆕 ✅ Voice/Text Search Route (Frontend: Summaries.jsx or Live Search)
-router.post("/search", userAuth, searchMeetingsByText);
+router.post("/search", userAuth, requirePermission("meetings", "view"), searchMeetingsByText);
 
 // 🆕 ✅ Update Meeting Route (Frontend: Meeting Repository - rename, etc.)
 router.put(
@@ -90,10 +97,11 @@ router.put(
   userAuth,
   writeLimiter,
   requireOwner(Meeting),
+  requirePermission("meetings", "edit"),
   updateMeeting,
 );
 
 // ✅ Notify Live Meeting Participants (from CreateMeeting Live section)
-router.post("/notify-live", userAuth, writeLimiter, notifyLiveMeeting);
+router.post("/notify-live", userAuth, writeLimiter, requirePermission("meetings", "create"), notifyLiveMeeting);
 
 export default router;

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import AppContent from "./AppContent.js";
+import { RBACProvider } from "./RBACContext.jsx";
 import { useNavigate } from "react-router-dom";
 import { authApi } from "../services";
 import apiClient from "../services/apiClient.js";
@@ -110,5 +111,11 @@ export const AppContextProvider = ({ children }) => {
     loading,
   };
 
-  return <AppContent.Provider value={value}>{children}</AppContent.Provider>;
+  return (
+    <AppContent.Provider value={value}>
+      <RBACProvider userRole={userData?.role || null}>
+        {children}
+      </RBACProvider>
+    </AppContent.Provider>
+  );
 };

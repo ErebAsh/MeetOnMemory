@@ -1,9 +1,11 @@
 import React, { useContext } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import AppContent from "../context/AppContent";
+import { useRBAC } from "../context/RBACContext.jsx";
 
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = ({ children, requiredPermission, resource, action }) => {
   const { isLoggedin, userData, isLoading } = useContext(AppContent);
+  const { hasPermission } = useRBAC();
   const location = useLocation();
 
   // Show loading while fetching user data
@@ -34,6 +36,13 @@ const ProtectedRoute = ({ children }) => {
 
   if (userData && userData.hasCompletedOnboarding && isOnboardingPage) {
     return <Navigate to="/dashboard" replace />;
+  }
+
+  // RBAC: Check if user has required permission
+  if (requiredPermission && resource && action) {
+    if (!hasPermission(resource, action)) {
+      return <Navigate to="/dashboard" state={{ from: location }} replace />;
+    }
   }
 
   return children;

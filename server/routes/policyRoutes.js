@@ -8,6 +8,7 @@ import Policy from "../models/policyModel.js";
 import {
   requireOwnerOrAdmin,
   requireOrgMembership,
+  requirePermission,
 } from "../middleware/rbac.js";
 import {
   uploadPolicy,
@@ -133,7 +134,7 @@ const handleMulterUpload = (req, res, next) => {
 // ──────────────────────────────────────────────
 
 // Protected (read-only)
-router.get("/", userAuth, getPolicies);
+router.get("/", userAuth, requirePermission("policies", "view"), getPolicies);
 
 // Protected — require authentication & rate limiting
 router.post(
@@ -141,6 +142,7 @@ router.post(
   uploadLimiter,
   userAuth,
   requireOrgMembership,
+  requirePermission("policies", "create"),
   handleMulterUpload,
   uploadPolicy,
 );
@@ -149,6 +151,7 @@ router.post(
   analyzeLimiter,
   userAuth,
   requireOwnerOrAdmin(Policy),
+  requirePermission("policies", "approve"),
   analyzePolicy,
 );
 router.get(
@@ -156,6 +159,7 @@ router.get(
   downloadLimiter,
   userAuth,
   requireOwnerOrAdmin(Policy),
+  requirePermission("policies", "view"),
   downloadPolicy,
 );
 router.delete(
@@ -163,6 +167,7 @@ router.delete(
   deleteLimiter,
   userAuth,
   requireOwnerOrAdmin(Policy),
+  requirePermission("policies", "delete"),
   deletePolicy,
 );
 
