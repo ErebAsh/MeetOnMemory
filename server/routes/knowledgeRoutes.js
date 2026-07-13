@@ -1,6 +1,7 @@
 import express from "express";
 import userAuth from "../middleware/userAuth.js";
 import { apiLimiter, writeLimiter } from "../middleware/rateLimiter.js";
+import { requireAdmin } from "../middleware/rbac.js";
 import {
   getDecisionLineageController,
   getOpenActionItems,
@@ -13,6 +14,6 @@ router.use(userAuth);
 
 router.get("/decisions/:id/lineage", getDecisionLineageController);
 router.get("/action-items", getOpenActionItems);
-router.patch("/action-items/:id", writeLimiter, updateActionItemStatus);
+router.patch("/action-items/:id", writeLimiter, requireAdmin, updateActionItemStatus);
 
 export default router;

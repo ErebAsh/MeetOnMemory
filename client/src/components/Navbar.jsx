@@ -274,9 +274,13 @@ const Navbar = () => {
     { label: "Compliance", href: "/policy-compliance", icon: ShieldAlert },
     { label: "Calendar", href: "/calendar", icon: CalendarDays },
     { label: "Team Members", href: "/team-members", icon: Users },
-    { label: "Organizations", href: "/organizations", icon: Building2 },
+    { label: "Organizations", href: "/organizations", icon: Building2, adminOnly: true },
     { label: "AI Search", href: "/ai-search", icon: Search },
   ];
+
+  const visibleLinks = appLinks.filter(
+    (link) => !link.adminOnly || userData?.role === "admin"
+  );
 
   return (
     <header
@@ -341,7 +345,7 @@ const Navbar = () => {
               className="hidden md:flex items-center gap-1.5 bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 p-1 rounded-2xl"
               aria-label="Application navigation"
             >
-              {appLinks.map((link) => {
+              {visibleLinks.map((link) => {
                 const Icon = link.icon;
                 const active = isTabActive(link.href);
                 return (
@@ -680,7 +684,7 @@ const Navbar = () => {
                 </div>
               </div>
 
-              {appLinks.map((link) => {
+              {visibleLinks.map((link) => {
                 const Icon = link.icon;
                 const active = isTabActive(link.href);
                 return (

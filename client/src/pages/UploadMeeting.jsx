@@ -1,4 +1,5 @@
 import React, { useState, useContext, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
   UploadCloud,
@@ -24,6 +25,17 @@ import { meetingApi } from "../services";
 
 const UploadMeeting = () => {
   const { userData } = useContext(AppContent);
+  const navigate = useNavigate();
+
+  const isAdmin = userData?.role === "admin";
+
+  // Redirect members to dashboard with a message
+  useEffect(() => {
+    if (!isAdmin) {
+      toast.error("Only admins can upload meetings");
+      navigate("/dashboard");
+    }
+  }, [isAdmin, navigate]);
 
   const [file, setFile] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);

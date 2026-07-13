@@ -318,6 +318,9 @@ const DropZone = ({ onFile, disabled, selectedFile }) => {
 // Main Component
 // ──────────────────────────────────────────────
 const Policies = () => {
+  const { userData } = useContext(AppContent);
+  const isAdmin = userData?.role === "admin";
+
   // Upload state
   const [file, setFile] = useState(null);
   const [commitMsg, setCommitMsg] = useState("");
@@ -591,111 +594,113 @@ const Policies = () => {
           </button>
         </div>
 
-        {/* ── Upload Card ── */}
-        <div
-          ref={uploadCardRef}
-          className="bg-white dark:bg-gray-800 shadow-sm rounded-2xl mb-8 border border-gray-100 dark:border-gray-700 overflow-hidden"
-        >
-          <div className="px-6 pt-6 pb-2">
-            <h2 className="text-base font-semibold text-gray-800 flex items-center gap-2 mb-4">
-              <FilePlus className="w-5 h-5 text-indigo-500" />
-              Upload Policy Document
-            </h2>
+        {/* ── Upload Card (Admin Only) ── */}
+        {isAdmin && (
+          <div
+            ref={uploadCardRef}
+            className="bg-white dark:bg-gray-800 shadow-sm rounded-2xl mb-8 border border-gray-100 dark:border-gray-700 overflow-hidden"
+          >
+            <div className="px-6 pt-6 pb-2">
+              <h2 className="text-base font-semibold text-gray-800 flex items-center gap-2 mb-4">
+                <FilePlus className="w-5 h-5 text-indigo-500" />
+                Upload Policy Document
+              </h2>
 
-            <DropZone
-              onFile={handleFileSelect}
-              disabled={isUploading}
-              selectedFile={file}
-            />
-
-            <ProgressBar progress={uploadProgress} stage={uploadStage} />
-          </div>
-
-          {/* Duplicate → update prompt */}
-          {showUpdatePrompt && existingPolicy && (
-            <div className="mx-6 mt-4 mb-2 bg-amber-50 border border-amber-200 rounded-xl p-4">
-              <h3 className="font-semibold text-amber-800 flex items-center gap-2 mb-1 text-sm">
-                <GitBranch className="w-4 h-4" />
-                This file already exists — currently at v
-                {existingPolicy.version || "1.0"}
-              </h3>
-              <p className="text-xs text-amber-700 mb-3">
-                Upload as a <strong>new version</strong> with a commit message,
-                or rename your file to upload as a separate policy.
-              </p>
-              <input
-                type="text"
-                placeholder="Describe the changes (e.g., Updated Section 2: Staff Policy)"
-                value={commitMsg}
-                onChange={(e) => setCommitMsg(e.target.value)}
+              <DropZone
+                onFile={handleFileSelect}
                 disabled={isUploading}
-                className="w-full border border-amber-200 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white"
+                selectedFile={file}
               />
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => handleUpload(true)}
+
+              <ProgressBar progress={uploadProgress} stage={uploadStage} />
+            </div>
+
+            {/* Duplicate → update prompt */}
+            {showUpdatePrompt && existingPolicy && (
+              <div className="mx-6 mt-4 mb-2 bg-amber-50 border border-amber-200 rounded-xl p-4">
+                <h3 className="font-semibold text-amber-800 flex items-center gap-2 mb-1 text-sm">
+                  <GitBranch className="w-4 h-4" />
+                  This file already exists — currently at v
+                  {existingPolicy.version || "1.0"}
+                </h3>
+                <p className="text-xs text-amber-700 mb-3">
+                  Upload as a <strong>new version</strong> with a commit message,
+                  or rename your file to upload as a separate policy.
+                </p>
+                <input
+                  type="text"
+                  placeholder="Describe the changes (e.g., Updated Section 2: Staff Policy)"
+                  value={commitMsg}
+                  onChange={(e) => setCommitMsg(e.target.value)}
                   disabled={isUploading}
-                  className="inline-flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full border border-amber-200 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white"
+                />
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => handleUpload(true)}
+                    disabled={isUploading}
+                    className="inline-flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {isUploading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <GitBranch className="w-4 h-4" />
+                    )}
+                    {isUploading ? "Processing…" : "Commit & Upload New Version"}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowUpdatePrompt(false);
+                      setExistingPolicy(null);
+                      setFile(null);
+                      setUploadStage("idle");
+                    }}
+                    disabled={isUploading}
+                    className="border border-gray-300 px-4 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-100 transition disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Primary upload button (only when no duplicate prompt) */}
+            {!showUpdatePrompt && (
+              <div className="px-6 pb-6 pt-4 flex gap-2">
+                <button
+                  onClick={() => handleUpload(false)}
+                  disabled={isUploading || !file}
+                  className="inline-flex items-center gap-2 bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isUploading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />{" "}
+                      {uploadStage === "processing"
+                        ? "AI Processing…"
+                        : "Uploading…"}
+                    </>
                   ) : (
-                    <GitBranch className="w-4 h-4" />
+                    <>
+                      <Upload className="w-4 h-4" /> Upload
+                    </>
                   )}
-                  {isUploading ? "Processing…" : "Commit & Upload New Version"}
                 </button>
-                <button
-                  onClick={() => {
-                    setShowUpdatePrompt(false);
-                    setExistingPolicy(null);
-                    setFile(null);
-                    setUploadStage("idle");
-                  }}
-                  disabled={isUploading}
-                  className="border border-gray-300 px-4 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-100 transition disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Primary upload button (only when no duplicate prompt) */}
-          {!showUpdatePrompt && (
-            <div className="px-6 pb-6 pt-4 flex gap-2">
-              <button
-                onClick={() => handleUpload(false)}
-                disabled={isUploading || !file}
-                className="inline-flex items-center gap-2 bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isUploading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />{" "}
-                    {uploadStage === "processing"
-                      ? "AI Processing…"
-                      : "Uploading…"}
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-4 h-4" /> Upload
-                  </>
+                {file && !isUploading && (
+                  <button
+                    onClick={() => {
+                      setFile(null);
+                      setUploadStage("idle");
+                      setShowUpdatePrompt(false);
+                    }}
+                    className="border border-gray-200 px-4 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition"
+                  >
+                    Clear
+                  </button>
                 )}
-              </button>
-              {file && !isUploading && (
-                <button
-                  onClick={() => {
-                    setFile(null);
-                    setUploadStage("idle");
-                    setShowUpdatePrompt(false);
-                  }}
-                  className="border border-gray-200 px-4 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ── Toolbar ── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
@@ -781,6 +786,7 @@ const Policies = () => {
                   onDownload={() => handleDownload(p._id, p.name)}
                   onDelete={() => setConfirmDelete(p)}
                   onReanalyze={() => handleReanalyze(p._id)}
+                  isAdmin={isAdmin}
                 />
               ))}
             </ul>
@@ -861,6 +867,7 @@ const PolicyRow = ({
   onDownload,
   onDelete,
   onReanalyze,
+  isAdmin,
 }) => {
   const authorName = p?.uploadedBy?.name || p?.lastEditedBy?.name || "Unknown";
   const needsReanalysis =
@@ -970,12 +977,14 @@ const PolicyRow = ({
           label="History"
           color="purple"
         />
-        <ActionBtn
-          onClick={onDelete}
-          icon={Trash2}
-          label="Delete"
-          color="red"
-        />
+        {isAdmin && (
+          <ActionBtn
+            onClick={onDelete}
+            icon={Trash2}
+            label="Delete"
+            color="red"
+          />
+        )}
       </div>
     </li>
   );

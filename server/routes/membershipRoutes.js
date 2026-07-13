@@ -9,6 +9,7 @@ import {
 } from "../controllers/membershipController.js";
 import userAuth from "../middleware/userAuth.js";
 import { apiLimiter } from "../middleware/rateLimiter.js";
+import { requireAdmin } from "../middleware/rbac.js";
 
 const router = express.Router();
 
@@ -24,9 +25,9 @@ router.get("/", getUserMemberships);
 // Organization memberships
 router.get("/organization/:organizationId", getOrganizationMemberships);
 
-// Membership management
-router.patch("/:id/role", updateMembershipRole);
-router.delete("/:id", removeMembership);
+// Membership management (admin only)
+router.patch("/:id/role", requireAdmin, updateMembershipRole);
+router.delete("/:id", requireAdmin, removeMembership);
 
 // Leave organization
 router.post("/leave/:organizationId", leaveOrganization);

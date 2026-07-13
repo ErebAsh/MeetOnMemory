@@ -35,6 +35,7 @@ const FEATURE_CARDS = [
     tag: "Transcription",
     tagColor: "bg-blue-50 text-blue-700 border-blue-100",
     accentRing: "group-hover:ring-blue-100",
+    adminOnly: true,
   },
   {
     id: "create-meeting",
@@ -47,6 +48,7 @@ const FEATURE_CARDS = [
     tag: "Scheduling",
     tagColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
     accentRing: "group-hover:ring-emerald-100",
+    adminOnly: true,
   },
   {
     id: "summaries",
@@ -128,6 +130,11 @@ const Dashboard = () => {
 
   const handleAISearch = () => navigate("/ai-search");
   const handleCardClick = (id) => navigate(ROUTE_MAP[id]);
+
+  const isAdmin = userData?.role === "admin";
+  const visibleCards = FEATURE_CARDS.filter(
+    (card) => !card.adminOnly || isAdmin
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-linear-to-b from-slate-50 via-white to-slate-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-900">
@@ -256,7 +263,7 @@ const Dashboard = () => {
             ref={gridRef}
             className="grid grid-cols-1 auto-rows-fr gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3"
           >
-            {FEATURE_CARDS.map((card, index) => {
+            {visibleCards.map((card, index) => {
               const Icon = card.icon;
               const staggerClass = `stagger-${Math.min(index + 1, 6)}`;
               return (
