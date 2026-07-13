@@ -12,9 +12,20 @@
  */
 
 import fs from "fs";
+import path from "path";
 import axios from "axios";
 import mongoose from "mongoose";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const validatePath = (filePath) => {
+  if (!filePath) throw new Error("Path is required");
+  const resolved = path.resolve(filePath);
+  const uploadsDir = path.resolve("uploads");
+  if (!resolved.startsWith(uploadsDir)) {
+    throw new Error("Directory traversal detected: Access denied");
+  }
+  return resolved;
+};
 
 import Meeting from "../models/meetingModel.js";
 import User from "../models/userModel.js";
@@ -80,7 +91,7 @@ const _pollAssemblyAI = async (transcriptId, intervalMs = 2500) => {
 const _startAssemblyAIJob = async (filePath) => {
   const uploadRes = await axios.post(
     "https://api.assemblyai.com/v2/upload",
-    fs.readFileSync(filePath),
+    fs.readFileSync(validatePath(filePath)),
     {
       headers: {
         authorization: ASSEMBLYAI_API_KEY,
@@ -451,7 +462,7 @@ export const uploadAndTranscribeMeeting = async (
 
   // Cleanup temp file
   try {
-    fs.unlinkSync(filePath);
+    fs.unlinkSync(validatePath(filePath));
   } catch (e) {
     console.warn("⚠️ Could not delete temp file:", e.message);
   }
@@ -501,7 +512,7 @@ export const uploadAudioForExistingMeeting = async (
   );
 
   try {
-    fs.unlinkSync(filePath);
+    fs.unlinkSync(validatePath(filePath));
   } catch (e) {
     console.warn("⚠️ Could not delete temp file:", e.message);
   }

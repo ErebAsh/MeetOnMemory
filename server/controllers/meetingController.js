@@ -12,6 +12,8 @@
  * server/services/MeetingService.js.
  */
 
+import fs from "fs";
+import path from "path";
 import { z } from "zod";
 import * as MeetingService from "../services/MeetingService.js";
 import { ValidationError, UnauthorizedError } from "../utils/errors.js";
@@ -36,6 +38,14 @@ const createMeetingSchema = z.object({
   agendaItems: z.array(z.record(z.unknown())).optional().default([]),
   policyDetails: z.record(z.unknown()).nullable().optional(),
   recordingType: z.enum(["upload", "live"]).optional().default("upload"),
+});
+
+const uploadMeetingSchema = z.object({
+  title: z.string().optional(),
+  date: z.string().optional(),
+  meetingType: z
+    .enum(["conference", "policy", "event", "internal", "external", "board"])
+    .optional(),
 });
 
 const summarizeMeetingSchema = z.object({
@@ -70,6 +80,39 @@ const notifyLiveMeetingSchema = z.object({
     .array(z.object({ name: z.string(), email: z.string().optional() }))
     .min(1, "At least one participant is required"),
 });
+
+const getAllMeetingsQuerySchema = z.object({
+  page: z
+    .string()
+    .optional()
+    .transform((val) => {
+      if (!val) return 1;
+      const parsed = parseInt(val, 10);
+      return isNaN(parsed) || parsed < 1 ? 1 : parsed;
+    }),
+  limit: z
+    .string()
+    .optional()
+    .transform((val) => {
+      if (!val) return 10;
+      const parsed = parseInt(val, 10);
+      if (isNaN(parsed) || parsed < 1) return 10;
+      return parsed > 100 ? 100 : parsed; // Cap at 100
+    }),
+  search: z.string().optional(),
+  meetingType: z.string().optional(),
+});
+
+// Helper to prevent path traversal in manual file cleanup checks
+const validatePath = (filePath) => {
+  if (!filePath) throw new Error("Path is required");
+  const resolved = path.resolve(filePath);
+  const uploadsDir = path.resolve("uploads");
+  if (!resolved.startsWith(uploadsDir)) {
+    throw new Error("Directory traversal detected: Access denied");
+  }
+  return resolved;
+};
 
 // ── Helper: extract userId from the request ───────────────────
 const getUserId = (req) => {
@@ -124,18 +167,38 @@ export const createMeeting = async (req, res, next) => {
    Used by: UploadMeeting.jsx
    ───────────────────────────────────────────────────────────── */
 export const uploadMeeting = async (req, res, next) => {
+  const uploadedFilePath = req.file?.path || null;
+
   try {
     if (!req.file) {
       throw new ValidationError("No audio file uploaded.");
     }
     const uploaderId = getUserId(req);
 
+    let validated;
+    try {
+      validated = uploadMeetingSchema.parse(req.body);
+    } catch (zodErr) {
+      // Clean up the uploaded file on validation failure before routing
+      if (uploadedFilePath) {
+        try {
+          const safePath = validatePath(uploadedFilePath);
+          if (fs.existsSync(safePath)) {
+            fs.unlinkSync(safePath);
+          }
+        } catch {
+          // ignore cleanup errors
+        }
+      }
+      throw zodErr;
+    }
+
     const { meeting, transcript } =
       await MeetingService.uploadAndTranscribeMeeting(
         uploaderId,
         req.user?.organization || null,
         req.file,
-        req.body,
+        validated,
       );
 
     return res.status(200).json({
@@ -235,10 +298,17 @@ export const getAllMeetings = async (req, res, next) => {
   try {
     const userId = getUserId(req);
 
+    let validatedQuery;
+    try {
+      validatedQuery = getAllMeetingsQuerySchema.parse(req.query);
+    } catch (zodErr) {
+      return next(zodErr);
+    }
+
     const { meetings, pagination } = await MeetingService.getAllMeetings(
       userId,
       req.user?.organization || null,
-      req.query,
+      validatedQuery,
     );
 
     return res.status(200).json({ success: true, meetings, pagination });

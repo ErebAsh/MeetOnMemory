@@ -23,6 +23,7 @@ const webhookSchema = new mongoose.Schema(
       type: String,
       required: true,
       default: () => crypto.randomBytes(32).toString("hex"),
+      select: false,
     },
     isActive: {
       type: Boolean,

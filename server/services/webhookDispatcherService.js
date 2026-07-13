@@ -46,7 +46,7 @@ const generateSignature = (payload, secret) => {
  * @returns {Promise<void>}
  */
 export const performDispatch = async (webhookId, payload) => {
-  const webhook = await Webhook.findById(webhookId);
+  const webhook = await Webhook.findById(webhookId).select("+secret");
   if (!webhook || !webhook.isActive) {
     console.log(`⚠️ Webhook subscription ${webhookId} not found or inactive. Skipping.`);
     return;

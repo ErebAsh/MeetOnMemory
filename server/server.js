@@ -29,7 +29,10 @@ import webhookRoutes from "./routes/webhookRoutes.js";
 
 import { initVectorStore } from "./utils/embeddingUtils.js";
 import meetingSocket from "./socket/meetingSocket.js";
-import { initRedis } from "./services/redisService.js";
+import documentSync from "./socket/documentSync.js";
+import { initRedis, getRedisClient } from "./services/redisService.js";
+import { createAdapter } from "@socket.io/redis-adapter";
+import { createClient } from "redis";
 import { initAIWorker } from "./services/queueService.js";
 import { initWebhookWorker } from "./services/webhookDispatcherService.js";
 import { globalLimiter } from "./middleware/rateLimiter.js";
@@ -41,171 +44,116 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load .env.local if it exists, otherwise fallback to .env
-const envPath = path.resolve(__dirname, '.env.local');
+const envPath = path.resolve(__dirname, ".env.local");
 dotenv.config({ path: envPath });
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// ================================
 // DATABASE & CACHE
-// ================================
 await connectDB();
 if (process.env.NODE_ENV !== "test") {
   initRedis(); // Non-blocking: allows server to start even if Redis is unavailable
 }
 
-// ================================
 // MIDDLEWARES
-// ================================
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
-
-// ================================
-// CORS (must be before CSRF)
-// ================================
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://localhost:5173",
-  process.env.CLIENT_URL,
+  "http://localhost:5174",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:5174",
+  process.env.FRONTEND_URL,
 ].filter(Boolean);
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      return callback(new Error(`CORS blocked: ${origin}`));
-    },
+    origin: allowedOrigins,
     credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "X-Requested-With",
-      "X-CSRF-Token",
-    ],
   }),
 );
 
-// ================================
-// CSRF PROTECTION (CodeQL Fix)
-// ================================
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+app.use(cookieParser());
+
+// Enforce CSRF protection on mutation routes
 const csrfProtection = csrf({
   cookie: {
     key: "_csrf",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    secure: process.env.NODE_ENV === "production",
     httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
   },
 });
 
 app.use((req, res, next) => {
-  // Bypass CSRF in development to avoid localhost cross-origin cookie blocking
-  if (process.env.NODE_ENV !== "production") {
+  const isSafeMethod = ["GET", "HEAD", "OPTIONS"].includes(req.method);
+  const isAuthRoute = req.path.startsWith("/api/auth");
+  const isSyncPath = req.path.startsWith("/sync");
+
+  if (isSafeMethod || isAuthRoute || isSyncPath || process.env.NODE_ENV === "test") {
     return next();
   }
-
-  // Exclude authentication endpoints from CSRF validation
-  // These endpoints handle initial authentication and shouldn't require CSRF tokens
-  if (req.path.startsWith("/api/auth/")) {
-    return next();
-  }
-
-  if (req.method === "GET") {
-    csrfProtection(req, res, (err) => {
-      if (err) return next(err);
-      next();
-    });
-  } else {
-    // For non-auth POST/PUT/PATCH/DELETE requests, require CSRF validation
-    csrfProtection(req, res, next);
-  }
+  return csrfProtection(req, res, next);
 });
 
-// Apply global rate limit after CORS
-app.use(globalLimiter);
+// CSRF token provider
+app.get("/api/csrf-token", csrfProtection, (req, res) => {
+  res.json({ csrfToken: req.csrfToken() });
+});
 
-// ================================
-// STATIC FILES
-// ================================
-app.use("/uploads", express.static("uploads"));
-
-// ================================
-// HEALTH CHECK
-// ================================
-app.get("/", (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "MeetOnMemory API is running",
+// VECTOR DB WARMUP
+// Vector store initializes lazily in the background. It won't block the app start
+// but ensures early readiness.
+if (process.env.NODE_ENV !== "test") {
+  initVectorStore().catch((err) => {
+    console.error("⚠️ Failed to pre-warm vector store:", err.message);
   });
-});
+}
 
-app.get("/api/health", (req, res) => {
-  res.status(200).json({
-    success: true,
-    status: "healthy",
-    timestamp: new Date().toISOString(),
-  });
-});
-
-// ================================
 // ROUTES
-// ================================
 app.use("/api/auth", authRoutes);
-app.use("/api/organizations", organizationRoutes);
-app.use("/api/organizations-new", organizationRoutesNew);
-app.use("/api/memberships", membershipRoutes);
-app.use("/api/membership-requests", membershipRequestRoutes);
-app.use("/api/invitations", invitationRoutes);
+app.use("/api/organization", organizationRoutes);
+app.use("/api/organization/new", organizationRoutesNew);
+app.use("/api/membership", membershipRoutes);
+app.use("/api/membership-request", membershipRequestRoutes);
+app.use("/api/invitation", invitationRoutes);
 app.use("/api/meetings", meetingRoutes);
 app.use("/api/search", searchRoutes);
-app.use("/api/ai-search", aiRoutes);
+app.use("/api/ai", aiRoutes);
 app.use("/api/policies", policyRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/gemini", geminiRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/knowledge", knowledgeRoutes);
-app.use("/api/policy-compliance", policyComplianceRoutes);
+app.use("/api/compliance", policyComplianceRoutes);
 app.use("/api/sessions", sessionRoutes);
 app.use("/api/webhooks", webhookRoutes);
 
-// ================================
-// VECTOR STORE INIT (Non-blocking)
-// ================================
-// Initialize vector store in background to avoid blocking server startup
-if (process.env.NODE_ENV !== "test") {
-  initVectorStore()
-    .then(() => console.log("✅ Vector store initialized"))
-    .catch((error) =>
-      console.error("⚠️ Vector store initialization failed:", error.message),
-    );
-}
+// GLOBAL RATE LIMITER
+app.use(globalLimiter);
 
-// ================================
-// START SERVER
-// ================================
-let server;
-if (process.env.NODE_ENV !== "test") {
-  server = app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`🌐 Allowed Origins: ${allowedOrigins.join(", ")}`);
+// Health check endpoint
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "UP",
+    timestamp: new Date().toISOString(),
+    env: process.env.NODE_ENV,
   });
-} else {
-  // In test mode, create server without listening
-  server = http.createServer(app);
+});
+
+const server = http.createServer(app);
+
+// SERVER START (Skipped during Jest test execution)
+if (process.env.NODE_ENV !== "test") {
+  server.listen(PORT, () => {
+    console.log(`🚀 MeetOnMemory Server running on port ${PORT}`);
+  });
 }
 
-// ================================
 // SOCKET.IO
-// ================================
 const io = new Server(server, {
   cors: {
     origin: allowedOrigins,
@@ -216,20 +164,52 @@ const io = new Server(server, {
 
 app.set("io", io);
 
+// REDIS PUB/SUB ADAPTER (Horizontal Scaling)
+// Enables collaborative editing to work across multiple server instances.
+// Gracefully skips if Redis is not configured.
+(async () => {
+  const redisUri = process.env.REDIS_URI || process.env.REDIS_URL;
+  if (redisUri) {
+    try {
+      const pubClient = createClient({ url: redisUri });
+      const subClient = pubClient.duplicate();
+
+      pubClient.on("error", (err) => {
+        console.error("❌ Redis PubClient Error:", err.message);
+      });
+      subClient.on("error", (err) => {
+        console.error("❌ Redis SubClient Error:", err.message);
+      });
+
+      await Promise.all([pubClient.connect(), subClient.connect()]);
+      io.adapter(createAdapter(pubClient, subClient));
+      console.log(
+        "✅ Socket.io Redis Pub/Sub adapter attached (horizontal scaling enabled)",
+      );
+    } catch (err) {
+      console.warn(
+        "⚠️  Redis adapter failed — running in single-instance mode:",
+        err.message,
+      );
+    }
+  } else {
+    console.log(
+      "ℹ️  No REDIS_URI/REDIS_URL set — Socket.io running in single-instance mode",
+    );
+  }
+})();
+
 meetingSocket(io);
+documentSync(io);
 if (process.env.NODE_ENV !== "test") {
   initAIWorker(app);
   initWebhookWorker();
 }
 
-// ================================
 // ERROR HANDLER
-// ================================
 app.use(errorHandler);
 
-// ================================
 // GRACEFUL SHUTDOWN
-// ================================
 process.on("SIGTERM", () => {
   console.log("SIGTERM received. Shutting down gracefully...");
   server.close(() => {

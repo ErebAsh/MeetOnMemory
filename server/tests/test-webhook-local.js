@@ -38,7 +38,6 @@ const runLocalTest = async () => {
     });
     console.log("📝 Registered test webhook subscription in database.");
     console.log(`   - Target URL: ${webhook.targetUrl}`);
-    console.log(`   - Secret Key: ${webhook.secret}`);
 
     console.log("\n📡 Emitting mock 'meeting.created' event via eventBus...");
 

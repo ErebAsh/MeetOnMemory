@@ -13,6 +13,7 @@
  */
 
 import fs from "fs";
+import path from "path";
 import { z } from "zod";
 import * as PolicyService from "../services/PolicyService.js";
 import { ValidationError, UnauthorizedError } from "../utils/errors.js";
@@ -42,6 +43,7 @@ const getUserId = (req) => {
 export const uploadPolicy = async (req, res, next) => {
   // Track file path so we can clean up on failure
   const uploadedFilePath = req.file?.path || null;
+  let isPersisted = false;
 
   try {
     if (!req.file) {
@@ -54,7 +56,7 @@ export const uploadPolicy = async (req, res, next) => {
     try {
       validated = uploadPolicySchema.parse(req.body);
     } catch (zodErr) {
-      return next(zodErr);
+      throw zodErr; // Propagation to catch block unlinks the uploaded file
     }
 
     const { policy, isUpdate } = await PolicyService.uploadAndProcessPolicy(
@@ -63,6 +65,8 @@ export const uploadPolicy = async (req, res, next) => {
       req.file,
       validated.commitMsg,
     );
+
+    isPersisted = true; // DB persistence succeeded; do not delete file on subsequent failures
 
     return res.status(isUpdate ? 200 : 201).json({
       success: true,
@@ -73,11 +77,13 @@ export const uploadPolicy = async (req, res, next) => {
       policy,
     });
   } catch (err) {
-    // If the service threw before it could move/handle the file, clean it up
-    if (uploadedFilePath) {
+    // Only clean up if the file was not successfully saved in DB
+    if (uploadedFilePath && !isPersisted) {
       try {
-        if (fs.existsSync(uploadedFilePath)) {
-          fs.unlinkSync(uploadedFilePath);
+        const resolvedPath = path.resolve(uploadedFilePath);
+        const uploadsDir = path.resolve("uploads");
+        if (resolvedPath.startsWith(uploadsDir) && fs.existsSync(resolvedPath)) {
+          fs.unlinkSync(resolvedPath);
         }
       } catch {
         // ignore cleanup errors

@@ -186,7 +186,7 @@ export const uploadAndProcessPolicy = async (
   file,
   commitMsg,
 ) => {
-  const fileName = file.originalname;
+  const fileName = String(file.originalname);
   const fileUrl = path.join(UPLOAD_DIR, file.filename);
   const safeFileUrl = _validateUploadPath(fileUrl);
 
