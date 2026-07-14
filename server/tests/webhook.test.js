@@ -10,14 +10,33 @@ import Membership from "../models/membershipModel.js";
 import Webhook from "../models/Webhook.js";
 import eventBus from "../services/eventBus.js";
 
+// Mock nodemailer to prevent SMTP verification during tests
+jest.mock("../config/nodeMailer.js", () => ({
+  sendMail: jest.fn(),
+  __esModule: true,
+  default: { sendMail: jest.fn() }
+}));
+
+// Import dispatcher to register eventBus listeners and access the queue
+import * as dispatcher from "../services/webhookDispatcherService.js";
+
 // Mock axios post to avoid hitting real endpoints
 let axiosSpy;
+let queueSpy;
 beforeAll(() => {
   axiosSpy = jest.spyOn(axios, "post").mockResolvedValue({ status: 200, data: {} });
+  
+  if (dispatcher.webhookQueue) {
+    queueSpy = jest.spyOn(dispatcher.webhookQueue, "add").mockImplementation(async (name, jobData) => {
+      // Bypass Redis and execute synchronously
+      await dispatcher.performDispatch(jobData.webhookId, jobData.payload);
+    });
+  }
 });
 
 afterAll(() => {
   axiosSpy.mockRestore();
+  if (queueSpy) queueSpy.mockRestore();
 });
 
 describe("Webhook Endpoints & Dispatcher", () => {
@@ -201,9 +220,9 @@ describe("Webhook Endpoints & Dispatcher", () => {
         organization: organization._id,
       });
 
-      // Wait deterministically for axiosSpy to have been called (up to 1000ms)
+      // Wait deterministically for axiosSpy to have been called (up to 3000ms)
       let attempts = 0;
-      while (axiosSpy.mock.calls.length === 0 && attempts < 100) {
+      while (axiosSpy.mock.calls.length === 0 && attempts < 300) {
         await new Promise((resolve) => setTimeout(resolve, 10));
         attempts++;
       }

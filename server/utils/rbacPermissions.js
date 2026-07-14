@@ -91,6 +91,10 @@ export const PERMISSIONS = {
     view: ["owner", "admin", "moderator", "member", "guest"],
     manage: ["owner", "admin"],
   },
+  // Audit Logs permissions
+  audit_logs: {
+    view: ["owner", "admin"],
+  },
 };
 
 /**

@@ -17,7 +17,7 @@ import path from "path";
 import { z } from "zod";
 import * as PolicyService from "../services/PolicyService.js";
 import { ValidationError, UnauthorizedError } from "../utils/errors.js";
-
+import AuditService from "../services/AuditService.js";
 // ═══════════════════════════════════════════════════════════════
 // Zod validation schemas
 // ═══════════════════════════════════════════════════════════════
@@ -67,6 +67,18 @@ export const uploadPolicy = async (req, res, next) => {
     );
 
     isPersisted = true; // DB persistence succeeded; do not delete file on subsequent failures
+
+    const orgId = req.user?.organization || policy.organization;
+    if (orgId) {
+      AuditService.logAction({
+        actorId: uploaderId,
+        action: isUpdate ? "POLICY_UPDATED" : "POLICY_CREATED",
+        entity: "Policy",
+        entityId: policy._id,
+        organizationId: orgId,
+        details: { title: policy.title, commitMsg: validated.commitMsg },
+      });
+    }
 
     return res.status(isUpdate ? 200 : 201).json({
       success: true,
@@ -164,6 +176,17 @@ export const deletePolicy = async (req, res, next) => {
     }
 
     await PolicyService.deletePolicy(policy);
+
+    if (policy.organization) {
+      AuditService.logAction({
+        actorId: getUserId(req),
+        action: "POLICY_DELETED",
+        entity: "Policy",
+        entityId: policy._id,
+        organizationId: policy.organization,
+        details: { title: policy.title },
+      });
+    }
 
     return res.status(200).json({
       success: true,

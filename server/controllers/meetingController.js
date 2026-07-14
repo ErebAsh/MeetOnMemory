@@ -17,7 +17,7 @@ import path from "path";
 import { z } from "zod";
 import * as MeetingService from "../services/MeetingService.js";
 import { ValidationError, UnauthorizedError } from "../utils/errors.js";
-
+import AuditService from "../services/AuditService.js";
 // ═══════════════════════════════════════════════════════════════
 // Zod validation schemas
 // ═══════════════════════════════════════════════════════════════
@@ -326,6 +326,17 @@ export const deleteMeeting = async (req, res, next) => {
       req.doc || null,  // from requireOwnerOrAdmin middleware (may be undefined)
       req.params.id,
     );
+
+    if (req.doc && req.doc.organization) {
+      AuditService.logAction({
+        actorId: getUserId(req),
+        action: "MEETING_DELETED",
+        entity: "Meeting",
+        entityId: req.doc._id,
+        organizationId: req.doc.organization,
+        details: { title: req.doc.title },
+      });
+    }
 
     return res
       .status(200)

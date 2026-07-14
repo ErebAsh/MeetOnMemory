@@ -45,4 +45,11 @@ router.get("/browse", userAuth, requirePermission("organizations", "view"), brow
 // Search organizations (public only)
 router.get("/search", userAuth, requirePermission("organizations", "view"), searchOrganizations);
 
+import { getOrganizationAuditLogs } from "../controllers/auditLogController.js";
+import Organization from "../models/organizationModel.js";
+import { requireOrgAccess } from "../middleware/rbac.js";
+
+// Fetch organization audit logs
+router.get("/:id/audit-logs", userAuth, requireOrgAccess(Organization), requirePermission("audit_logs", "view"), getOrganizationAuditLogs);
+
 export default router;

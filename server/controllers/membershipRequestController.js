@@ -4,7 +4,7 @@ import Membership from "../models/membershipModel.js";
 import Organization from "../models/organizationModel.js";
 import userModel from "../models/userModel.js";
 import mongoose from "mongoose";
-
+import AuditService from "../services/AuditService.js";
 /**
  * Validate MongoDB ObjectId
  */
@@ -346,6 +346,15 @@ export const approveMembershipRequest = async (req, res) => {
       hasCompletedOnboarding: true,
     });
 
+    AuditService.logAction({
+      actorId: req.user.id,
+      action: "MEMBERSHIP_REQUEST_APPROVED",
+      entity: "MembershipRequest",
+      entityId: request._id,
+      organizationId: request.organization._id,
+      details: { userId: request.user },
+    });
+
     res.status(200).json({
       success: true,
       message: "Membership request approved successfully.",
@@ -419,6 +428,15 @@ export const rejectMembershipRequest = async (req, res) => {
     request.reviewedAt = new Date();
     request.reviewNotes = reviewNotes ? String(reviewNotes).trim().substring(0, 500) : "";
     await request.save();
+
+    AuditService.logAction({
+      actorId: req.user.id,
+      action: "MEMBERSHIP_REQUEST_REJECTED",
+      entity: "MembershipRequest",
+      entityId: request._id,
+      organizationId: request.organization._id,
+      details: { userId: request.user, reviewNotes },
+    });
 
     res.status(200).json({
       success: true,
@@ -585,6 +603,15 @@ export const bulkApproveMembershipRequests = async (req, res) => {
         hasCompletedOnboarding: true,
       });
 
+      AuditService.logAction({
+        actorId: req.user.id,
+        action: "MEMBERSHIP_REQUEST_APPROVED",
+        entity: "MembershipRequest",
+        entityId: request._id,
+        organizationId: request.organization._id,
+        details: { userId: request.user },
+      });
+
       results.push({
         requestId: request._id,
         membershipId: newMembership._id,
@@ -686,6 +713,15 @@ export const bulkRejectMembershipRequests = async (req, res) => {
         ? String(reviewNotes).trim().substring(0, 500)
         : "";
       await request.save();
+
+      AuditService.logAction({
+        actorId: req.user.id,
+        action: "MEMBERSHIP_REQUEST_REJECTED",
+        entity: "MembershipRequest",
+        entityId: request._id,
+        organizationId: request.organization._id,
+        details: { userId: request.user, reviewNotes },
+      });
 
       results.push({
         requestId: request._id,

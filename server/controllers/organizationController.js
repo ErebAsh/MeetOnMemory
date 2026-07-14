@@ -3,7 +3,7 @@ import Organization from "../models/organizationModel.js";
 import userModel from "../models/userModel.js";
 import { createAndPushNotification } from "../services/notificationService.js";
 import mongoose from "mongoose";
-
+import AuditService from "../services/AuditService.js";
 /**
  * Escape special regex characters to prevent ReDoS attacks
  */
@@ -103,6 +103,16 @@ export const createOrJoinOrganization = async (req, res) => {
         role: "admin",
         organization: organization._id,
         hasCompletedOnboarding: true,
+      });
+
+      // Log the creation
+      AuditService.logAction({
+        actorId: userId,
+        action: "ORGANIZATION_CREATED",
+        entity: "Organization",
+        entityId: organization._id,
+        organizationId: organization._id,
+        details: { name: orgName, slug: uniqueSlug },
       });
 
       message = "Organization created successfully!";
