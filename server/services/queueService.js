@@ -402,9 +402,10 @@ export const initDataExportWorker = (app) => {
         const fileName = `export_${userId}_${Date.now()}.zip`;
         const filePath = path.join(exportDir, fileName);
 
-        await new Promise(async (resolve, reject) => {
-          // archiver v8+ is a pure ES Module — must be loaded via dynamic import()
-          const { default: archiver } = await import("archiver");
+        // archiver v8+ is a pure ES Module — must be loaded via dynamic import()
+        const { default: archiver } = await import("archiver");
+
+        await new Promise((resolve, reject) => {
           const output = fs.createWriteStream(filePath);
           const archive = archiver("zip", { zlib: { level: 9 } });
 

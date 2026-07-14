@@ -8,17 +8,16 @@ on:
 
 jobs:
   ping-backend:
-    name: Ping backend health endpoint
     runs-on: ubuntu-latest
+    env:
+      BACKEND_URL: ${{ secrets.RENDER_BACKEND_URL }}
 
     steps:
       - name: Ping /api/health
         run: |
-          # Fetch the backend URL from Repository Secrets; default to a placeholder if not configured
-          BACKEND_URL="${{ secrets.RENDER_BACKEND_URL }}"
-          
+          # Use backend URL from env; default to a placeholder if not configured
           if [ -z "$BACKEND_URL" ]; then
-            echo "⚠️ secrets.RENDER_BACKEND_URL is not set. Defaulting to https://meetonmemory.onrender.com"
+            echo "⚠️ RENDER_BACKEND_URL is not set. Defaulting to https://meetonmemory.onrender.com"
             BACKEND_URL="https://meetonmemory.onrender.com"
           fi
           
