@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import AppContent from "../context/AppContent";
 import {
@@ -22,71 +23,6 @@ const ROLE_STYLES = {
   guest: "bg-slate-100 text-slate-600 border-slate-200",
 };
 
-/* ─── Feature Card Config ─────────────────────────────────────────────────── */
-const FEATURE_CARDS = [
-  {
-    id: "upload-meeting",
-    icon: Upload,
-    title: "Upload Recorded Meetings",
-    description:
-      "Upload and transcribe past meetings automatically using AI-powered speech-to-text.",
-    iconBg: "bg-blue-50",
-    iconColor: "text-blue-600",
-    tag: "Transcription",
-    tagColor: "bg-blue-50 text-blue-700 border-blue-100",
-    accentRing: "group-hover:ring-blue-100",
-    adminOnly: true,
-  },
-  {
-    id: "create-meeting",
-    icon: FileText,
-    title: "Meeting & Event Hub",
-    description:
-      "Schedule, upload, and organise events or sessions for instant AI-driven summaries.",
-    iconBg: "bg-emerald-50",
-    iconColor: "text-emerald-600",
-    tag: "Scheduling",
-    tagColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
-    accentRing: "group-hover:ring-emerald-100",
-    adminOnly: true,
-  },
-  {
-    id: "summaries",
-    icon: Brain,
-    title: "AI Summarization",
-    description:
-      "Generate professional Minutes of Meeting with decisions, action points, and key insights.",
-    iconBg: "bg-violet-50",
-    iconColor: "text-violet-600",
-    tag: "AI-Powered",
-    tagColor: "bg-violet-50 text-violet-700 border-violet-100",
-    accentRing: "group-hover:ring-violet-100",
-  },
-  {
-    id: "policies",
-    icon: Shield,
-    title: "Policies & Rules Repository",
-    description:
-      "Upload, version, and audit organisational policies with AI-powered insights and search.",
-    iconBg: "bg-amber-50",
-    iconColor: "text-amber-600",
-    tag: "Compliance",
-    tagColor: "bg-amber-50 text-amber-700 border-amber-100",
-    accentRing: "group-hover:ring-amber-100",
-  },
-  {
-    id: "reports",
-    icon: BarChart3,
-    title: "Reports & Analytics",
-    description:
-      "Visualise organisational metrics — meetings, updates, and performance trends at a glance.",
-    iconBg: "bg-indigo-50",
-    iconColor: "text-indigo-600",
-    tag: "Analytics",
-    tagColor: "bg-indigo-50 text-indigo-700 border-indigo-100",
-    accentRing: "group-hover:ring-indigo-100",
-  },
-];
 
 const ROUTE_MAP = {
   "upload-meeting": "/upload-meeting",
@@ -98,6 +34,7 @@ const ROUTE_MAP = {
 
 /* ─── Dashboard ───────────────────────────────────────────────────────────── */
 const Dashboard = () => {
+  const { t } = useTranslation();
   const { userData } = useContext(AppContent);
   const navigate = useNavigate();
   const gridRef = useRef(null);
@@ -132,6 +69,67 @@ const Dashboard = () => {
   const handleCardClick = (id) => navigate(ROUTE_MAP[id]);
 
   const isAdmin = userData?.role === "admin";
+
+  const FEATURE_CARDS = [
+    {
+      id: "upload-meeting",
+      icon: Upload,
+      title: t("dashboard.uploadMeetings"),
+      description: t("dashboard.uploadMeetingsDesc"),
+      iconBg: "bg-blue-50",
+      iconColor: "text-blue-600",
+      tag: t("dashboard.transcription"),
+      tagColor: "bg-blue-50 text-blue-700 border-blue-100",
+      accentRing: "group-hover:ring-blue-100",
+      adminOnly: true,
+    },
+    {
+      id: "create-meeting",
+      icon: FileText,
+      title: t("dashboard.meetingEventHub"),
+      description: t("dashboard.meetingEventHubDesc"),
+      iconBg: "bg-emerald-50",
+      iconColor: "text-emerald-600",
+      tag: t("dashboard.scheduling"),
+      tagColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
+      accentRing: "group-hover:ring-emerald-100",
+      adminOnly: true,
+    },
+    {
+      id: "summaries",
+      icon: Brain,
+      title: t("dashboard.aiSummarization"),
+      description: t("dashboard.aiSummarizationDesc"),
+      iconBg: "bg-violet-50",
+      iconColor: "text-violet-600",
+      tag: t("dashboard.aiPowered"),
+      tagColor: "bg-violet-50 text-violet-700 border-violet-100",
+      accentRing: "group-hover:ring-violet-100",
+    },
+    {
+      id: "policies",
+      icon: Shield,
+      title: t("dashboard.policiesRepository"),
+      description: t("dashboard.policiesRepositoryDesc"),
+      iconBg: "bg-amber-50",
+      iconColor: "text-amber-600",
+      tag: t("dashboard.complianceTag"),
+      tagColor: "bg-amber-50 text-amber-700 border-amber-100",
+      accentRing: "group-hover:ring-amber-100",
+    },
+    {
+      id: "reports",
+      icon: BarChart3,
+      title: t("dashboard.reportsAnalytics"),
+      description: t("dashboard.reportsAnalyticsDesc"),
+      iconBg: "bg-indigo-50",
+      iconColor: "text-indigo-600",
+      tag: t("dashboard.analytics"),
+      tagColor: "bg-indigo-50 text-indigo-700 border-indigo-100",
+      accentRing: "group-hover:ring-indigo-100",
+    },
+  ];
+
   const visibleCards = FEATURE_CARDS.filter(
     (card) => !card.adminOnly || isAdmin
   );
@@ -188,11 +186,11 @@ const Dashboard = () => {
                       </span>
                     </div>
                     <p className="max-w-xl text-sm leading-relaxed text-slate-500 dark:text-gray-400 sm:text-base">
-                      Welcome back,{" "}
+                      {t("dashboard.welcomeBack")}{" "}
                       <span className="font-semibold text-slate-800 dark:text-gray-200">
-                        {userData?.name || "there"}
+                        {userData?.name || t("dashboard.there")}
                       </span>
-                      . Everything you need is right here.
+                      {t("dashboard.everythingHere")}
                     </p>
                   </div>
                 </div>
@@ -215,16 +213,15 @@ const Dashboard = () => {
                     <div className="space-y-1.5">
                       <div className="flex flex-wrap items-center gap-2">
                         <h2 className="text-base font-semibold text-slate-900 dark:text-gray-100 sm:text-lg">
-                          Smart Search
+                          {t("dashboard.smartSearch")}
                         </h2>
                         <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-blue-700 dark:text-blue-300">
                           <Sparkles className="h-3 w-3" aria-hidden="true" />
-                          AI-Powered
+                          {t("dashboard.aiPowered")}
                         </span>
                       </div>
                       <p className="max-w-lg text-sm leading-relaxed text-slate-500 dark:text-gray-400">
-                        Instantly find insights across your meetings, summaries,
-                        and policies — powered by AI.
+                        {t("dashboard.searchDescription")}
                       </p>
                     </div>
                   </div>
@@ -236,7 +233,7 @@ const Dashboard = () => {
                     aria-label="Open AI Smart Search"
                     className="group/btn inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-linear-to-r from-blue-600 to-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-600/20 transition-all duration-200 hover:-translate-y-0.5 hover:from-blue-500 hover:to-indigo-500 hover:shadow-lg hover:shadow-blue-600/25 active:translate-y-0 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 lg:w-auto"
                   >
-                    Open AI Search
+                    {t("dashboard.openAiSearch")}
                     <ArrowRight
                       className="h-4 w-4 transition-transform duration-200 group-hover/btn:translate-x-0.5"
                       aria-hidden="true"
@@ -252,10 +249,10 @@ const Dashboard = () => {
         <section aria-label="Dashboard features">
           <header className="mb-6 sm:mb-8 fade-in-up stagger-2">
             <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-gray-500">
-              Features
+              {t("dashboard.features")}
             </p>
             <h2 className="mt-1 text-xl font-semibold text-slate-900 dark:text-gray-100 sm:text-2xl">
-              Everything you need, in one place
+              {t("dashboard.everythingInOnePlace")}
             </h2>
           </header>
 
@@ -308,7 +305,7 @@ const Dashboard = () => {
                   </div>
 
                   <div className="mt-5 flex items-center gap-1.5 border-t border-slate-100 dark:border-gray-700 pt-4 text-xs font-semibold text-slate-400 dark:text-gray-500 transition-colors duration-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">
-                    <span>Open</span>
+                    <span>{t("dashboard.open")}</span>
                     <ArrowRight
                       className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
                       aria-hidden="true"

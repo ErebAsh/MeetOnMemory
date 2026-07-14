@@ -74,6 +74,12 @@ const App = () => {
     const handleMouseMove = (e) => {
       mouse.x = e.clientX;
       mouse.y = e.clientY;
+      if (!dotEl) dotEl = document.querySelector(".custom-cursor");
+      if (!ringEl) ringEl = document.querySelector(".custom-cursor-ring");
+      if (dotEl && ringEl) {
+        dotEl.style.opacity = "1";
+        ringEl.style.opacity = "1";
+      }
     };
 
     const handleMouseOver = (e) => {
@@ -88,6 +94,20 @@ const App = () => {
         setIsHovered(true);
       } else {
         setIsHovered(false);
+      }
+    };
+
+    const handleMouseLeave = () => {
+      if (dotEl && ringEl) {
+        dotEl.style.opacity = "0";
+        ringEl.style.opacity = "0";
+      }
+    };
+
+    const handleMouseEnter = () => {
+      if (dotEl && ringEl) {
+        dotEl.style.opacity = "1";
+        ringEl.style.opacity = "1";
       }
     };
 
@@ -113,11 +133,15 @@ const App = () => {
 
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseover", handleMouseOver);
+    document.addEventListener("mouseleave", handleMouseLeave);
+    document.addEventListener("mouseenter", handleMouseEnter);
     animationFrameId = requestAnimationFrame(tick);
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseover", handleMouseOver);
+      document.removeEventListener("mouseleave", handleMouseLeave);
+      document.removeEventListener("mouseenter", handleMouseEnter);
       cancelAnimationFrame(animationFrameId);
     };
   }, []);

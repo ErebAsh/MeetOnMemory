@@ -1,12 +1,14 @@
 // client/src/components/Navbar.jsx
 import React, { useState, useContext, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import AppContent from "../context/AppContent";
 import { useRBAC } from "../hooks/useRBAC.js";
 import useTheme from "../context/useTheme.jsx";
 import { toast } from "react-toastify";
 import { notificationApi, authApi } from "../services";
 import { io } from "socket.io-client";
+import LanguageSwitcher from "./LanguageSwitcher.jsx";
 import {
   Menu,
   X,
@@ -28,16 +30,17 @@ import {
   Sun,
 } from "lucide-react";
 
-const NAV_LINKS = [
-  { label: "Features", href: "#features" },
-  { label: "How It Works", href: "#how-it-works" },
-  { label: "About", href: "#about" },
-  { label: "FAQ", href: "#faq" },
+const NAV_LINK_KEYS = [
+  { labelKey: "navbar.features", href: "#features" },
+  { labelKey: "navbar.howItWorks", href: "#how-it-works" },
+  { labelKey: "navbar.about", href: "#about" },
+  { labelKey: "navbar.faq", href: "#faq" },
 ];
 
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
   const { backendUrl, userData, setUserData, setIsLoggedin } =
     useContext(AppContent);
   const { hasPermission } = useRBAC();
@@ -271,49 +274,49 @@ const Navbar = () => {
 
   const appLinks = [
     {
-      label: "Dashboard",
+      label: t("navbar.dashboard"),
       href: "/dashboard",
       icon: LayoutDashboard,
       permission: { resource: "reports", action: "view" },
     },
     {
-      label: "Meetings",
+      label: t("navbar.meetings"),
       href: "/meetings",
       icon: Calendar,
       permission: { resource: "meetings", action: "view" },
     },
     {
-      label: "Tasks",
+      label: t("navbar.tasks"),
       href: "/tasks",
       icon: CheckSquare,
       permission: { resource: "tasks", action: "view" },
     },
     {
-      label: "Compliance",
+      label: t("navbar.compliance"),
       href: "/policy-compliance",
       icon: ShieldAlert,
       permission: { resource: "policies", action: "view" },
     },
     {
-      label: "Calendar",
+      label: t("navbar.calendar"),
       href: "/calendar",
       icon: CalendarDays,
       permission: { resource: "calendar", action: "view" },
     },
     {
-      label: "Team Members",
+      label: t("navbar.teamMembers"),
       href: "/team-members",
       icon: Users,
       permission: { resource: "team_members", action: "view" },
     },
     {
-      label: "Organizations",
+      label: t("navbar.organizations"),
       href: "/organizations",
       icon: Building2,
       permission: { resource: "organizations", action: "view" },
     },
     {
-      label: "AI Search",
+      label: t("navbar.aiSearch"),
       href: "/ai-search",
       icon: Search,
       permission: { resource: "ai_search", action: "search" },
@@ -418,13 +421,13 @@ const Navbar = () => {
               className="hidden md:flex items-center gap-1.5"
               aria-label="Marketing navigation"
             >
-              {NAV_LINKS.map((link) => (
+              {NAV_LINK_KEYS.map((link) => (
                 <button
                   key={link.href}
                   onClick={() => handleNavLinkClick(link.href)}
                   className="px-3.5 py-2 text-sm font-semibold text-gray-600 dark:text-gray-300 rounded-xl hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/70 dark:hover:bg-blue-900/30 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-blue-500 cursor-pointer"
                 >
-                  {link.label}
+                  {t(link.labelKey)}
                 </button>
               ))}
             </nav>
@@ -432,6 +435,9 @@ const Navbar = () => {
 
           {/* Right Side Controls */}
           <div className="flex items-center gap-1 sm:gap-3 shrink-0">
+            {/* Language Switcher */}
+            <LanguageSwitcher />
+
             {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
@@ -439,9 +445,9 @@ const Navbar = () => {
               aria-label={
                 mounted
                   ? theme === "light"
-                    ? "Switch to dark mode"
-                    : "Switch to light mode"
-                  : "Toggle theme"
+                    ? t("navbar.switchToDark")
+                    : t("navbar.switchToLight")
+                  : t("navbar.toggleTheme")
               }
             >
               {mounted && theme === "light" ? (
@@ -482,7 +488,7 @@ const Navbar = () => {
                     <div className="absolute right-0 mt-3 w-80 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-xl overflow-hidden z-50">
                       <div className="px-4 py-3.5 bg-gray-50/80 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-600 flex items-center justify-between">
                         <span className="font-bold text-gray-800 dark:text-gray-100 text-sm">
-                          Notifications
+                          {t("navbar.notifications")}
                         </span>
                         <button
                           onClick={() => {
@@ -491,7 +497,7 @@ const Navbar = () => {
                           }}
                           className="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors cursor-pointer"
                         >
-                          View All
+                          {t("navbar.viewAll")}
                         </button>
                       </div>
                       <div className="max-h-64 overflow-y-auto divide-y divide-gray-50 dark:divide-gray-700">
@@ -523,7 +529,7 @@ const Navbar = () => {
                           ))
                         ) : (
                           <div className="py-8 text-center text-gray-400 dark:text-gray-500 text-xs">
-                            No notifications yet
+                            {t("navbar.noNotifications")}
                           </div>
                         )}
                       </div>
@@ -567,7 +573,7 @@ const Navbar = () => {
                     <div className="absolute right-0 mt-3 w-60 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-xl overflow-hidden z-50">
                       <div className="px-4 py-3.5 bg-gray-50/80 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-600">
                         <p className="text-[9px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider">
-                          Signed in as
+                          {t("navbar.signedInAs")}
                         </p>
                         <p className="text-sm font-bold text-gray-800 dark:text-gray-100 truncate">
                           {userData?.name || "User"}
@@ -597,7 +603,7 @@ const Navbar = () => {
                           role="menuitem"
                         >
                           <LayoutDashboard className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
-                          Dashboard
+                          {t("navbar.dashboard")}
                         </button>
 
                         <button
@@ -609,7 +615,7 @@ const Navbar = () => {
                           role="menuitem"
                         >
                           <User className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
-                          My Profile
+                          {t("navbar.myProfile")}
                         </button>
 
                         <button
@@ -621,7 +627,7 @@ const Navbar = () => {
                           role="menuitem"
                         >
                           <Settings className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
-                          Settings
+                          {t("navbar.settings")}
                         </button>
 
                         {userData?.role === "admin" && (
@@ -634,7 +640,7 @@ const Navbar = () => {
                             role="menuitem"
                           >
                             <Sparkles className="w-3.5 h-3.5 text-yellow-500" />
-                            Admin Panel
+                            {t("navbar.adminPanel")}
                           </button>
                         )}
                       </div>
@@ -649,7 +655,7 @@ const Navbar = () => {
                           role="menuitem"
                         >
                           <LogOut className="w-3.5 h-3.5 text-red-500 dark:text-red-400" />
-                          Logout
+                          {t("navbar.logout")}
                         </button>
                       </div>
                     </div>
@@ -662,7 +668,7 @@ const Navbar = () => {
                 className="px-5 py-2.5 rounded-xl bg-linear-to-r from-blue-600 to-indigo-600 text-white text-sm font-bold shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/35 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 cursor-pointer"
                 aria-label="Login to MeetOnMemory"
               >
-                Login
+                {t("navbar.login")}
               </button>
             )}
 
@@ -671,7 +677,7 @@ const Navbar = () => {
               className="md:hidden w-10 h-10 rounded-xl flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 cursor-pointer"
               onClick={() => setMobileOpen((s) => !s)}
               aria-expanded={mobileOpen}
-              aria-label={mobileOpen ? "Close menu" : "Open menu"}
+              aria-label={mobileOpen ? t("navbar.closeMenu") : t("navbar.openMenu")}
             >
               {mobileOpen ? (
                 <X className="w-5 h-5" />
@@ -766,11 +772,11 @@ const Navbar = () => {
                   <Bell
                     className={`w-4 h-4 ${mobileNotifOpen ? "text-blue-600 dark:text-blue-400" : "text-gray-400 dark:text-gray-500"}`}
                   />
-                  <span>Notifications</span>
+                  <span>{t("navbar.notifications")}</span>
                 </div>
                 {unreadCount > 0 && (
                   <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
-                    {unreadCount} New
+                    {unreadCount} {t("navbar.new")}
                   </span>
                 )}
               </button>
@@ -783,7 +789,7 @@ const Navbar = () => {
                 className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 rounded-xl transition-all cursor-pointer"
               >
                 <User className="w-4 h-4 text-gray-400 dark:text-gray-500" />
-                <span>My Profile</span>
+                <span>{t("navbar.myProfile")}</span>
               </button>
 
               <button
@@ -794,7 +800,7 @@ const Navbar = () => {
                 className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 rounded-xl transition-all cursor-pointer"
               >
                 <Settings className="w-4 h-4 text-gray-400 dark:text-gray-500" />
-                <span>Settings</span>
+                <span>{t("navbar.settings")}</span>
               </button>
 
               <hr className="my-1.5 border-gray-100 dark:border-gray-700" />
@@ -804,19 +810,19 @@ const Navbar = () => {
                 className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-xl transition-all cursor-pointer"
               >
                 <LogOut className="w-4 h-4 text-red-500 dark:text-red-400" />
-                <span>Logout</span>
+                <span>{t("navbar.logout")}</span>
               </button>
             </>
           ) : (
             /* Logged Out Mobile Nav List */
             <>
-              {NAV_LINKS.map((link) => (
+              {NAV_LINK_KEYS.map((link) => (
                 <button
                   key={link.href}
                   onClick={() => handleNavLinkClick(link.href)}
                   className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
                 >
-                  {link.label}
+                  {t(link.labelKey)}
                 </button>
               ))}
               <button
@@ -826,7 +832,7 @@ const Navbar = () => {
                 }}
                 className="mt-3 w-full px-4 py-3 rounded-xl bg-linear-to-r from-blue-600 to-indigo-600 text-white text-sm font-bold shadow-md shadow-blue-500/20 hover:shadow-lg transition-all duration-200 text-center cursor-pointer"
               >
-                Get Started — It&apos;s Free
+                {t("navbar.getStarted")}
               </button>
             </>
           )}
