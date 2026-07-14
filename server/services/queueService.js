@@ -20,7 +20,6 @@ import jwt from "jsonwebtoken";
 import transporter from "../config/nodeMailer.js";
 
 const require = createRequire(import.meta.url);
-const archiver = require("archiver");
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -402,6 +401,9 @@ export const initDataExportWorker = (app) => {
 
         const fileName = `export_${userId}_${Date.now()}.zip`;
         const filePath = path.join(exportDir, fileName);
+
+        // archiver v8+ is a pure ES Module — must be loaded via dynamic import()
+        const { default: archiver } = await import("archiver");
 
         await new Promise((resolve, reject) => {
           const output = fs.createWriteStream(filePath);
