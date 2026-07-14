@@ -278,7 +278,8 @@
     "star": "Star",
     "unstar": "Unstar",
     "export": "Export",
-    "close": "Close"
+    "close": "Close",
+    "loadFailed": "Failed to load summaries."
   },
   "emailVerify": {
     "title": "Verify Your Email",
@@ -374,7 +375,8 @@
     "createOrJoin": "Create or Join Organization",
     "createOrJoinDesc": "Enter your organization name. If it exists, you’ll be linked to it.",
     "placeholder": "Enter your organization name",
-    "createOrJoinBtn": "Create / Join"
+    "createOrJoinBtn": "Create / Join",
+    "nameRequired": "Organization name is required."
   },
   "joinOrganization": {
     "title": "Join Organization",

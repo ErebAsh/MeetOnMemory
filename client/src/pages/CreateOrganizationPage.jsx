@@ -16,7 +16,7 @@ const CreateOrganizationPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!orgName.trim()) return toast.error(t("createOrganization.name") + " is required.");
+    if (!orgName.trim()) return toast.error(t("createOrganization.nameRequired"));
 
     try {
       setLoading(true);

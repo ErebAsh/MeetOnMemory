@@ -97,11 +97,11 @@ const Summaries = () => {
         if (res.data?.success) {
           setSummaries(res.data.meetings || []);
         } else {
-          toast.error(res.data?.message || t("summaries.loading"));
+          toast.error(res.data?.message || t("summaries.loadFailed"));
         }
       } catch (error) {
         console.error("Error fetching summaries:", error);
-        toast.error("Unable to fetch meeting summaries.");
+        toast.error(t("summaries.loadFailed"));
       } finally {
         setLoading(false);
       }
@@ -168,7 +168,7 @@ const Summaries = () => {
   };
 
   const handleCopy = (summary) => {
-    navigator.clipboard.writeText(summary.summary);
+    navigator.clipboard.writeText(summary.summary || summary.transcript || "");
     toast.success(t("aiSearch.copiedToClipboard"));
   };
 
@@ -317,7 +317,9 @@ const Summaries = () => {
                   </p>
                   <p className="text-gray-700 dark:text-gray-300 text-sm line-clamp-5 whitespace-pre-wrap">
                     {summary.summary ||
-                      summary.transcript?.slice(0, 200) + "..."}
+                      (summary.transcript
+                        ? `${summary.transcript.slice(0, 200)}...`
+                        : t("aiSearch.noSummary"))}
                   </p>
 
                   <div className="flex gap-3 mt-4">
@@ -433,7 +435,7 @@ const Summaries = () => {
             <div className="flex gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(viewModal.summary);
+                  navigator.clipboard.writeText(viewModal.summary || viewModal.transcript || "");
                   toast.success(t("aiSearch.copiedToClipboard"));
                 }}
                 className="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
