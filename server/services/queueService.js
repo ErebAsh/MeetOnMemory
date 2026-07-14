@@ -10,6 +10,20 @@ import {
   detectResolutions,
 } from "./knowledgeGraphService.js";
 import { createAndPushNotification } from "./notificationService.js";
+import userModel from "../models/userModel.js";
+import membershipModel from "../models/membershipModel.js";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import { createRequire } from "module";
+import jwt from "jsonwebtoken";
+import transporter from "../config/nodeMailer.js";
+
+const require = createRequire(import.meta.url);
+const archiver = require("archiver");
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const redisUri = process.env.REDIS_URI;
 
@@ -29,6 +43,10 @@ if (connection) {
 
 export const aiQueue = connection
   ? new Queue("ai-mom-generation", { connection })
+  : null;
+
+export const dataExportQueue = connection
+  ? new Queue("data-export-queue", { connection })
   : null;
 
 export const initAIWorker = (app) => {
@@ -333,4 +351,112 @@ ${textToSummarize}
   });
 
   console.log("✅ AI Worker initialized and listening to ai-mom-generation queue");
+};
+
+export const initDataExportWorker = (app) => {
+  if (!connection) {
+    console.warn("⚠️ Redis not configured. Data Export Worker will not start.");
+    return;
+  }
+
+  const worker = new Worker(
+    "data-export-queue",
+    async (job) => {
+      const { userId, email } = job.data;
+      console.log(`📦 Starting data export for user ${userId}...`);
+
+      try {
+        // Fetch User Data
+        const user = await userModel.findById(userId).lean();
+        if (!user) throw new Error("User not found");
+
+        // Fetch Meetings
+        const meetings = await Meeting.find({ uploadedBy: userId }).lean();
+
+        // Fetch Memberships
+        const memberships = await membershipModel.find({ user: userId }).lean();
+
+        const exportDir = path.join(__dirname, "..", "uploads", "exports");
+        if (!fs.existsSync(exportDir)) {
+          fs.mkdirSync(exportDir, { recursive: true });
+        }
+
+        const fileName = `export_${userId}_${Date.now()}.zip`;
+        const filePath = path.join(exportDir, fileName);
+
+        await new Promise((resolve, reject) => {
+          const output = fs.createWriteStream(filePath);
+          const archive = archiver("zip", { zlib: { level: 9 } });
+
+          output.on("close", resolve);
+          archive.on("error", reject);
+          archive.on("warning", (err) => {
+            if (err.code === "ENOENT") console.warn(err);
+            else reject(err);
+          });
+
+          archive.pipe(output);
+          archive.append(JSON.stringify(user, null, 2), { name: "user_profile.json" });
+          archive.append(JSON.stringify(meetings, null, 2), { name: "meetings.json" });
+          archive.append(JSON.stringify(memberships, null, 2), { name: "memberships.json" });
+          archive.finalize();
+        });
+
+        console.log(`✅ Data export for user ${userId} saved to ${filePath}`);
+
+        // Generate Secure Download Link
+        const jwtSecret = process.env.JWT_SECRET || "fallback_secret";
+        const downloadToken = jwt.sign({ userId, fileName }, jwtSecret, { expiresIn: "24h" });
+        
+        // In production, BASE_URL should be configured correctly in .env
+        const baseUrl = process.env.BASE_URL || "http://localhost:3000";
+        const downloadUrl = `${baseUrl}/api/user/download-export/${downloadToken}`;
+
+        // Send Email
+        const mailOptions = {
+          from: process.env.SMTP_USER || "no-reply@meetonmemory.com",
+          to: email,
+          subject: "Your Data Export is Ready",
+          html: `
+            <h2>Data Export Completed</h2>
+            <p>Your requested data export is ready. You can download it using the link below:</p>
+            <p><a href="${downloadUrl}">Download Data Export</a></p>
+            <p><strong>Note:</strong> This link will expire in 24 hours.</p>
+          `,
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log(`📧 Notification email sent to ${email}`);
+
+        const io = app.get("io");
+        if (io) {
+          await createAndPushNotification(
+            io,
+            userId,
+            "Data Export Ready",
+            "Your data export has been completed and emailed to you.",
+            "system",
+            downloadUrl,
+            "Download"
+          );
+        }
+
+        return { success: true, fileName };
+      } catch (error) {
+        console.error(`❌ Data export failed for user ${userId}:`, error.message);
+        throw error;
+      }
+    },
+    { connection, concurrency: 2 }
+  );
+
+  worker.on("completed", (job) => {
+    console.log(`✅ Data Export Job ${job.id} completed successfully`);
+  });
+
+  worker.on("failed", (job, err) => {
+    console.error(`❌ Data Export Job ${job.id} failed with error:`, err.message);
+  });
+
+  console.log("✅ Data Export Worker initialized and listening to data-export-queue");
 };

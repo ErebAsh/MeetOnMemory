@@ -33,7 +33,7 @@ import documentSync from "./socket/documentSync.js";
 import { initRedis, getRedisClient } from "./services/redisService.js";
 import { createAdapter } from "@socket.io/redis-adapter";
 import { createClient } from "redis";
-import { initAIWorker } from "./services/queueService.js";
+import { initAIWorker, initDataExportWorker } from "./services/queueService.js";
 import { initWebhookWorker } from "./services/webhookDispatcherService.js";
 import { globalLimiter } from "./middleware/rateLimiter.js";
 import errorHandler from "./middleware/errorHandler.js";
@@ -203,6 +203,7 @@ meetingSocket(io);
 documentSync(io);
 if (process.env.NODE_ENV !== "test") {
   initAIWorker(app);
+  initDataExportWorker(app);
   initWebhookWorker();
 }
 

@@ -96,3 +96,15 @@ export const globalLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+// Rate limiter for data export requests (1 per 24 hours per IP)
+export const dataExportLimiter = rateLimit({
+  windowMs: 24 * 60 * 60 * 1000, // 24 hours
+  max: 1, // 1 request per 24 hours
+  message: {
+    success: false,
+    message: "You can only request a data export once every 24 hours.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
