@@ -39,8 +39,14 @@ const ProtectedRoute = ({ children, requiredPermission, resource, action }) => {
   }
 
   // RBAC: Check if user has required permission
-  if (requiredPermission && resource && action) {
+  if (resource && action) {
     if (!hasPermission(resource, action)) {
+      return <Navigate to="/dashboard" state={{ from: location }} replace />;
+    }
+  } else if (requiredPermission) {
+    const permResource = typeof requiredPermission === "object" ? requiredPermission.resource : requiredPermission;
+    const permAction = typeof requiredPermission === "object" ? requiredPermission.action : "view";
+    if (!hasPermission(permResource, permAction)) {
       return <Navigate to="/dashboard" state={{ from: location }} replace />;
     }
   }

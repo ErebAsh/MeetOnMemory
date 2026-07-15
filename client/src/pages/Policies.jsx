@@ -320,7 +320,7 @@ const DropZone = ({ onFile, disabled, selectedFile }) => {
 // ──────────────────────────────────────────────
 const Policies = () => {
   const { userData } = useContext(AppContent);
-  const isAdmin = userData?.role === "admin";
+  const isAdmin = userData?.role === "admin" || userData?.role === "owner";
 
   // Upload state
   const [file, setFile] = useState(null);

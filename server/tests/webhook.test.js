@@ -64,6 +64,7 @@ describe("Webhook Endpoints & Dispatcher", () => {
       email: `user-${Math.random()}@example.com`,
       password: "password123",
       organization: organization._id,
+      role: "member",
     });
     userToken = jwt.sign(
       { id: user._id },
@@ -76,6 +77,7 @@ describe("Webhook Endpoints & Dispatcher", () => {
       email: `admin-${Math.random()}@example.com`,
       password: "password123",
       organization: organization._id,
+      role: "admin",
     });
     adminToken = jwt.sign(
       { id: adminUser._id },

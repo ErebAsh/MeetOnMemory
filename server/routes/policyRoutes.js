@@ -10,6 +10,7 @@ import {
   requireOrgMembership,
   requireAdmin,
   requirePermission,
+  requireOrgAccess,
 } from "../middleware/rbac.js";
 import {
   uploadPolicy,
@@ -20,7 +21,6 @@ import {
 } from "../controllers/policyController.js";
 
 const router = express.Router();
-
 // Apply rate limiting to all routes
 router.use(
   rateLimit({
@@ -174,7 +174,7 @@ router.get(
   "/download/:id",
   downloadLimiter,
   userAuth,
-  requireOwnerOrAdmin(Policy),
+  requireOrgAccess(Policy),
   requirePermission("policies", "view"),
   downloadPolicy,
 );
