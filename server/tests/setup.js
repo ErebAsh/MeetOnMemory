@@ -12,6 +12,7 @@ const uri = mongoServer.getUri();
 
 process.env.TEST_MONGODB_URI = uri.replace(/\/$/, "");
 process.env.NODE_ENV = "test";
+process.env.JWT_SECRET = process.env.JWT_SECRET || "test_jwt_secret";
 
 // ─── Teardown ──────────────────────────────────────────────────────────────
 afterAll(async () => {

@@ -8,6 +8,8 @@ import {
   rejectInvitation,
   revokeInvitation,
   getInvitationByToken,
+  resendInvitation,
+  expireInvitation,
 } from "../controllers/invitationController.js";
 import userAuth from "../middleware/userAuth.js";
 import { apiLimiter, writeLimiter } from "../middleware/rateLimiter.js";
@@ -59,6 +61,20 @@ router.delete(
   writeLimiter,
   requirePermission("team_members", "remove"),
   revokeInvitation,
+);
+router.post(
+  "/:id/resend",
+  userAuth,
+  writeLimiter,
+  requirePermission("team_members", "invite"),
+  resendInvitation,
+);
+router.post(
+  "/:id/expire",
+  userAuth,
+  writeLimiter,
+  requirePermission("team_members", "invite"),
+  expireInvitation,
 );
 router.get("/:token", getInvitationByToken);
 

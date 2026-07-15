@@ -5,6 +5,7 @@ import Organization from "../models/organizationModel.js";
 import userModel from "../models/userModel.js";
 import crypto from "crypto";
 import mongoose from "mongoose";
+import EmailService from "../services/EmailService.js";
 
 /**
  * Validate MongoDB ObjectId
@@ -38,8 +39,8 @@ const sanitizeEmail = (email) => {
 const allowedStatuses = [
   "pending",
   "accepted",
-  "rejected",
-  "revoked",
+  "declined",
+  "cancelled",
   "expired",
 ];
 const isValidStatus = (status) => allowedStatuses.includes(status);
@@ -200,6 +201,15 @@ export const createInvitation = async (req, res) => {
     };
 
     const invitation = await Invitation.create(invitationData);
+
+    // Send invitation email
+    const inviteLink = `${req.headers.origin || "http://localhost:5173"}/join-organization?token=${invitation.token}`;
+    await EmailService.sendInvitation({
+      to: sanitizedEmail,
+      organizationName: organization.name,
+      invitedBy: req.user.name || "Admin",
+      inviteLink,
+    });
 
     res.status(201).json({
       success: true,
@@ -475,12 +485,12 @@ export const rejectInvitation = async (req, res) => {
     }
 
     // Update invitation status
-    invitation.status = "rejected";
+    invitation.status = "declined";
     await invitation.save();
 
     res.status(200).json({
       success: true,
-      message: "Invitation rejected successfully.",
+      message: "Invitation declined successfully.",
       invitation,
     });
   } catch (error) {
@@ -544,16 +554,16 @@ export const revokeInvitation = async (req, res) => {
         .status(400)
         .json({
           success: false,
-          message: "Can only revoke pending invitations.",
+          message: "Can only cancel pending invitations.",
         });
     }
 
-    invitation.status = "revoked";
+    invitation.status = "cancelled";
     await invitation.save();
 
     res.status(200).json({
       success: true,
-      message: "Invitation revoked successfully.",
+      message: "Invitation cancelled successfully.",
       invitation,
     });
   } catch (error) {
@@ -600,6 +610,147 @@ export const getInvitationByToken = async (req, res) => {
     res.status(200).json({ success: true, invitation });
   } catch (error) {
     console.error("❌ Error fetching invitation:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+/**
+ * ✅ Resend Invitation
+ * POST /api/invitations/:id/resend
+ */
+export const resendInvitation = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!req.user || !req.user.id) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Authentication failed." });
+    }
+
+    if (!isValidObjectId(id)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid invitation ID." });
+    }
+
+    const cleanInvitationId = new mongoose.Types.ObjectId(String(id));
+    const invitation = await Invitation.findById(cleanInvitationId).populate("organization");
+
+    if (!invitation) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Invitation not found." });
+    }
+
+    // Check if user is admin or owner
+    const membership = await Membership.findOne({
+      user: req.user.id,
+      organization: invitation.organization._id,
+      role: "admin",
+      status: "active",
+    });
+
+    const isOwner = invitation.organization.owner.toString() === req.user.id.toString();
+
+    if (!membership && !isOwner) {
+      return res
+        .status(403)
+        .json({ success: false, message: "Not authorized to resend invitations." });
+    }
+
+    // Generate new token and set expiration to +7 days from now
+    const newToken = generateInvitationToken();
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
+
+    invitation.token = newToken;
+    invitation.expiresAt = expiresAt;
+    invitation.status = "pending";
+    await invitation.save();
+
+    // Send the email
+    const inviteLink = `${req.headers.origin || "http://localhost:5173"}/join-organization?token=${newToken}`;
+    await EmailService.sendInvitation({
+      to: invitation.email,
+      organizationName: invitation.organization.name,
+      invitedBy: req.user.name || "Admin",
+      inviteLink,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Invitation resent successfully.",
+      invitation,
+    });
+  } catch (error) {
+    console.error("❌ Error resending invitation:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+/**
+ * ✅ Expire Invitation Manually
+ * POST /api/invitations/:id/expire
+ */
+export const expireInvitation = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!req.user || !req.user.id) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Authentication failed." });
+    }
+
+    if (!isValidObjectId(id)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid invitation ID." });
+    }
+
+    const cleanInvitationId = new mongoose.Types.ObjectId(String(id));
+    const invitation = await Invitation.findById(cleanInvitationId).populate("organization");
+
+    if (!invitation) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Invitation not found." });
+    }
+
+    // Check if user is admin or owner
+    const membership = await Membership.findOne({
+      user: req.user.id,
+      organization: invitation.organization._id,
+      role: "admin",
+      status: "active",
+    });
+
+    const isOwner = invitation.organization.owner.toString() === req.user.id.toString();
+
+    if (!membership && !isOwner) {
+      return res
+        .status(403)
+        .json({ success: false, message: "Not authorized to expire invitations." });
+    }
+
+    if (invitation.status !== "pending") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Can only expire pending invitations." });
+    }
+
+    invitation.status = "expired";
+    invitation.expiresAt = new Date();
+    await invitation.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Invitation expired successfully.",
+      invitation,
+    });
+  } catch (error) {
+    console.error("❌ Error expiring invitation:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
