@@ -14,9 +14,16 @@ let _realTransporter = null;
 
 const mockTransporter = {
   verify: (callback) => {
-    if (typeof callback === "function") callback(null, true);
+    if (typeof callback === "function") {
+      callback(null, true);
+      return;
+    }
+    return Promise.resolve(true);
   },
   sendMail: async (options) => {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("SMTP credentials are not configured. Email cannot be sent in production.");
+    }
     console.log("=========================================");
     console.log("✉️ MOCK EMAIL SENT");
     console.log(`To: ${options.to}`);
@@ -79,11 +86,13 @@ if (isMock && process.env.NODE_ENV === "production") {
 const transporter = {
   verify: (callback) => {
     const currentTransporter = getTransporter();
-    if (typeof currentTransporter.verify === "function") {
-      currentTransporter.verify(callback);
-    } else {
-      if (typeof callback === "function") callback(null, true);
+    if (typeof callback === "function") {
+      return currentTransporter.verify(callback);
     }
+    if (typeof currentTransporter.verify === "function") {
+      return currentTransporter.verify();
+    }
+    return Promise.resolve(true);
   },
   sendMail: async (options) => {
     const currentTransporter = getTransporter();

@@ -1,4 +1,3 @@
-import transporter from "../config/nodeMailer.js";
 import nodemailer from "nodemailer";
 
 jest.mock("nodemailer", () => {
@@ -11,17 +10,31 @@ jest.mock("nodemailer", () => {
 });
 
 describe("nodeMailer lazy initialization test", () => {
+  let originalEnv;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.resetModules();
+    originalEnv = { ...process.env };
   });
 
-  test("should export a transporter object with sendMail and verify methods", () => {
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
+  test("should export a transporter object with sendMail and verify methods", async () => {
+    const { default: transporter } = await import(`../config/nodeMailer.js?test=1`);
     expect(transporter).toBeDefined();
     expect(typeof transporter.sendMail).toBe("function");
     expect(typeof transporter.verify).toBe("function");
   });
 
   test("should resolve verify and sendMail when SMTP is in mock mode", async () => {
+    // Clear SMTP env so we are in mock mode
+    delete process.env.SMTP_USER;
+    delete process.env.SMTP_PASS;
+
+    const { default: transporter } = await import(`../config/nodeMailer.js?test=2`);
     const spyLog = jest.spyOn(console, "log").mockImplementation(() => {});
     
     // Test verify
@@ -39,15 +52,14 @@ describe("nodeMailer lazy initialization test", () => {
   });
 
   test("should initialize real transport only when real SMTP variables are defined and method is called", async () => {
-    // Save original env variables
-    const originalEnv = { ...process.env };
-    
     // Set dummy SMTP credentials so SMTP is not mocked
     process.env.SMTP_USER = "test@example.com";
     process.env.SMTP_PASS = "securepassword";
     process.env.SMTP_HOST = "smtp.example.com";
     process.env.SMTP_PORT = "465";
     process.env.SMTP_SECURE = "true";
+
+    const { default: transporter } = await import(`../config/nodeMailer.js?test=3`);
 
     // Re-verify that createTransport was NOT called simply by loading/setting env
     expect(nodemailer.createTransport).not.toHaveBeenCalled();
@@ -70,8 +82,5 @@ describe("nodeMailer lazy initialization test", () => {
       greetingTimeout: 5000,
       socketTimeout: 10000,
     });
-
-    // Clean up/restore env
-    process.env = originalEnv;
   });
 });

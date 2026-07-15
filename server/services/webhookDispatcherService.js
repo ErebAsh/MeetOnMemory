@@ -7,24 +7,62 @@ import eventBus from "./eventBus.js";
 
 const redisUri = process.env.REDIS_URI;
 
-// Initialize Redis connection for BullMQ if configured
-const connection = redisUri
-  ? new Redis(redisUri, {
-      maxRetriesPerRequest: null,
-      family: 0,
-    })
-  : null;
+let _producerConnection = null;
+let _workerConnection = null;
+let _webhookQueueInstance = null;
 
-if (connection) {
-  connection.on("error", (err) => {
-    console.error("⚠️ Webhook Redis Connection Error:", err.message);
-  });
+function getProducerConnection() {
+  if (!redisUri) return null;
+  if (!_producerConnection) {
+    _producerConnection = new Redis(redisUri, {
+      maxRetriesPerRequest: 3, // Fail fast for requests adding tasks to queue
+      family: 0,
+    });
+    _producerConnection.on("error", (err) => {
+      console.error("⚠️ Webhook Producer Redis Connection Error:", err.message);
+    });
+  }
+  return _producerConnection;
 }
 
-// Initialize BullMQ Queue
-export const webhookQueue = connection
-  ? new Queue("webhook-dispatches", { connection })
-  : null;
+function getWorkerConnection() {
+  if (!redisUri) return null;
+  if (!_workerConnection) {
+    _workerConnection = new Redis(redisUri, {
+      maxRetriesPerRequest: null, // Unlimited retries for background workers
+      family: 0,
+    });
+    _workerConnection.on("error", (err) => {
+      console.error("⚠️ Webhook Worker Redis Connection Error:", err.message);
+    });
+  }
+  return _workerConnection;
+}
+
+function getWebhookQueue() {
+  if (!redisUri) return null;
+  if (!_webhookQueueInstance) {
+    const conn = getProducerConnection();
+    if (conn) {
+      _webhookQueueInstance = new Queue("webhook-dispatches", { connection: conn });
+    }
+  }
+  return _webhookQueueInstance;
+}
+
+export const webhookQueue = {
+  add: async (...args) => {
+    const q = getWebhookQueue();
+    if (!q) {
+      console.warn("⚠️ Queue operation ignored: Redis is not configured.");
+      return null;
+    }
+    return await q.add(...args);
+  },
+  get isActive() {
+    return getWebhookQueue() !== null;
+  }
+};
 
 /**
  * Signs the payload using HMAC SHA-256 with the webhook's secret.
@@ -114,7 +152,7 @@ export const dispatchWebhookEvent = async (organizationId, event, data) => {
     };
 
     for (const webhook of webhooks) {
-      if (webhookQueue) {
+      if (getWebhookQueue()) {
         // Add to BullMQ with exponential backoff retries for reliability
         await webhookQueue.add(
           "dispatch-webhook",
@@ -146,6 +184,7 @@ export const dispatchWebhookEvent = async (organizationId, event, data) => {
  * Initializes the Webhook worker listening on the dispatch queue.
  */
 export const initWebhookWorker = () => {
+  const connection = getWorkerConnection();
   if (!connection) {
     console.warn(
       "⚠️ Redis not configured. Webhook background worker will not start (falling back to sync dispatch).",
