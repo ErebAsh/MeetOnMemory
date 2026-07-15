@@ -338,7 +338,7 @@ const App = () => {
           <Route
             path="/membership-requests"
             element={
-              <ProtectedRoute resource="team_members" action="view">
+              <ProtectedRoute resource="team_members" action="invite">
                 <MembershipRequests />
               </ProtectedRoute>
             }

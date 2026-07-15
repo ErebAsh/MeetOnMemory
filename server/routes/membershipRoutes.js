@@ -31,9 +31,7 @@ router.get(
   getOrganizationMemberships,
 );
 
-// Membership management (admin only)
-router.patch("/:id/role", requireAdmin, updateMembershipRole);
-router.delete("/:id", requireAdmin, removeMembership);
+
 // Membership management
 router.patch(
   "/:id/role",

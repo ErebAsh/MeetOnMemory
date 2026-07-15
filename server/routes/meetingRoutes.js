@@ -106,8 +106,7 @@ router.delete(
 
 // ========== NEW ROUTES (for CreateMeeting.jsx) ==========
 
-// ✅ Create/Schedule Meeting (from CreateMeeting Schedule section) - admin only
-router.post("/create", userAuth, requireAdmin, writeLimiter, createMeeting);
+
 // ✅ Create/Schedule Meeting (from CreateMeeting Schedule section)
 router.post(
   "/create",

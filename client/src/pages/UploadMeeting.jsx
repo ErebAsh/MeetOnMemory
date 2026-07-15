@@ -27,7 +27,7 @@ const UploadMeeting = () => {
   const { userData } = useContext(AppContent);
   const navigate = useNavigate();
 
-  const isAdmin = userData?.role === "admin";
+  const isAdmin = userData?.role === "admin" || userData?.role === "owner";
 
   // Redirect members to dashboard with a message
   useEffect(() => {

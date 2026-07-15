@@ -68,7 +68,7 @@ const Dashboard = () => {
   const handleAISearch = () => navigate("/ai-search");
   const handleCardClick = (id) => navigate(ROUTE_MAP[id]);
 
-  const isAdmin = userData?.role === "admin";
+  const isAdmin = userData?.role === "admin" || userData?.role === "owner";
 
   const FEATURE_CARDS = [
     {

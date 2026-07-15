@@ -266,6 +266,7 @@ describe("GET /api/slack/install", () => {
       name: "Install User",
       email: `install-${Math.random()}@example.com`,
       password: "password123",
+      role: "admin",
     });
     const token = jwt.sign(
       { id: user._id },
