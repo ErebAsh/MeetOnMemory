@@ -21,7 +21,7 @@ import {
   CreditCard,
   Cpu,
   Fingerprint,
-  Mail,
+
   Award,
   Server
 } from "lucide-react";

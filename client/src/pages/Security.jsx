@@ -21,9 +21,9 @@ import {
   Info,
   Sliders,
   AlertOctagon,
-  EyeOff,
   UserCheck,
-  Scale
+  Scale,
+  Globe
 } from "lucide-react";
 
 // Sections data
