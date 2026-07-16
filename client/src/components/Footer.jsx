@@ -82,13 +82,12 @@ const Footer = () => {
               >
                 {t("footer.privacy")}
               </Link>
-              <a
-                href="#"
-                onClick={(e) => e.preventDefault()}
+              <Link
+                to="/terms"
                 className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
               >
                 {t("footer.terms")}
-              </a>
+              </Link>
               <a
                 href="https://github.com/imuniqueshiv/MeetOnMemory"
                 target="_blank"
@@ -329,9 +328,9 @@ const Footer = () => {
                 {t("footer.privacy")}
               </Link>
               <span>•</span>
-              <a href="#" onClick={(e) => e.preventDefault()} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+              <Link to="/terms" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                 {t("footer.terms")}
-              </a>
+              </Link>
             </div>
           </div>
           <p className="text-gray-400 dark:text-gray-500 text-sm">
