@@ -61,7 +61,9 @@ const ResultModal = ({ result, onClose }) => {
               </p>
             </div>
             <div>
-              <span className="text-gray-500">{t("aiSearch.similarityScore")}</span>
+              <span className="text-gray-500">
+                {t("aiSearch.similarityScore")}
+              </span>
               <p className="font-medium text-gray-800">
                 {result.similarityScore || "N/A"}
               </p>
@@ -125,7 +127,7 @@ const AiSearch = () => {
     setHasSearched(true);
 
     try {
-      const res = await apiClient.post("/api/ai-search", { query, filters });
+      const res = await apiClient.post("/api/ai", { query, filters });
       const data = res.data;
 
       let sortedResults = data.results || [];
@@ -145,9 +147,7 @@ const AiSearch = () => {
       console.error("❌ Search error:", err);
 
       if (err.message === "Failed to fetch") {
-        setError(
-          t("aiSearch.unableToConnect"),
-        );
+        setError(t("aiSearch.unableToConnect"));
       } else if (err.message.includes("500")) {
         setError(t("aiSearch.serverError"));
       } else if (err.message.includes("404")) {
@@ -196,7 +196,8 @@ const AiSearch = () => {
         <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-gray-100 mb-3 tracking-tight">
           {t("aiSearch.title")}
         </h1>
-        <p className="text-gray-600 dark:text-gray-400 mb-8 text-sm md:text-base max-w-2xl"
+        <p
+          className="text-gray-600 dark:text-gray-400 mb-8 text-sm md:text-base max-w-2xl"
           dangerouslySetInnerHTML={{ __html: t("aiSearch.subtitle") }}
         />
 
@@ -214,7 +215,8 @@ const AiSearch = () => {
           <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-400 text-sm text-left w-full">
             <span className="font-semibold">
               ⚠️{" "}
-              {error.includes("Unable to connect") || error.includes(t("aiSearch.unableToConnect").substring(0, 10))
+              {error.includes("Unable to connect") ||
+              error.includes(t("aiSearch.unableToConnect").substring(0, 10))
                 ? t("aiSearch.connectionError")
                 : t("aiSearch.error")}
             </span>
