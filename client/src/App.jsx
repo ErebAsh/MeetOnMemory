@@ -13,6 +13,7 @@ import Privacy from "./pages/Privacy.jsx";
 import Terms from "./pages/Terms.jsx";
 import Security from "./pages/Security.jsx";
 import Contact from "./pages/Contact.jsx";
+import CookiePolicy from "./pages/CookiePolicy.jsx";
 
 // --- Protected Pages ---
 import MeetingListPage from "./pages/MeetingListPage.jsx";
@@ -166,6 +167,7 @@ const App = () => {
           <Route path="/terms" element={<Terms />} />
           <Route path="/security" element={<Security />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/cookie-policy" element={<CookiePolicy />} />
           <Route
             path="/organizations/:slug"
             element={<PublicOrganizationProfile />}
