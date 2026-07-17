@@ -32,13 +32,7 @@ export const deleteMeetingById = async (id) => {
 };
 
 export const searchMeetingsRecords = async (searchQuery) => {
-  return await Meeting.find({
-    $or: [
-      { title: { $regex: searchQuery, $options: "i" } },
-      { summary: { $regex: searchQuery, $options: "i" } },
-      { transcript: { $regex: searchQuery, $options: "i" } },
-    ],
-  })
+  return await Meeting.find({ $text: { $search: searchQuery } })
     .sort({ createdAt: -1 })
-    .select("title summary transcript createdAt date meetingType");
+    .select("title summary createdAt date meetingType");
 };
