@@ -15,10 +15,33 @@ const notificationRouter = express.Router();
 
 notificationRouter.use(userAuth, apiLimiter);
 
-notificationRouter.get("/", requirePermission("notifications", "view"), getNotifications);
-notificationRouter.get("/unread-count", requirePermission("notifications", "view"), getUnreadCount);
-notificationRouter.patch("/mark-all-read", writeLimiter, requirePermission("notifications", "manage"), markAllAsRead);
-notificationRouter.patch("/:id/read", writeLimiter, requirePermission("notifications", "view"), markAsRead);
-notificationRouter.delete("/:id", writeLimiter, requirePermission("notifications", "manage"), deleteNotification);
+notificationRouter.get(
+  "/",
+  requirePermission("notifications", "view"),
+  getNotifications,
+);
+notificationRouter.get(
+  "/unread-count",
+  requirePermission("notifications", "view"),
+  getUnreadCount,
+);
+notificationRouter.patch(
+  "/mark-all-read",
+  writeLimiter,
+  requirePermission("notifications", "manage"),
+  markAllAsRead,
+);
+notificationRouter.patch(
+  "/:id/read",
+  writeLimiter,
+  requirePermission("notifications", "view"),
+  markAsRead,
+);
+notificationRouter.delete(
+  "/:id",
+  writeLimiter,
+  requirePermission("notifications", "manage"),
+  deleteNotification,
+);
 
 export default notificationRouter;

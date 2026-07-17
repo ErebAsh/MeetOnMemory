@@ -6,6 +6,12 @@ import { requirePermission } from "../middleware/rbac.js";
 
 const router = express.Router();
 
-router.get("/", apiLimiter, userAuth, requirePermission("reports", "view"), getAnalytics);
+router.get(
+  "/",
+  apiLimiter,
+  userAuth,
+  requirePermission("reports", "view"),
+  getAnalytics,
+);
 
 export default router;

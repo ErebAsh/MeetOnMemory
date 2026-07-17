@@ -61,7 +61,10 @@ export const getOrganizationMemberships = async (req, res) => {
     if (!membership) {
       return res
         .status(403)
-        .json({ success: false, message: "Not a member of this organization." });
+        .json({
+          success: false,
+          message: "Not a member of this organization.",
+        });
     }
 
     const memberships = await Membership.find({
@@ -96,7 +99,10 @@ export const updateMembershipRole = async (req, res) => {
     if (!role || !["admin", "member"].includes(role)) {
       return res
         .status(400)
-        .json({ success: false, message: "Invalid role. Must be 'admin' or 'member'." });
+        .json({
+          success: false,
+          message: "Invalid role. Must be 'admin' or 'member'.",
+        });
     }
 
     const membership = await Membership.findById(id).populate("organization");
@@ -121,7 +127,10 @@ export const updateMembershipRole = async (req, res) => {
     if (!requesterMembership && !isOwner) {
       return res
         .status(403)
-        .json({ success: false, message: "Not authorized to update membership role." });
+        .json({
+          success: false,
+          message: "Not authorized to update membership role.",
+        });
     }
 
     // Prevent removing the last admin
@@ -190,7 +199,10 @@ export const removeMembership = async (req, res) => {
     if (!isSelf && !requesterMembership && !isOwner) {
       return res
         .status(403)
-        .json({ success: false, message: "Not authorized to remove this membership." });
+        .json({
+          success: false,
+          message: "Not authorized to remove this membership.",
+        });
     }
 
     // Prevent removing the last admin
@@ -258,12 +270,10 @@ export const leaveOrganization = async (req, res) => {
 
     // Prevent owner from leaving (they should transfer ownership first)
     if (membership.organization.owner.toString() === req.user.id.toString()) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Owner cannot leave organization. Transfer ownership first.",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Owner cannot leave organization. Transfer ownership first.",
+      });
     }
 
     // Update status to removed

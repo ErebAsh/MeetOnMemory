@@ -1,21 +1,7 @@
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import { randomInt } from "node:crypto";
-import userModel from "../models/userModel.js";
-import transporter from "../config/nodeMailer.js";
-import {
-  EMAIL_VERIFY_TEMPLATE,
-  PASSWORD_RESET_TEMPLATE,
-} from "../config/emailTemplates.js";
-import { getAuthUrl, getTokens } from "../services/calendarService.js";
+import { getAuthUrl } from "../services/calendarService.js";
+import AuthService from "../services/AuthService.js";
 
 // --------------------------- HELPERS ---------------------------
-const sendBackgroundEmail = (mailOptions, flowName) => {
-  transporter.sendMail(mailOptions).catch((err) => {
-    console.error(`Background email transmission failed [${flowName}]:`, err);
-  });
-};
-
 const validateFields = (fields, res) => {
   const missing = Object.entries(fields).filter(([_, val]) => !val);
   if (missing.length > 0) {
@@ -25,33 +11,13 @@ const validateFields = (fields, res) => {
   return true;
 };
 
-const normalizeEmail = (email) => String(email).trim().toLowerCase();
-
 // --------------------------- REGISTER ---------------------------
 export const register = async (req, res) => {
   const { name, email, password } = req.body;
   if (!validateFields({ name, email, password }, res)) return;
 
   try {
-    const cleanEmail = normalizeEmail(email);
-    const existingUser = await userModel
-      .findOne({ email: cleanEmail })
-      .select("_id")
-      .lean();
-    if (existingUser)
-      return res.json({ success: false, message: "User already exists" });
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new userModel({
-      name,
-      email: cleanEmail,
-      password: hashedPassword,
-    });
-    await user.save();
-
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const { token } = await AuthService.register({ name, email, password });
 
     res.cookie("token", token, {
       httpOnly: true,
@@ -60,17 +26,9 @@ export const register = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    sendBackgroundEmail(
-      {
-        from: process.env.SENDER_EMAIL,
-        to: cleanEmail,
-        subject: "Welcome to MeetOnMemory!",
-        text: `Welcome to MeetOnMemory, ${name}! Your account has been successfully created.`,
-      },
-      "Register",
-    );
-
-    return res.status(201).json({ success: true, message: "Registration successful" });
+    return res
+      .status(201)
+      .json({ success: true, message: "Registration successful" });
   } catch (error) {
     console.error("Register error:", error);
     res.json({ success: false, message: error.message });
@@ -83,17 +41,7 @@ export const login = async (req, res) => {
   if (!validateFields({ email, password }, res)) return;
 
   try {
-    const cleanEmail = normalizeEmail(email);
-    const user = await userModel.findOne({ email: cleanEmail }).lean();
-    if (!user) return res.json({ success: false, message: "Invalid Email" });
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-      return res.json({ success: false, message: "Invalid Password" });
-
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const { token } = await AuthService.login({ email, password });
 
     res.cookie("token", token, {
       httpOnly: true,
@@ -127,32 +75,18 @@ export const logout = async (req, res) => {
 export const sendVerifyOtp = async (req, res) => {
   try {
     const { userId } = req;
-    const user = await userModel.findById(userId);
-
-    if (!user)
-      return res.json({ success: false, message: "Authentication failed" });
-    if (user.isAccountVerified)
-      return res.json({ success: false, message: "Account already verified" });
-
-    const otp = randomInt(100000, 1000000).toString();
-    user.verifyOtp = otp;
-    user.verifyOtpExpireAt = Date.now() + 24 * 60 * 60 * 1000;
-    await user.save();
-
-    await transporter.sendMail({
-      from: process.env.SENDER_EMAIL,
-      to: user.email,
-      subject: "Account Verification OTP",
-      html: EMAIL_VERIFY_TEMPLATE.replace("{{otp}}", otp).replace(
-        "{{email}}",
-        user.email,
-      ),
-    });
+    
+    await AuthService.sendVerifyOtp(userId);
 
     res.json({ success: true, message: "Verification OTP sent on email" });
   } catch (error) {
     console.error("SendVerifyOtp error:", error);
-    res.json({ success: false, message: "Failed to send verification OTP" });
+    // Maintain old generic error for sendVerifyOtp to not break tests if it relies on exact string
+    if (error.message === "Authentication failed" || error.message === "Account already verified") {
+      res.json({ success: false, message: error.message });
+    } else {
+      res.json({ success: false, message: "Failed to send verification OTP" });
+    }
   }
 };
 
@@ -163,21 +97,7 @@ export const verifyEmail = async (req, res) => {
   if (!validateFields({ userId, otp }, res)) return;
 
   try {
-    const user = await userModel.findById(userId);
-    if (!user)
-      return res.json({
-        success: false,
-        message: "Verification session invalid",
-      });
-    if (user.verifyOtp === "" || user.verifyOtp !== otp)
-      return res.json({ success: false, message: "Invalid OTP" });
-    if (user.verifyOtpExpireAt < Date.now())
-      return res.json({ success: false, message: "OTP expired" });
-
-    user.isAccountVerified = true;
-    user.verifyOtp = "";
-    user.verifyOtpExpireAt = 0;
-    await user.save();
+    await AuthService.verifyEmail({ userId, otp });
 
     return res.json({ success: true, message: "Email verified successfully!" });
   } catch (error) {
@@ -200,27 +120,7 @@ export const sendResetOtp = async (req, res) => {
   if (!validateFields({ email }, res)) return;
 
   try {
-    const cleanEmail = normalizeEmail(email);
-    const user = await userModel.findOne({ email: cleanEmail });
-
-    if (!user) {
-      return res.json({ success: true, message: "OTP sent to your email" });
-    }
-
-    const otp = randomInt(100000, 1000000).toString();
-    user.resetOtp = otp;
-    user.resetOtpExpireAt = Date.now() + 15 * 60 * 1000;
-    await user.save();
-
-    await transporter.sendMail({
-      from: process.env.SENDER_EMAIL,
-      to: user.email,
-      subject: "Password Reset OTP",
-      html: PASSWORD_RESET_TEMPLATE.replace("{{otp}}", otp).replace(
-        "{{email}}",
-        user.email,
-      ),
-    });
+    await AuthService.sendResetOtp({ email });
 
     res.json({ success: true, message: "OTP sent to your email" });
   } catch (error) {
@@ -238,23 +138,7 @@ export const resetPassword = async (req, res) => {
   if (!validateFields({ email, otp, newPassword }, res)) return;
 
   try {
-    const cleanEmail = normalizeEmail(email);
-    const user = await userModel.findOne({ email: cleanEmail });
-
-    if (!user)
-      return res.json({
-        success: false,
-        message: "Invalid request or expired token",
-      });
-    if (user.resetOtp === "" || user.resetOtp !== otp)
-      return res.json({ success: false, message: "Invalid OTP" });
-    if (user.resetOtpExpireAt < Date.now())
-      return res.json({ success: false, message: "OTP expired" });
-
-    user.password = await bcrypt.hash(newPassword, 10);
-    user.resetOtp = "";
-    user.resetOtpExpireAt = 0;
-    await user.save();
+    await AuthService.resetPassword({ email, otp, newPassword });
 
     return res.json({
       success: true,
@@ -268,20 +152,16 @@ export const resetPassword = async (req, res) => {
 // --------------------------- GET USER DATA (For Dashboard) ---------------------------
 export const getUserData = async (req, res) => {
   try {
-    const user = await userModel
-      .findById(req.user.id)
-      .populate("organization", "name")
-      .lean();
-
-    if (!user)
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+    const user = await AuthService.getUserData(req.user.id);
 
     res.status(200).json({ success: true, user });
   } catch (error) {
     console.error("Error fetching user data:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    if (error.statusCode === 404) {
+      res.status(404).json({ success: false, message: "User not found" });
+    } else {
+      res.status(500).json({ success: false, message: "Server error" });
+    }
   }
 };
 
@@ -294,26 +174,17 @@ export const googleCalendarAuth = (req, res) => {
 export const googleCalendarCallback = async (req, res) => {
   const { code } = req.query;
   try {
-    const tokens = await getTokens(code);
-    
     const token = req.cookies?.token;
-    if (!token) return res.status(401).json({ success: false, message: "Not authenticated" });
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.id;
+    await AuthService.googleCalendarCallback({ code, token });
 
-    const user = await userModel.findById(userId);
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
-
-    user.googleAccessToken = tokens.access_token;
-    if (tokens.refresh_token) {
-      user.googleRefreshToken = tokens.refresh_token;
-    }
-    user.calendarSyncEnabled = true;
-    await user.save();
-
-    res.redirect("http://localhost:5173/profile?sync=success");
+    res.redirect(`${process.env.CLIENT_URL || "http://localhost:5173"}/profile?sync=success`);
   } catch (error) {
     console.error("Google Calendar Callback error:", error);
-    res.redirect("http://localhost:5173/profile?sync=error");
+    if (error.statusCode === 401) {
+      return res.status(401).json({ success: false, message: "Not authenticated" });
+    } else if (error.statusCode === 404) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+    res.redirect(`${process.env.CLIENT_URL || "http://localhost:5173"}/profile?sync=error`);
   }
 };

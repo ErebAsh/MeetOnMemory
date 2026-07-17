@@ -7,24 +7,62 @@ import eventBus from "./eventBus.js";
 
 const redisUri = process.env.REDIS_URI;
 
-// Initialize Redis connection for BullMQ if configured
-const connection = redisUri
-  ? new Redis(redisUri, {
-      maxRetriesPerRequest: null,
-      family: 0,
-    })
-  : null;
+let _producerConnection = null;
+let _workerConnection = null;
+let _webhookQueueInstance = null;
 
-if (connection) {
-  connection.on("error", (err) => {
-    console.error("⚠️ Webhook Redis Connection Error:", err.message);
-  });
+function getProducerConnection() {
+  if (!redisUri) return null;
+  if (!_producerConnection) {
+    _producerConnection = new Redis(redisUri, {
+      maxRetriesPerRequest: 3, // Fail fast for requests adding tasks to queue
+      family: 0,
+    });
+    _producerConnection.on("error", (err) => {
+      console.error("⚠️ Webhook Producer Redis Connection Error:", err.message);
+    });
+  }
+  return _producerConnection;
 }
 
-// Initialize BullMQ Queue
-export const webhookQueue = connection
-  ? new Queue("webhook-dispatches", { connection })
-  : null;
+function getWorkerConnection() {
+  if (!redisUri) return null;
+  if (!_workerConnection) {
+    _workerConnection = new Redis(redisUri, {
+      maxRetriesPerRequest: null, // Unlimited retries for background workers
+      family: 0,
+    });
+    _workerConnection.on("error", (err) => {
+      console.error("⚠️ Webhook Worker Redis Connection Error:", err.message);
+    });
+  }
+  return _workerConnection;
+}
+
+function getWebhookQueue() {
+  if (!redisUri) return null;
+  if (!_webhookQueueInstance) {
+    const conn = getProducerConnection();
+    if (conn) {
+      _webhookQueueInstance = new Queue("webhook-dispatches", { connection: conn });
+    }
+  }
+  return _webhookQueueInstance;
+}
+
+export const webhookQueue = {
+  add: async (...args) => {
+    const q = getWebhookQueue();
+    if (!q) {
+      console.warn("⚠️ Queue operation ignored: Redis is not configured.");
+      return null;
+    }
+    return await q.add(...args);
+  },
+  get isActive() {
+    return getWebhookQueue() !== null;
+  }
+};
 
 /**
  * Signs the payload using HMAC SHA-256 with the webhook's secret.
@@ -48,14 +86,18 @@ const generateSignature = (payload, secret) => {
 export const performDispatch = async (webhookId, payload) => {
   const webhook = await Webhook.findById(webhookId).select("+secret");
   if (!webhook || !webhook.isActive) {
-    console.log(`⚠️ Webhook subscription ${webhookId} not found or inactive. Skipping.`);
+    console.log(
+      `⚠️ Webhook subscription ${webhookId} not found or inactive. Skipping.`,
+    );
     return;
   }
 
   const signature = generateSignature(payload, webhook.secret);
 
   try {
-    console.log(`📡 Sending webhook event '${payload.event}' to ${webhook.targetUrl}...`);
+    console.log(
+      `📡 Sending webhook event '${payload.event}' to ${webhook.targetUrl}...`,
+    );
     const response = await axios.post(webhook.targetUrl, payload, {
       headers: {
         "Content-Type": "application/json",
@@ -64,13 +106,17 @@ export const performDispatch = async (webhookId, payload) => {
       timeout: 10000, // 10 second timeout
     });
 
-    console.log(`✅ Webhook event '${payload.event}' successfully sent to ${webhook.targetUrl}. Status: ${response.status}`);
+    console.log(
+      `✅ Webhook event '${payload.event}' successfully sent to ${webhook.targetUrl}. Status: ${response.status}`,
+    );
   } catch (error) {
     const errorMsg = error.response
       ? `Status Code: ${error.response.status}`
       : error.message;
-    console.error(`❌ Webhook dispatch failed for ${webhook.targetUrl}: ${errorMsg}`);
-    
+    console.error(
+      `❌ Webhook dispatch failed for ${webhook.targetUrl}: ${errorMsg}`,
+    );
+
     // Throwing error allows BullMQ to retry the job
     throw new Error(`Webhook dispatch failed: ${errorMsg}`);
   }
@@ -106,7 +152,7 @@ export const dispatchWebhookEvent = async (organizationId, event, data) => {
     };
 
     for (const webhook of webhooks) {
-      if (webhookQueue) {
+      if (getWebhookQueue()) {
         // Add to BullMQ with exponential backoff retries for reliability
         await webhookQueue.add(
           "dispatch-webhook",
@@ -117,12 +163,15 @@ export const dispatchWebhookEvent = async (organizationId, event, data) => {
               type: "exponential",
               delay: 2000, // 2s initial delay
             },
-          }
+          },
         );
       } else {
         // Fallback: Synchronous dispatch in local/dev environment without Redis
         performDispatch(webhook._id, payload).catch((err) => {
-          console.error("⚠️ Local webhook dispatch sync fallback failed:", err.message);
+          console.error(
+            "⚠️ Local webhook dispatch sync fallback failed:",
+            err.message,
+          );
         });
       }
     }
@@ -135,8 +184,11 @@ export const dispatchWebhookEvent = async (organizationId, event, data) => {
  * Initializes the Webhook worker listening on the dispatch queue.
  */
 export const initWebhookWorker = () => {
+  const connection = getWorkerConnection();
   if (!connection) {
-    console.warn("⚠️ Redis not configured. Webhook background worker will not start (falling back to sync dispatch).");
+    console.warn(
+      "⚠️ Redis not configured. Webhook background worker will not start (falling back to sync dispatch).",
+    );
     return;
   }
 
@@ -146,7 +198,7 @@ export const initWebhookWorker = () => {
       const { webhookId, payload } = job.data;
       await performDispatch(webhookId, payload);
     },
-    { connection, concurrency: 10 }
+    { connection, concurrency: 10 },
   );
 
   worker.on("completed", (job) => {
@@ -154,10 +206,15 @@ export const initWebhookWorker = () => {
   });
 
   worker.on("failed", (job, err) => {
-    console.error(`❌ Webhook job ${job.id} failed after retries:`, err.message);
+    console.error(
+      `❌ Webhook job ${job.id} failed after retries:`,
+      err.message,
+    );
   });
 
-  console.log("✅ Webhook Worker initialized and listening to webhook-dispatches queue");
+  console.log(
+    "✅ Webhook Worker initialized and listening to webhook-dispatches queue",
+  );
 };
 
 // ─────────────────────────────────────────────────────────────

@@ -4,7 +4,12 @@ import { z } from "zod";
 import Webhook from "../models/Webhook.js";
 import Membership from "../models/membershipModel.js";
 import Organization from "../models/organizationModel.js";
-import { ValidationError, UnauthorizedError, ForbiddenError, NotFoundError } from "../utils/errors.js";
+import {
+  ValidationError,
+  UnauthorizedError,
+  ForbiddenError,
+  NotFoundError,
+} from "../utils/errors.js";
 
 const isSafeWebhookUrl = (urlStr) => {
   try {
@@ -29,22 +34,22 @@ const isSafeWebhookUrl = (urlStr) => {
       if (parts.some((p) => p < 0 || p > 255)) return false;
 
       const [p1, p2] = parts;
-      
+
       // 127.x.x.x (Loopback)
       if (p1 === 127) return false;
-      
+
       // 10.x.x.x (Private class A)
       if (p1 === 10) return false;
-      
+
       // 172.16.x.x - 172.31.x.x (Private class B)
       if (p1 === 172 && p2 >= 16 && p2 <= 31) return false;
-      
+
       // 192.168.x.x (Private class C)
       if (p1 === 192 && p2 === 168) return false;
-      
+
       // 169.254.x.x (Link-local)
       if (p1 === 169 && p2 === 254) return false;
-      
+
       // 0.x.x.x or broadcast/any
       if (p1 === 0) return false;
     }
@@ -96,7 +101,8 @@ const createWebhookSchema = z.object({
       message: "Target URL must start with http:// or https://.",
     })
     .refine((url) => isSafeWebhookUrl(url), {
-      message: "Target URL must be a public, safe address. Local/private addresses are not permitted.",
+      message:
+        "Target URL must be a public, safe address. Local/private addresses are not permitted.",
     }),
   events: z
     .array(z.enum(["meeting.created", "mom.generated", "policy.updated"]), {
@@ -120,7 +126,8 @@ const updateWebhookSchema = z.object({
       message: "Target URL must start with http:// or https://.",
     })
     .refine((url) => isSafeWebhookUrl(url), {
-      message: "Target URL must be a public, safe address. Local/private addresses are not permitted.",
+      message:
+        "Target URL must be a public, safe address. Local/private addresses are not permitted.",
     })
     .optional(),
   events: z
@@ -154,9 +161,14 @@ export const createWebhook = async (req, res, next) => {
     }
 
     // Authorization check
-    const isAuthorized = await hasAdminPermission(userId, validated.organizationId);
+    const isAuthorized = await hasAdminPermission(
+      userId,
+      validated.organizationId,
+    );
     if (!isAuthorized) {
-      throw new ForbiddenError("Forbidden. Only organization owners and admins can configure webhooks.");
+      throw new ForbiddenError(
+        "Forbidden. Only organization owners and admins can configure webhooks.",
+      );
     }
 
     const webhookData = {
@@ -205,10 +217,14 @@ export const getWebhooks = async (req, res, next) => {
     // Authorization check
     const isAuthorized = await hasAdminPermission(userId, organizationId);
     if (!isAuthorized) {
-      throw new ForbiddenError("Forbidden. Only organization owners and admins can view webhooks.");
+      throw new ForbiddenError(
+        "Forbidden. Only organization owners and admins can view webhooks.",
+      );
     }
 
-    const webhooks = await Webhook.find({ organizationId }).sort({ createdAt: -1 });
+    const webhooks = await Webhook.find({ organizationId }).sort({
+      createdAt: -1,
+    });
 
     return res.status(200).json({ success: true, webhooks });
   } catch (error) {
@@ -235,9 +251,14 @@ export const updateWebhook = async (req, res, next) => {
     }
 
     // Authorization check
-    const isAuthorized = await hasAdminPermission(userId, webhook.organizationId);
+    const isAuthorized = await hasAdminPermission(
+      userId,
+      webhook.organizationId,
+    );
     if (!isAuthorized) {
-      throw new ForbiddenError("Forbidden. Only organization owners and admins can modify webhooks.");
+      throw new ForbiddenError(
+        "Forbidden. Only organization owners and admins can modify webhooks.",
+      );
     }
 
     let validated;
@@ -291,9 +312,14 @@ export const deleteWebhook = async (req, res, next) => {
     }
 
     // Authorization check
-    const isAuthorized = await hasAdminPermission(userId, webhook.organizationId);
+    const isAuthorized = await hasAdminPermission(
+      userId,
+      webhook.organizationId,
+    );
     if (!isAuthorized) {
-      throw new ForbiddenError("Forbidden. Only organization owners and admins can delete webhooks.");
+      throw new ForbiddenError(
+        "Forbidden. Only organization owners and admins can delete webhooks.",
+      );
     }
 
     await webhook.deleteOne();

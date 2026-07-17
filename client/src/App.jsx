@@ -9,6 +9,11 @@ import Login from "./pages/Login.jsx";
 import EmailVerify from "./pages/EmailVerify.jsx";
 import ResetPassword from "./pages/ResetPassword.jsx";
 import PublicOrganizationProfile from "./pages/PublicOrganizationProfile.jsx";
+import Privacy from "./pages/Privacy.jsx";
+import Terms from "./pages/Terms.jsx";
+import Security from "./pages/Security.jsx";
+import Contact from "./pages/Contact.jsx";
+import CookiePolicy from "./pages/CookiePolicy.jsx";
 
 // --- Protected Pages ---
 import MeetingListPage from "./pages/MeetingListPage.jsx";
@@ -33,6 +38,7 @@ import Calendar from "./pages/Calendar.jsx";
 import Notifications from "./pages/Notifications.jsx";
 import Tasks from "./pages/Tasks.jsx";
 import KnowledgeTimeline from "./pages/KnowledgeTimeline.jsx";
+import MemoryConsolidation from "./pages/MemoryConsolidation.jsx";
 import PolicyCompliance from "./pages/PolicyCompliance.jsx";
 import Settings from "./pages/Settings.jsx";
 import MembershipRequests from "./pages/MembershipRequests.jsx";
@@ -74,6 +80,12 @@ const App = () => {
     const handleMouseMove = (e) => {
       mouse.x = e.clientX;
       mouse.y = e.clientY;
+      if (!dotEl) dotEl = document.querySelector(".custom-cursor");
+      if (!ringEl) ringEl = document.querySelector(".custom-cursor-ring");
+      if (dotEl && ringEl) {
+        dotEl.style.opacity = "1";
+        ringEl.style.opacity = "1";
+      }
     };
 
     const handleMouseOver = (e) => {
@@ -88,6 +100,20 @@ const App = () => {
         setIsHovered(true);
       } else {
         setIsHovered(false);
+      }
+    };
+
+    const handleMouseLeave = () => {
+      if (dotEl && ringEl) {
+        dotEl.style.opacity = "0";
+        ringEl.style.opacity = "0";
+      }
+    };
+
+    const handleMouseEnter = () => {
+      if (dotEl && ringEl) {
+        dotEl.style.opacity = "1";
+        ringEl.style.opacity = "1";
       }
     };
 
@@ -113,11 +139,15 @@ const App = () => {
 
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseover", handleMouseOver);
+    document.addEventListener("mouseleave", handleMouseLeave);
+    document.addEventListener("mouseenter", handleMouseEnter);
     animationFrameId = requestAnimationFrame(tick);
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseover", handleMouseOver);
+      document.removeEventListener("mouseleave", handleMouseLeave);
+      document.removeEventListener("mouseenter", handleMouseEnter);
       cancelAnimationFrame(animationFrameId);
     };
   }, []);
@@ -134,7 +164,15 @@ const App = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/email-verify" element={<EmailVerify />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/organizations/:slug" element={<PublicOrganizationProfile />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/security" element={<Security />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/cookie-policy" element={<CookiePolicy />} />
+          <Route
+            path="/organizations/:slug"
+            element={<PublicOrganizationProfile />}
+          />
 
           {/* === Protected Routes (Require login) === */}
           <Route
@@ -150,6 +188,14 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <KnowledgeTimeline />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/knowledge/consolidate"
+            element={
+              <ProtectedRoute resource="knowledge" action="view">
+                <MemoryConsolidation />
               </ProtectedRoute>
             }
           />
@@ -311,7 +357,7 @@ const App = () => {
           <Route
             path="/membership-requests"
             element={
-              <ProtectedRoute resource="team_members" action="view">
+              <ProtectedRoute resource="team_members" action="invite">
                 <MembershipRequests />
               </ProtectedRoute>
             }

@@ -80,7 +80,9 @@ const errorHandler = (err, req, res, next) => {
   const isProd = process.env.NODE_ENV === "production";
   return res.status(500).json({
     success: false,
-    message: isProd ? "Internal Server Error" : (err.message || "Internal Server Error"),
+    message: isProd
+      ? "Internal Server Error"
+      : err.message || "Internal Server Error",
     ...(isProd ? {} : { stack: err.stack }),
   });
 };

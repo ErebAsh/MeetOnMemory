@@ -22,9 +22,8 @@ export const getDecisionCompliance = async (req, res) => {
 
     // Verify the decision belongs to the caller's organization before
     // returning anything — never leak cross-organization data.
-    const decision = await Decision.findById(decisionId).select(
-      "organization text",
-    );
+    const decision =
+      await Decision.findById(decisionId).select("organization text");
 
     if (
       !decision ||
@@ -146,7 +145,9 @@ export const getComplianceFlags = async (req, res) => {
       req.query;
 
     if (typeof status !== "string" || !ALLOWED_STATUSES.includes(status)) {
-      return res.status(400).json({ success: false, message: "Invalid status" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid status" });
     }
     if (
       typeof classification !== "string" ||
@@ -189,17 +190,23 @@ export const updateFlagStatus = async (req, res) => {
     const organization = req.user.organization;
 
     if (!isValidId(id)) {
-      return res.status(400).json({ success: false, message: "Invalid flag id" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid flag id" });
     }
 
     const allowedStatuses = ALLOWED_STATUSES.filter((s) => s !== "all");
     if (typeof status !== "string" || !allowedStatuses.includes(status)) {
-      return res.status(400).json({ success: false, message: "Invalid status" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid status" });
     }
 
     const flag = await PolicyCompliance.findOne({ _id: id, organization });
     if (!flag) {
-      return res.status(404).json({ success: false, message: "Flag not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Flag not found" });
     }
 
     flag.status = status;

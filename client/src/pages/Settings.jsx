@@ -200,7 +200,9 @@ const Settings = () => {
                 <Palette className="w-5 h-5 text-purple-600 dark:text-purple-400" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Appearance</h2>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                  Appearance
+                </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   Customize your application theme
                 </p>
@@ -210,7 +212,9 @@ const Settings = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between py-3">
                 <div>
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-200">Theme</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-200">
+                    Theme
+                  </p>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     Choose your preferred theme
                   </p>
@@ -385,7 +389,9 @@ const Settings = () => {
                 <Shield className="w-5 h-5 text-red-600 dark:text-red-400" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Security</h2>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                  Security
+                </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   Manage your account security settings
                 </p>
@@ -418,7 +424,9 @@ const Settings = () => {
                     <p className="text-sm font-semibold text-slate-900 dark:text-slate-200">
                       Two-Factor Authentication
                     </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Coming soon</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Coming soon
+                    </p>
                   </div>
                 </div>
                 <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-full">

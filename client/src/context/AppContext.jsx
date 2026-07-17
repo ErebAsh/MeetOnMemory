@@ -113,9 +113,7 @@ export const AppContextProvider = ({ children }) => {
 
   return (
     <AppContent.Provider value={value}>
-      <RBACProvider userRole={userData?.role || null}>
-        {children}
-      </RBACProvider>
+      <RBACProvider userRole={userData?.role || null}>{children}</RBACProvider>
     </AppContent.Provider>
   );
 };

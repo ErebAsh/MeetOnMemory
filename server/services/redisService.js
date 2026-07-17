@@ -21,7 +21,9 @@ export const initRedis = async () => {
       socket: {
         reconnectStrategy: (retries) => {
           if (retries > 3) {
-            console.error("⚠️ Redis connection failed after 3 retries. Disabling Redis.");
+            console.error(
+              "⚠️ Redis connection failed after 3 retries. Disabling Redis.",
+            );
             isRedisDisabled = true;
             return new Error("Retry limit exceeded");
           }
@@ -38,14 +40,21 @@ export const initRedis = async () => {
     });
 
     await redisClient.connect();
-    
-    const isLocal = redisUri.includes('localhost') || redisUri.includes('127.0.0.1');
-    const connectionType = isLocal ? 'local' : (redisUri.includes('upstash') ? 'Upstash' : 'remote');
-    
+
+    const isLocal =
+      redisUri.includes("localhost") || redisUri.includes("127.0.0.1");
+    const connectionType = isLocal
+      ? "local"
+      : redisUri.includes("upstash")
+        ? "Upstash"
+        : "remote";
+
     console.log(`✅ Redis connected successfully (${connectionType})`);
   } catch (error) {
     console.error("⚠️ Redis connection failed:", error.message);
-    console.warn("⚠️  Server running without Redis. Rate limiting and caching will not work.");
+    console.warn(
+      "⚠️  Server running without Redis. Rate limiting and caching will not work.",
+    );
     redisClient = null; // Disable the client for subsequent requests
     isRedisDisabled = true;
   }

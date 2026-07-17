@@ -16,7 +16,8 @@ const isValidObjectId = (id) => {
  * Whitelist allowed visibility values
  */
 const allowedVisibilities = ["public", "private"];
-const isValidVisibility = (visibility) => allowedVisibilities.includes(visibility);
+const isValidVisibility = (visibility) =>
+  allowedVisibilities.includes(visibility);
 
 /**
  * Whitelist allowed role values
@@ -68,7 +69,10 @@ export const createOrganization = async (req, res) => {
     if (existingOrg) {
       return res
         .status(409)
-        .json({ success: false, message: "Organization with this name already exists." });
+        .json({
+          success: false,
+          message: "Organization with this name already exists.",
+        });
     }
 
     // Generate unique slug
@@ -125,7 +129,10 @@ export const getOrganizations = async (req, res) => {
     const { visibility, page = 1, limit = 20 } = req.query;
 
     const filter = {};
-    const validVisibility = visibility && isValidVisibility(visibility) ? allowedVisibilities.find(v => v === visibility) : null;
+    const validVisibility =
+      visibility && isValidVisibility(visibility)
+        ? allowedVisibilities.find((v) => v === visibility)
+        : null;
     if (visibility) {
       // Validate visibility value
       if (!validVisibility) {
@@ -189,8 +196,8 @@ export const getOrganizationById = async (req, res) => {
 
     // Try as ObjectId first, then as slug
     const isObjectId = isValidObjectId(idOrSlug);
-    const query = isObjectId 
-      ? { _id: new mongoose.Types.ObjectId(String(idOrSlug)) } 
+    const query = isObjectId
+      ? { _id: new mongoose.Types.ObjectId(String(idOrSlug)) }
       : { slug: String(idOrSlug) };
 
     const organization = await Organization.findOne(query)
@@ -241,7 +248,10 @@ export const updateOrganization = async (req, res) => {
         .json({ success: false, message: "Invalid visibility value." });
     }
 
-    const cleanVisibility = visibility && isValidVisibility(visibility) ? allowedVisibilities.find(v => v === visibility) : undefined;
+    const cleanVisibility =
+      visibility && isValidVisibility(visibility)
+        ? allowedVisibilities.find((v) => v === visibility)
+        : undefined;
 
     const organization = await Organization.findById(cleanId);
 
@@ -259,18 +269,27 @@ export const updateOrganization = async (req, res) => {
       status: "active",
     }).lean();
 
-    if (!membership && organization.owner.toString() !== req.user.id.toString()) {
+    if (
+      !membership &&
+      organization.owner.toString() !== req.user.id.toString()
+    ) {
       return res
         .status(403)
-        .json({ success: false, message: "Not authorized to update this organization." });
+        .json({
+          success: false,
+          message: "Not authorized to update this organization.",
+        });
     }
 
     // Update fields with sanitization
     if (name) organization.name = String(name).trim().substring(0, 100);
-    if (description !== undefined) organization.description = String(description).trim().substring(0, 500);
-    if (logo !== undefined) organization.logo = String(logo).trim().substring(0, 500);
+    if (description !== undefined)
+      organization.description = String(description).trim().substring(0, 500);
+    if (logo !== undefined)
+      organization.logo = String(logo).trim().substring(0, 500);
     if (cleanVisibility) organization.visibility = cleanVisibility;
-    if (metadata) organization.metadata = typeof metadata === 'object' ? metadata : {};
+    if (metadata)
+      organization.metadata = typeof metadata === "object" ? metadata : {};
 
     await organization.save();
 
@@ -320,7 +339,10 @@ export const deleteOrganization = async (req, res) => {
     if (organization.owner.toString() !== req.user.id.toString()) {
       return res
         .status(403)
-        .json({ success: false, message: "Not authorized to delete this organization." });
+        .json({
+          success: false,
+          message: "Not authorized to delete this organization.",
+        });
     }
 
     // Delete all memberships
@@ -380,7 +402,10 @@ export const getOrganizationMembers = async (req, res) => {
     if (!membership) {
       return res
         .status(403)
-        .json({ success: false, message: "Not a member of this organization." });
+        .json({
+          success: false,
+          message: "Not a member of this organization.",
+        });
     }
 
     // Get all active memberships with user details

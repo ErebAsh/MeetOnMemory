@@ -44,7 +44,13 @@ const policyComplianceSchema = new mongoose.Schema(
     // silently indistinguishable from genuine negatives.
     classification: {
       type: String,
-      enum: ["aligned", "references", "potential_conflict", "unrelated", "unclassified"],
+      enum: [
+        "aligned",
+        "references",
+        "potential_conflict",
+        "unrelated",
+        "unclassified",
+      ],
       required: true,
     },
     reasoning: { type: String, default: "" },
@@ -55,7 +61,11 @@ const policyComplianceSchema = new mongoose.Schema(
       enum: ["unresolved", "acknowledged", "dismissed"],
       default: "unresolved",
     },
-    reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+    reviewedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
     reviewedAt: { type: Date, default: null },
 
     // Set/bumped whenever the matched policy version changes and this row

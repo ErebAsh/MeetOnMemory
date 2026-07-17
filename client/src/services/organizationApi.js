@@ -7,7 +7,8 @@ export const organizationApi = {
   joinOrganization: (data) => apiClient.post("/api/organizations/join", data),
   getMembers: () => apiClient.get("/api/organizations/members"),
   getUserOrganizations: () => apiClient.get("/api/organizations/user"),
-  selectOrganization: (data) => apiClient.post("/api/organizations/select", data),
+  selectOrganization: (data) =>
+    apiClient.post("/api/organizations/select", data),
   getPublicOrganizationBySlug: (slug) =>
     apiClient.get(`/api/organizations/public/${slug}`),
   browsePublicOrganizations: (params) =>

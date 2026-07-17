@@ -40,7 +40,7 @@ const BrowseOrganizations = () => {
     search = searchQuery,
     sort = sortBy,
     filt = filter,
-    append = false
+    append = false,
   ) => {
     try {
       if (!append) {
@@ -90,7 +90,7 @@ const BrowseOrganizations = () => {
       }, 300);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [sortBy, filter]
+    [sortBy, filter],
   );
 
   // Initial load
@@ -137,7 +137,7 @@ const BrowseOrganizations = () => {
             searchQuery,
             sortBy,
             filter,
-            true
+            true,
           );
         }
       });
@@ -145,7 +145,7 @@ const BrowseOrganizations = () => {
       if (node) observerRef.current.observe(node);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [loadingMore, pagination.hasNextPage, searchQuery, sortBy, filter]
+    [loadingMore, pagination.hasNextPage, searchQuery, sortBy, filter],
   );
 
   // Format date
@@ -293,7 +293,9 @@ const BrowseOrganizations = () => {
               </h2>
               <p className="text-gray-500 dark:text-gray-400 mb-6">{error}</p>
               <button
-                onClick={() => fetchOrganizations(1, searchQuery, sortBy, filter)}
+                onClick={() =>
+                  fetchOrganizations(1, searchQuery, sortBy, filter)
+                }
                 className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all"
               >
                 Try Again
@@ -410,7 +412,8 @@ const BrowseOrganizations = () => {
               {/* Pagination Info */}
               {!loadingMore && pagination.totalPages > 1 && (
                 <div className="text-center mt-8 text-sm text-gray-500 dark:text-gray-400">
-                  Showing {organizations.length} of {pagination.total} organizations
+                  Showing {organizations.length} of {pagination.total}{" "}
+                  organizations
                 </div>
               )}
             </>

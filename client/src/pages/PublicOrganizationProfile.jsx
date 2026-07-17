@@ -33,8 +33,9 @@ const PublicOrganizationProfile = () => {
       try {
         setLoading(true);
         setError(null);
-        const { data } = await organizationApi.getPublicOrganizationBySlug(slug);
-        
+        const { data } =
+          await organizationApi.getPublicOrganizationBySlug(slug);
+
         if (data.success) {
           setOrganization(data.organization);
           // Check for existing request
@@ -47,7 +48,9 @@ const PublicOrganizationProfile = () => {
         if (err.response?.status === 404) {
           setError("Organization not found");
         } else {
-          setError(err.response?.data?.message || "Failed to load organization");
+          setError(
+            err.response?.data?.message || "Failed to load organization",
+          );
         }
       } finally {
         setLoading(false);
@@ -64,7 +67,8 @@ const PublicOrganizationProfile = () => {
       const { data } = await membershipRequestApi.getUserRequests();
       if (data.success && data.requests) {
         const existingRequest = data.requests.find(
-          (req) => req.organization._id === organizationId && req.status === "pending"
+          (req) =>
+            req.organization._id === organizationId && req.status === "pending",
         );
         if (existingRequest) {
           setRequestStatus("pending");
@@ -126,7 +130,9 @@ const PublicOrganizationProfile = () => {
       const { data } = await membershipRequestApi.getUserRequests();
       if (data.success && data.requests) {
         const pendingRequest = data.requests.find(
-          (req) => req.organization._id === organization._id && req.status === "pending"
+          (req) =>
+            req.organization._id === organization._id &&
+            req.status === "pending",
         );
         if (pendingRequest) {
           await membershipRequestApi.cancelRequest(pendingRequest._id);
@@ -180,7 +186,9 @@ const PublicOrganizationProfile = () => {
               <AlertCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-              {error === "Organization not found" ? "Organization Not Found" : "Error"}
+              {error === "Organization not found"
+                ? "Organization Not Found"
+                : "Error"}
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               {error === "Organization not found"
@@ -275,7 +283,8 @@ const PublicOrganizationProfile = () => {
                     }`}
                   >
                     <Shield className="w-3 h-3" />
-                    {visibility?.charAt(0)?.toUpperCase() + visibility?.slice(1) || "Private"}
+                    {visibility?.charAt(0)?.toUpperCase() +
+                      visibility?.slice(1) || "Private"}
                   </span>
                 </div>
 
@@ -400,7 +409,8 @@ const PublicOrganizationProfile = () => {
                   <div className="flex justify-between">
                     <span>Visibility:</span>
                     <span className="font-medium text-gray-900 dark:text-gray-100">
-                      {visibility?.charAt(0)?.toUpperCase() + visibility?.slice(1) || "Private"}
+                      {visibility?.charAt(0)?.toUpperCase() +
+                        visibility?.slice(1) || "Private"}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -426,7 +436,8 @@ const PublicOrganizationProfile = () => {
                   </h4>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  Join this organization to collaborate with team members and access shared resources.
+                  Join this organization to collaborate with team members and
+                  access shared resources.
                 </p>
                 {requestStatus === "pending" ? (
                   <div className="flex items-center gap-2">
@@ -478,7 +489,8 @@ const PublicOrganizationProfile = () => {
             </div>
 
             <p className="text-gray-600 dark:text-gray-400 mb-4">
-              Send a membership request to join <strong>{organization?.name}</strong>
+              Send a membership request to join{" "}
+              <strong>{organization?.name}</strong>
             </p>
 
             <div className="mb-4">

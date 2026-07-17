@@ -14,10 +14,14 @@ import {
 } from "lucide-react";
 
 const STATUS_STYLES = {
-  pending: "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800",
-  approved: "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800",
-  rejected: "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800",
-  cancelled: "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600",
+  pending:
+    "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800",
+  approved:
+    "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800",
+  rejected:
+    "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800",
+  cancelled:
+    "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600",
 };
 
 const STATUS_LABELS = {
@@ -51,7 +55,7 @@ const MembershipRequests = ({ organizationId }) => {
       setLoading(true);
       const { data } = await membershipRequestApi.getOrganizationRequests(
         organizationId,
-        statusFilter === "all" ? undefined : statusFilter
+        statusFilter === "all" ? undefined : statusFilter,
       );
       if (data.success) {
         setRequests(data.requests || []);
@@ -71,7 +75,7 @@ const MembershipRequests = ({ organizationId }) => {
       setFilteredRequests(requests);
     } else {
       setFilteredRequests(
-        requests.filter((req) => req.status === statusFilter)
+        requests.filter((req) => req.status === statusFilter),
       );
     }
   };
@@ -198,7 +202,8 @@ const MembershipRequests = ({ organizationId }) => {
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <Users className="h-16 w-16 text-slate-300 mb-4" />
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-            No {statusFilter === "all" ? "" : STATUS_LABELS[statusFilter]} requests
+            No {statusFilter === "all" ? "" : STATUS_LABELS[statusFilter]}{" "}
+            requests
           </h3>
           <p className="text-slate-500 dark:text-slate-400">
             {statusFilter === "pending"

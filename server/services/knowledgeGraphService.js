@@ -2,10 +2,31 @@ import Decision from "../models/decisionModel.js";
 import ActionItem from "../models/actionItemModel.js";
 import { embedText } from "../utils/embeddingUtils.js";
 import { calculateRelationshipConfidence } from "../utils/relationshipScoring.js";
-import { cosineSimilarity } from "../utils/similarity.js";
+import { applyImportanceScore } from "./importanceScoringService.js";
+
+import { calculateRelationshipConfidence } from "../utils/relationshipScoring.js";
+
 
 const SIMILARITY_THRESHOLD = 0.85;
 const CONFIDENCE_THRESHOLD = 70; // conservative, per issue's technical considerations
+
+export function cosineSimilarity(a, b) {
+  if (!a?.length || !b?.length || a.length !== b.length) return 0;
+  let dot = 0,
+    normA = 0,
+    normB = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    normA += a[i] * a[i];
+    normB += b[i] * b[i];
+  }
+
+  document.relatesTo.push({
+    target: targetId,
+    confidence,
+    computedAt: new Date(),
+  });
+}
 
 function upsertRelationship(document, targetId, confidence) {
   const existing = document.relatesTo.find(
@@ -49,6 +70,10 @@ async function findBestMatch(Model, text, embedding, organization) {
     return null;
   }
 
+  if (bestScore < SIMILARITY_THRESHOLD) {
+    return null;
+  }
+
   return {
     match: best,
     similarity: bestScore,
@@ -59,6 +84,22 @@ async function findBestMatch(Model, text, embedding, organization) {
         best.status === "resolved" || best.status === "superseded",
     }),
   };
+}
+if (bestScore < SIMILARITY_THRESHOLD) {
+  return null;
+}
+
+return {
+  match: best,
+  similarity: bestScore,
+  confidence: calculateRelationshipConfidence({
+    similarity: bestScore,
+    createdAt: best.createdAt,
+    explicitSignal:
+      best.status === "resolved" ||
+      best.status === "superseded",
+  }),
+};
 }
 /**
  * Called after a meeting's structuredMoM is generated/updated.
@@ -102,12 +143,53 @@ export async function processStructuredMoM(meeting, mom) {
           : [],
     });
 
+    if (match) {
+      match.relatesTo.push(decision._id);
+      await match.save();
+      relatesTo:
+        match && match.confidence >= CONFIDENCE_THRESHOLD
+          ? [
+              {
+                target: match.match._id,
+                confidence: match.confidence,
+                computedAt: new Date(),
+              },
+            ]
+          : [],
+    });
+
     if (match && match.confidence >= CONFIDENCE_THRESHOLD) {
       upsertRelationship(match.match, decision._id, match.confidence);
 
-      await match.match.save();
+      // The matched decision just gained a relationship, so its graph
+      // degree (and therefore importance score) changed too.
+      await applyImportanceScore(match.match);
     }
+      relatesTo:
+        match && match.confidence >= CONFIDENCE_THRESHOLD
+          ? [
+              {
+                target: match.match._id,
+                confidence: match.confidence,
+                computedAt: new Date(),
+              },
+          ]
+        : [],
+    });
 
+    if (match && match.confidence >= CONFIDENCE_THRESHOLD) {
+        upsertRelationship(
+           match.match,
+           decision._id,
+           match.confidence,
+        );
+          
+
+        await match.match.save();
+  }
+
+
+    await applyImportanceScore(decision);
     results.decisions.push(decision);
   }
 
@@ -163,13 +245,56 @@ export async function processStructuredMoM(meeting, mom) {
     });
 
     if (match) {
+      match.relatesTo.push(actionItem._id);
+      await match.save();
+      relatesTo:
+        match && match.confidence >= CONFIDENCE_THRESHOLD
+          ? [
+              {
+                target: match.match._id,
+                confidence: match.confidence,
+                computedAt: new Date(),
+              },
+            ]
+          : [],
+    });
+
+    if (match) {
       if (match.confidence >= CONFIDENCE_THRESHOLD) {
         upsertRelationship(match.match, actionItem._id, match.confidence);
 
-        await match.match.save();
+        // The matched action item just gained a relationship, so its
+        // graph degree (and therefore importance score) changed too.
+        await applyImportanceScore(match.match);
       }
     }
 
+     relatesTo:
+       match && match.confidence >= CONFIDENCE_THRESHOLD
+         ? [
+             {
+               target: match.match._id,
+               confidence: match.confidence,
+               computedAt: new Date(),
+             },
+           ]
+         : [],
+    });
+
+    if (match) {
+       if (match.confidence >= CONFIDENCE_THRESHOLD) {
+         upsertRelationship(
+           match.match,
+           actionItem._id,
+           match.confidence,
+          );
+
+          await match.match.save();
+        }
+    } 
+
+
+    await applyImportanceScore(actionItem);
     results.actionItems.push(actionItem);
   }
 
@@ -194,19 +319,20 @@ export async function getDecisionLineage(decisionId) {
     if (!decision) return;
     chain.push(decision);
 
+    for (const relatedId of decision.relatesTo) {
+      await walk(relatedId);
     const sortedRelations = [...decision.relatesTo]
       .filter((r) => r.confidence >= CONFIDENCE_THRESHOLD)
       .sort((a, b) => b.confidence - a.confidence);
-
+      
     for (const relation of sortedRelations) {
       await walk(relation.target);
     }
-  }
 
-  await walk(decisionId);
-  chain.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-  return chain;
-}
+    await walk(decisionId);
+    chain.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      return chain;
+    }
 
 /**
  * Attempts to detect resolution mentions of open action items within a new meeting's transcript/summary.
@@ -247,7 +373,9 @@ export async function detectResolutions(meeting, mom) {
       item.status = "resolved";
       item.resolvedAt = new Date();
       item.resolvedInMeetingId = meeting._id;
-      await item.save();
+      item.accessCount = (item.accessCount || 0) + 1;
+      item.lastAccessedAt = new Date();
+      await applyImportanceScore(item);
       resolvedNowIds.push(item._id);
     }
   }

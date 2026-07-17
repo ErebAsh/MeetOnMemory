@@ -8,7 +8,9 @@ export const policyComplianceApi = {
   getDecisionCompliance: (decisionId) =>
     apiClient.get(`/api/policy-compliance/decisions/${decisionId}`),
   getPolicyRelatedDecisions: (policyId) =>
-    apiClient.get(`/api/policy-compliance/policies/${policyId}/related-decisions`),
+    apiClient.get(
+      `/api/policy-compliance/policies/${policyId}/related-decisions`,
+    ),
   updateFlagStatus: (flagId, status) =>
     apiClient.patch(`/api/policy-compliance/flags/${flagId}`, { status }),
 };

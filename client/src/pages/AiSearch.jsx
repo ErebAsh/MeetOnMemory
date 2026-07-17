@@ -12,7 +12,7 @@ import { apiClient } from "../services";
 
 // Modal Component for showing full details
 const ResultModal = ({ result, onClose }) => {
-   const { t } = useTranslation();
+  const { t } = useTranslation();
   if (!result) return null;
 
   return (
@@ -20,7 +20,7 @@ const ResultModal = ({ result, onClose }) => {
       <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6 shadow-2xl">
         <div className="flex justify-between items-start mb-4">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            {result.title || "Untitled Meeting"}
+            {result.title || t("aiSearch.untitledMeeting")}
           </h2>
           <button
             onClick={onClose}
@@ -31,17 +31,17 @@ const ResultModal = ({ result, onClose }) => {
         <div className="space-y-4">
           <div>
             <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase">
-              Summary
+              {t("aiSearch.summary")}
             </h3>
             <p className="text-gray-700 mt-1 leading-relaxed">
-              {result.summary || result.transcript || "No summary available."}
+              {result.summary || result.transcript || t("aiSearch.noSummary")}
             </p>
           </div>
 
           {result.transcript && (
             <div>
               <h3 className="text-sm font-semibold text-gray-500 uppercase">
-                Transcript
+                {t("aiSearch.transcript")}
               </h3>
               <p className="text-gray-600 text-sm mt-1 leading-relaxed max-h-40 overflow-y-auto bg-gray-50 p-3 rounded-lg">
                 {result.transcript}
@@ -51,7 +51,7 @@ const ResultModal = ({ result, onClose }) => {
 
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-gray-500">Date</span>
+              <span className="text-gray-500">{t("aiSearch.date")}</span>
               <p className="font-medium text-gray-800">
                 {result.createdAt
                   ? new Date(result.createdAt).toLocaleDateString("en-US", {
@@ -59,7 +59,7 @@ const ResultModal = ({ result, onClose }) => {
                       month: "long",
                       day: "numeric",
                     })
-                  : "Unknown"}
+                  : t("aiSearch.unknown")}
               </p>
             </div>
             <div>
@@ -75,7 +75,7 @@ const ResultModal = ({ result, onClose }) => {
           {result.tags && result.tags.length > 0 && (
             <div>
               <h3 className="text-sm font-semibold text-gray-500 uppercase">
-                Tags
+                {t("aiSearch.tags")}
               </h3>
               <div className="flex flex-wrap gap-2 mt-1">
                 {result.tags.map((tag) => (
@@ -95,7 +95,7 @@ const ResultModal = ({ result, onClose }) => {
           onClick={onClose}
           className="mt-6 w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition"
         >
-          Close
+          {t("aiSearch.close")}
         </button>
       </div>
     </div>
@@ -124,7 +124,7 @@ const AiSearch = () => {
 
   const handleSearch = async () => {
     if (!query.trim()) {
-      setError("Please enter a search query");
+      setError(t("aiSearch.enterQuery"));
       return;
     }
 
@@ -134,15 +134,8 @@ const AiSearch = () => {
     setHasSearched(true);
 
     try {
-      if (searchMode === "hybrid") {
-        const res = await apiClient.post("/api/search/hybrid", {
-          query,
-          ...hybridWeights,
-        });
-        setResults(res.data.results || []);
-      } else {
-        const res = await apiClient.post("/api/ai-search", { query, filters });
-        const data = res.data;
+      const res = await apiClient.post("/api/ai", { query, filters });
+      const data = res.data;
 
         let sortedResults = data.results || [];
 
@@ -164,11 +157,11 @@ const AiSearch = () => {
       if (err.message === "Failed to fetch") {
         setError(t("aiSearch.unableToConnect"));
       } else if (err.message.includes("500")) {
-        setError("Server error. Please try again later.");
+        setError(t("aiSearch.serverError"));
       } else if (err.message.includes("404")) {
-        setError("Search service not found. Please contact support.");
+        setError(t("aiSearch.serviceNotFound"));
       } else {
-        setError(err.message || "Failed to fetch results. Please try again.");
+        setError(err.message || t("aiSearch.fetchFailed"));
       }
     } finally {
       setLoading(false);
@@ -199,7 +192,7 @@ const AiSearch = () => {
     if (textToCopy) {
       try {
         await navigator.clipboard.writeText(textToCopy);
-        alert("Summary copied to clipboard!");
+        alert(t("aiSearch.copiedToClipboard"));
       } catch (err) {
         console.error("Failed to copy:", err);
       }
@@ -213,7 +206,7 @@ const AiSearch = () => {
       <div className="max-w-4xl mx-auto pt-28 px-6 flex flex-col items-center text-center">
         {/* Header */}
         <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-gray-100 mb-3 tracking-tight">
-          🤖 Smart AI Meeting Search
+          {t("aiSearch.title")}
         </h1>
         <p
           className="text-gray-600 dark:text-gray-400 mb-8 text-sm md:text-base max-w-2xl"

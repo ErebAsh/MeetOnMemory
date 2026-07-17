@@ -82,7 +82,10 @@ const PolicyCompliance = () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await policyComplianceApi.getFlags(status, "potential_conflict");
+      const res = await policyComplianceApi.getFlags(
+        status,
+        "potential_conflict",
+      );
       if (res.data?.success) {
         setFlags(res.data.flags || []);
       } else {
@@ -141,8 +144,8 @@ const PolicyCompliance = () => {
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Meeting decisions flagged as potentially conflicting with an
-            organizational policy. This is a detection layer only — review
-            and acknowledge or dismiss each flag; nothing here blocks or
+            organizational policy. This is a detection layer only — review and
+            acknowledge or dismiss each flag; nothing here blocks or
             auto-rejects a decision.
           </p>
         </div>
