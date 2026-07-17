@@ -90,6 +90,30 @@ export const embedText = async (text) => {
 };
 
 // ===================================================
+// ✂️ 3.5️⃣ Chunk Text for Embedding
+// ===================================================
+// Splits text into overlapping chunks to avoid truncation by the embedding model
+// MiniLM-L6-v2 has a max sequence length of 256 tokens (~150-200 words)
+const chunkText = (text, maxWords = 180, overlapWords = 30) => {
+  if (!text || text.trim().length === 0) return [];
+
+  const words = text.split(/\s+/);
+  if (words.length <= maxWords) return [text];
+
+  const chunks = [];
+  let startIndex = 0;
+
+  while (startIndex < words.length) {
+    const endIndex = Math.min(startIndex + maxWords, words.length);
+    const chunk = words.slice(startIndex, endIndex).join(" ");
+    chunks.push(chunk);
+    startIndex += maxWords - overlapWords;
+  }
+
+  return chunks;
+};
+
+// ===================================================
 // 💾 4️⃣ Index Meeting in Pinecone (FINAL v3-compatible)
 // ===================================================
 export const indexMeeting = async (meeting) => {
@@ -113,30 +137,34 @@ export const indexMeeting = async (meeting) => {
       summary = meeting.transcript.split(" ").slice(0, 50).join(" ") + "...";
     }
 
-    const combinedText = `
-      ${title}
-      ${summary}
-      ${meeting.transcript}
-    `;
+    // Combine title and summary with each chunk for context
+    const contextPrefix = `${title}\n${summary}\n`;
+    const transcriptChunks = chunkText(meeting.transcript);
 
-    const embedding = await embedText(combinedText);
+    const vectors = [];
 
-    // ✅ FIXED FORMAT — direct array (Pinecone v3.x+)
-    await indexInstance.upsert([
-      {
-        id: meeting._id.toString(),
+    for (let i = 0; i < transcriptChunks.length; i++) {
+      const chunkText = contextPrefix + transcriptChunks[i];
+      const embedding = await embedText(chunkText);
+
+      vectors.push({
+        id: `${meeting._id.toString()}-chunk-${i}`,
         values: embedding,
         metadata: {
           meetingId: meeting._id.toString(),
+          chunkIndex: i,
           title,
           summary,
           transcript: meeting.transcript,
           createdAt: meeting.createdAt || new Date(),
         },
-      },
-    ]);
+      });
+    }
 
-    console.log(`✅ Indexed meeting: ${title}`);
+    // ✅ FIXED FORMAT — direct array (Pinecone v3.x+)
+    await indexInstance.upsert(vectors);
+
+    console.log(`✅ Indexed meeting: ${title} (${transcriptChunks.length} chunks)`);
   } catch (error) {
     console.error("❌ Failed to index meeting:", error);
   }
@@ -195,8 +223,21 @@ export const searchVectorStore = async (query, filters = {}) => {
       };
     });
 
+    // De-duplicate results by meetingId (keep highest score)
+    const deduplicatedResults = [];
+    const meetingIdMap = new Map();
+
+    for (const result of formattedResults) {
+      const existing = meetingIdMap.get(result.meetingId);
+      if (!existing || result.similarityScore > existing.similarityScore) {
+        meetingIdMap.set(result.meetingId, result);
+      }
+    }
+
+    deduplicatedResults.push(...meetingIdMap.values());
+
     // Apply filters if provided
-    let filteredResults = formattedResults;
+    let filteredResults = deduplicatedResults;
 
     if (filters.resultType && filters.resultType !== "all") {
       filteredResults = filteredResults.filter(
@@ -253,8 +294,13 @@ export const deleteMeetingFromPinecone = async (meetingId) => {
       return;
     }
 
-    await indexInstance.deleteOne(meetingId.toString());
-    console.log(`✅ Deleted meeting from Pinecone: ${meetingId}`);
+    // Delete all chunks for this meeting using prefix filter
+    await indexInstance.deleteMany({
+      filter: {
+        meetingId: { $eq: meetingId.toString() },
+      },
+    });
+    console.log(`✅ Deleted meeting chunks from Pinecone: ${meetingId}`);
   } catch (error) {
     console.error("❌ Failed to delete meeting from Pinecone:", error);
     // Don't throw - allow deletion to proceed even if Pinecone fails
