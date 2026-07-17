@@ -116,5 +116,11 @@ const meetingSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+// Indexes for query performance
+meetingSchema.index({ organization: 1, createdAt: -1 });
+meetingSchema.index({ uploadedBy: 1, createdAt: -1 });
+meetingSchema.index({ status: 1 });
+meetingSchema.index({ title: "text", summary: "text" });
+
 const Meeting = mongoose.model("Meeting", meetingSchema);
 export default Meeting;
