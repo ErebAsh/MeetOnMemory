@@ -53,17 +53,21 @@ export const semanticSearch = async (req, res) => {
       .select("title summary createdAt")
       .lean();
 
-    // ✅ Step 5 — Merge vector results with DB data
-    const mergedResults = results.map((r) => {
-      const m = meetings.find((mt) => mt._id.toString() === r.meetingId);
-      return {
-        meetingId: r.meetingId,
-        title: m?.title || r.title || "Untitled Meeting",
-        summary: m?.summary || r.summary || "No summary available.",
-        score: (1 - r.similarityScore).toFixed(3),
-        createdAt: m?.createdAt || null,
-      };
-    });
+    // ✅ Step 5 — Merge vector results with DB data and filter out deleted meetings
+    const mergedResults = results
+      .map((r) => {
+        const m = meetings.find((mt) => mt._id.toString() === r.meetingId);
+        // Defense in depth: only return results that still exist in MongoDB
+        if (!m) return null;
+        return {
+          meetingId: r.meetingId,
+          title: m?.title || r.title || "Untitled Meeting",
+          summary: m?.summary || r.summary || "No summary available.",
+          score: (1 - r.similarityScore).toFixed(3),
+          createdAt: m?.createdAt || null,
+        };
+      })
+      .filter((r) => r !== null);
 
     const responsePayload = {
       success: true,

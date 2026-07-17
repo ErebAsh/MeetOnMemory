@@ -11,7 +11,7 @@
 import fs from "fs";
 import mongoose from "mongoose";
 import User from "../models/userModel.js";
-import { indexMeeting } from "../utils/embeddingUtils.js";
+import { indexMeeting, deleteMeetingFromPinecone } from "../utils/embeddingUtils.js";
 import {
   processStructuredMoM,
   detectResolutions,
@@ -426,7 +426,13 @@ export const deleteMeeting = async (doc, meetingId) => {
   if (doc) {
     const googleEventId = doc.googleEventId;
     const uploadedBy = doc.uploadedBy;
+    const meetingIdToDelete = doc._id.toString();
     await doc.deleteOne();
+
+    // Delete from Pinecone (fire-and-forget)
+    deleteMeetingFromPinecone(meetingIdToDelete).catch((err) =>
+      console.error("⚠️ Pinecone deletion error (continuing):", err.message),
+    );
 
     if (googleEventId) {
       User.findById(uploadedBy)
@@ -448,6 +454,11 @@ export const deleteMeeting = async (doc, meetingId) => {
 
   deleted = await MeetingStorageService.deleteMeetingById(meetingId);
   if (!deleted) throw new NotFoundError("Meeting not found");
+
+  // Delete from Pinecone (fire-and-forget)
+  deleteMeetingFromPinecone(meetingId).catch((err) =>
+    console.error("⚠️ Pinecone deletion error (continuing):", err.message),
+  );
 
   if (deleted.googleEventId) {
     User.findById(deleted.uploadedBy)

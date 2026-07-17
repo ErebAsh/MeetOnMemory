@@ -242,7 +242,27 @@ export const searchVectorStore = async (query, filters = {}) => {
 };
 
 // ===================================================
-// 🚀 6️⃣ Bulk Reindex All Meetings (Manual / Script)
+// �️ 6️⃣ Delete Meeting from Pinecone
+// ===================================================
+export const deleteMeetingFromPinecone = async (meetingId) => {
+  try {
+    const indexInstance = await initVectorStore();
+
+    if (!meetingId) {
+      console.warn("⚠️ No meetingId provided for Pinecone deletion");
+      return;
+    }
+
+    await indexInstance.deleteOne(meetingId.toString());
+    console.log(`✅ Deleted meeting from Pinecone: ${meetingId}`);
+  } catch (error) {
+    console.error("❌ Failed to delete meeting from Pinecone:", error);
+    // Don't throw - allow deletion to proceed even if Pinecone fails
+  }
+};
+
+// ===================================================
+// �🚀 7️⃣ Bulk Reindex All Meetings (Manual / Script)
 // ===================================================
 export const reindexAllMeetings = async () => {
   try {
