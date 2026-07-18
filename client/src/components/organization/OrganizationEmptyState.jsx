@@ -22,7 +22,7 @@ const OrganizationEmptyState = () => {
       </p>
 
       {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row w-full max-w-xs sm:max-w-none mx-auto sm:mx-0 gap-3 sm:gap-4">
+      <div className="flex flex-col sm:flex-row w-full max-w-xs sm:max-w-none mx-auto justify-center gap-3 sm:gap-4">
         <button
           onClick={() => navigate("/create-organization")}
           className="flex items-center justify-center w-full sm:w-auto gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"

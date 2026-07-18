@@ -26,7 +26,7 @@ import { embedText, initVectorStore } from "../utils/embeddingUtils.js";
 dotenv.config();
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
 // Namespace policy vectors separately from meeting vectors so semantic
 // search over meetings never picks up policy text and vice versa.
@@ -169,7 +169,8 @@ async function classifyRelationship(decisionText, policy) {
       if (attempt === 2) {
         return {
           classification: "unclassified",
-          reasoning: "Classification unavailable after retry (LLM call failed).",
+          reasoning:
+            "Classification unavailable after retry (LLM call failed).",
         };
       }
     }
@@ -216,7 +217,9 @@ export async function indexPolicy(policy) {
       },
     ]);
 
-    console.log(`✅ Indexed policy in Pinecone: ${policy.name} (v${policy.version})`);
+    console.log(
+      `✅ Indexed policy in Pinecone: ${policy.name} (v${policy.version})`,
+    );
   } catch (error) {
     console.error("❌ Failed to index policy:", error.message);
   }
@@ -271,13 +274,19 @@ async function findCandidatePolicies(decisionEmbedding, organizationId) {
  */
 async function evaluateCandidate(candidate, decision, meeting, organizationId) {
   const policy = await Policy.findById(candidate.policyId);
-  if (!policy || policy.organization?.toString() !== organizationId.toString()) {
+  if (
+    !policy ||
+    policy.organization?.toString() !== organizationId.toString()
+  ) {
     return null; // stale vector or cross-org leak guard
   }
 
   const [{ classification, reasoning }, existing] = await Promise.all([
     classifyRelationship(decision.text, policy),
-    PolicyCompliance.findOne({ decisionId: decision._id, policyId: policy._id }),
+    PolicyCompliance.findOne({
+      decisionId: decision._id,
+      policyId: policy._id,
+    }),
   ]);
 
   // Reopen the review workflow only when the classification actually
@@ -325,8 +334,9 @@ export async function checkDecisionAgainstPolicies(decision, meeting) {
       return [];
     }
 
-    const embedding =
-      decision.embedding?.length ? decision.embedding : await embedText(decision.text);
+    const embedding = decision.embedding?.length
+      ? decision.embedding
+      : await embedText(decision.text);
 
     const candidates = await findCandidatePolicies(embedding, organizationId);
     if (!candidates.length) return [];
@@ -345,7 +355,10 @@ export async function checkDecisionAgainstPolicies(decision, meeting) {
       .filter((result) => result.status === "fulfilled" && result.value)
       .map((result) => result.value);
   } catch (error) {
-    console.error("❌ Policy compliance check failed for decision:", error.message);
+    console.error(
+      "❌ Policy compliance check failed for decision:",
+      error.message,
+    );
     return [];
   }
 }
@@ -362,7 +375,9 @@ export async function checkMeetingDecisionsAgainstPolicies(meeting, decisions) {
   if (!decisions?.length) return [];
 
   const settled = await Promise.allSettled(
-    decisions.map((decision) => checkDecisionAgainstPolicies(decision, meeting)),
+    decisions.map((decision) =>
+      checkDecisionAgainstPolicies(decision, meeting),
+    ),
   );
 
   return settled

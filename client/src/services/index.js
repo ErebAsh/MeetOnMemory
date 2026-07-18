@@ -9,3 +9,4 @@ export * from "./policyComplianceApi";
 export * from "./notificationApi";
 export * from "./analyticsApi";
 export * from "./membershipRequestApi";
+export * from "./invitationApi";

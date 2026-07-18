@@ -7,7 +7,8 @@ export const RBACProvider = ({ children, userRole }) => {
   const value = useMemo(() => {
     return {
       userRole,
-      hasPermission: (resource, action) => hasPermission(userRole, resource, action),
+      hasPermission: (resource, action) =>
+        hasPermission(userRole, resource, action),
       getPermissions: () => getRolePermissions(userRole),
     };
   }, [userRole]);

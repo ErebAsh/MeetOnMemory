@@ -19,7 +19,10 @@ const RUN_IT = process.env.RUN_POLICY_COMPLIANCE_IT === "1";
 const describeOrSkip = RUN_IT ? describe : describe.skip;
 
 describeOrSkip("policy compliance — integration", () => {
-  let embedText, indexPolicy, removePolicyFromIndex, checkDecisionAgainstPolicies;
+  let embedText,
+    indexPolicy,
+    removePolicyFromIndex,
+    checkDecisionAgainstPolicies;
   let Policy, Decision, PolicyCompliance;
 
   beforeAll(async () => {
@@ -28,9 +31,12 @@ describeOrSkip("policy compliance — integration", () => {
       await import("../services/policyComplianceService.js"));
     Policy = (await import("../models/policyModel.js")).default;
     Decision = (await import("../models/decisionModel.js")).default;
-    PolicyCompliance = (await import("../models/policyComplianceModel.js")).default;
+    PolicyCompliance = (await import("../models/policyComplianceModel.js"))
+      .default;
 
-    await mongoose.connect(process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/test");
+    await mongoose.connect(
+      process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/test",
+    );
   });
 
   afterAll(async () => {
@@ -38,8 +44,12 @@ describeOrSkip("policy compliance — integration", () => {
   });
 
   test("embedding pipeline produces a consistent-length vector", async () => {
-    const a = await embedText("Expense reimbursements require pre-approval above $500.");
-    const b = await embedText("A completely unrelated sentence about lunch catering.");
+    const a = await embedText(
+      "Expense reimbursements require pre-approval above $500.",
+    );
+    const b = await embedText(
+      "A completely unrelated sentence about lunch catering.",
+    );
     expect(a.length).toBeGreaterThan(0);
     expect(a.length).toBe(b.length);
   });
@@ -75,7 +85,9 @@ describeOrSkip("policy compliance — integration", () => {
       text: "Approved a $1200 purchase without pre-approval.",
       sourceMeetingId: new mongoose.Types.ObjectId(),
       organization: orgA,
-      embedding: await embedText("Approved a $1200 purchase without pre-approval."),
+      embedding: await embedText(
+        "Approved a $1200 purchase without pre-approval.",
+      ),
     });
 
     const meeting = { _id: decision.sourceMeetingId, organization: orgA };

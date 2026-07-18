@@ -71,10 +71,47 @@ const decisionSchema = new mongoose.Schema(
       ref: "Organization",
       default: null,
     },
-    embedding: { type: [Number], default: [] }, // cached vector for similarity checks
-    relatesTo: [{ type: mongoose.Schema.Types.ObjectId, ref: "Decision" }], // links to prior related decisions
+    embedding: { type: [Number], default: [] },
+
+    relatesTo: {
+      type: [relationshipSchema],
+      default: [],
+    },
+
     resolvedAt: { type: Date, default: null },
-  
+
+    // --- Dynamic memory importance scoring (Issue #269) ---
+    accessCount: { type: Number, default: 0 },
+    lastAccessedAt: { type: Date, default: null },
+    feedbackScore: { type: Number, default: 0 }, // sum of ratings (1-5 each)
+    feedbackCount: { type: Number, default: 0 },
+    importanceScore: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+      index: true,
+    },
+    importanceFactors: {
+      accessFrequency: { type: Number, default: 0 },
+      recency: { type: Number, default: 0 },
+      graphDegree: { type: Number, default: 0 },
+      aiConfidence: { type: Number, default: 0 },
+      userFeedback: { type: Number, default: 0 },
+    },
+    importanceUpdatedAt: { type: Date, default: null },
+    // --- Memory Consolidation fields ---
+    // Alternate phrasings that were detected as duplicates/paraphrases of
+    // this canonical memory and folded into it.
+    aliases: { type: [String], default: [] },
+    // Full history of duplicate records merged into this canonical memory.
+    mergedFrom: { type: [mergeHistorySchema], default: [] },
+    // Conflicting field values encountered during consolidation and how
+    // they were resolved.
+    mergeConflicts: { type: [mergeConflictSchema], default: [] },
+    // If this record was itself merged away into another canonical memory,
+    // this points to that canonical record. Non-canonical records are kept
+    // (not deleted) so relationships/history remain traceable.
     supersededByMemory: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Decision",
@@ -87,4 +124,7 @@ const decisionSchema = new mongoose.Schema(
 
 const Decision =
   mongoose.models.Decision || mongoose.model("Decision", decisionSchema);
+export default Decision;
+
+
 export default Decision;

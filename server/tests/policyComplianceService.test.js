@@ -71,7 +71,9 @@ describe("buildClassificationPrompt", () => {
       policy,
     );
 
-    expect(prompt).toMatch(/Approved a \$1,200 purchase without pre-approval\./);
+    expect(prompt).toMatch(
+      /Approved a \$1,200 purchase without pre-approval\./,
+    );
     expect(prompt).toMatch(/Expense Reimbursement Policy/);
     expect(prompt).toMatch(/version 2\.0/);
     expect(prompt).toMatch(/Requires pre-approval above \$500\./);
@@ -96,7 +98,9 @@ describe("buildClassificationPrompt", () => {
       summary: "",
       key_changes: [],
     });
-    expect(prompt).toMatch(/"aligned" \| "references" \| "potential_conflict" \| "unrelated"/);
+    expect(prompt).toMatch(
+      /"aligned" \| "references" \| "potential_conflict" \| "unrelated"/,
+    );
   });
 
   test("handles a policy with no key_changes without throwing", () => {
@@ -122,8 +126,13 @@ describe("buildClassificationPrompt", () => {
 describe("hand-labeled fixture set", () => {
   for (const fixture of fixtures) {
     test(`prompt for fixture "${fixture.id}" is well-formed`, () => {
-      const prompt = buildClassificationPrompt(fixture.decisionText, fixture.policy);
-      expect(prompt).toMatch(new RegExp(fixture.policy.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+      const prompt = buildClassificationPrompt(
+        fixture.decisionText,
+        fixture.policy,
+      );
+      expect(prompt).toMatch(
+        new RegExp(fixture.policy.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
+      );
       expect(prompt.includes(fixture.decisionText)).toBe(true);
       expect(
         ["aligned", "references", "potential_conflict", "unrelated"].includes(

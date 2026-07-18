@@ -245,8 +245,7 @@ export default (io) => {
             ) {
               const matchedParticipant = meeting.participants.find(
                 (p) =>
-                  p.email &&
-                  p.email.toLowerCase() === user.email.toLowerCase(),
+                  p.email && p.email.toLowerCase() === user.email.toLowerCase(),
               );
               if (matchedParticipant) {
                 isAuthorized = true;

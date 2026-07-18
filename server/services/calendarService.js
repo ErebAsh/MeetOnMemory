@@ -6,7 +6,7 @@ const getOAuth2Client = (user) => {
   const oAuth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
-    process.env.GOOGLE_REDIRECT_URI
+    process.env.GOOGLE_REDIRECT_URI,
   );
 
   if (user && user.googleAccessToken) {
@@ -81,7 +81,11 @@ export const createEvent = async (user, meetingDetails) => {
  */
 export const updateEvent = async (user, meetingDetails) => {
   try {
-    if (!user.calendarSyncEnabled || !user.googleAccessToken || !meetingDetails.googleEventId) {
+    if (
+      !user.calendarSyncEnabled ||
+      !user.googleAccessToken ||
+      !meetingDetails.googleEventId
+    ) {
       return;
     }
 
@@ -118,7 +122,10 @@ export const updateEvent = async (user, meetingDetails) => {
       resource: event,
     });
 
-    console.log("✅ Google Calendar event updated:", meetingDetails.googleEventId);
+    console.log(
+      "✅ Google Calendar event updated:",
+      meetingDetails.googleEventId,
+    );
   } catch (error) {
     console.error("❌ Error updating Google Calendar event:", error.message);
   }
@@ -151,9 +158,7 @@ export const deleteEvent = async (user, eventId) => {
 
 export const getAuthUrl = () => {
   const oAuth2Client = getOAuth2Client();
-  const scopes = [
-    "https://www.googleapis.com/auth/calendar.events",
-  ];
+  const scopes = ["https://www.googleapis.com/auth/calendar.events"];
 
   return oAuth2Client.generateAuthUrl({
     access_type: "offline",

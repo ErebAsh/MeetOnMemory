@@ -19,6 +19,12 @@ const router = express.Router();
 router.use(apiLimiter);
 router.use(userAuth);
 
+router.get("/decisions/:id/lineage", getDecisionLineageController);
+router.get("/action-items", getOpenActionItems);
+router.patch("/action-items/:id", writeLimiter, requireAdmin, updateActionItemStatus);
+router.get("/decisions/:id/lineage", requireOrgMembership, requirePermission("knowledge", "view"), getDecisionLineageController);
+router.get("/action-items", requireOrgMembership, requirePermission("knowledge", "view"), getOpenActionItems);
+router.patch("/action-items/:id", writeLimiter, requireOrgMembership, requirePermission("tasks", "edit"), updateActionItemStatus);
 router.get(
   "/decisions",
   requireOrgMembership,
@@ -74,5 +80,6 @@ router.get(
   requirePermission("knowledge", "view"),
   getConsolidationHistory,
 );
+
 
 export default router;

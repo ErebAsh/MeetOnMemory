@@ -1,6 +1,7 @@
 import express from "express";
 import userAuth from "../middleware/userAuth.js";
 import { apiLimiter, writeLimiter } from "../middleware/rateLimiter.js";
+import { requireOrgMembership, requirePermission } from "../middleware/rbac.js";
 import {
   createWebhook,
   getWebhooks,
@@ -17,15 +18,15 @@ router.use(apiLimiter);
 router.use(userAuth);
 
 // Create Webhook Subscription
-router.post("/", writeLimiter, createWebhook);
+router.post("/", writeLimiter, requireOrgMembership, requirePermission("settings", "edit"), createWebhook);
 
 // Get Webhooks for an Organization
-router.get("/", getWebhooks);
+router.get("/", requireOrgMembership, requirePermission("settings", "view"), getWebhooks);
 
 // Update Webhook Subscription
-router.patch("/:id", writeLimiter, updateWebhook);
+router.patch("/:id", writeLimiter, requireOrgMembership, requirePermission("settings", "edit"), updateWebhook);
 
 // Delete Webhook Subscription
-router.delete("/:id", writeLimiter, deleteWebhook);
+router.delete("/:id", writeLimiter, requireOrgMembership, requirePermission("settings", "edit"), deleteWebhook);
 
 export default router;

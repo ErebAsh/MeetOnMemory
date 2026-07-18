@@ -1,8 +1,10 @@
 import React, { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router-dom";
 import { Github, ArrowUp } from "lucide-react";
 
 const Footer = () => {
+  const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
   const location = useLocation();
   const isLandingPage = location.pathname === "/";
@@ -65,7 +67,7 @@ const Footer = () => {
                 |
               </span>
               <span className="text-xs text-gray-500 dark:text-gray-400">
-                &copy; {currentYear} MeetOnMemory. All rights reserved.
+                &copy; {currentYear} MeetOnMemory. {t("footer.allRightsReserved")}
               </span>
               <span className="px-2 py-0.5 text-[10px] font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full">
                 v1.0.0
@@ -74,20 +76,36 @@ const Footer = () => {
 
             {/* Right: Links & Back to Top */}
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-medium text-gray-500 dark:text-gray-400">
-              <a
-                href="#"
-                onClick={(e) => e.preventDefault()}
+              <Link
+                to="/privacy"
                 className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
               >
-                Privacy Policy
-              </a>
-              <a
-                href="#"
-                onClick={(e) => e.preventDefault()}
+                {t("footer.privacy")}
+              </Link>
+              <Link
+                to="/terms"
                 className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
               >
-                Terms of Service
-              </a>
+                {t("footer.terms")}
+              </Link>
+              <Link
+                to="/security"
+                className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
+              >
+                {t("footer.security", "Security")}
+              </Link>
+              <Link
+                to="/cookie-policy"
+                className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
+              >
+                Cookies
+              </Link>
+              <Link
+                to="/contact"
+                className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
+              >
+                {t("footer.contact", "Contact")}
+              </Link>
               <a
                 href="https://github.com/imuniqueshiv/MeetOnMemory"
                 target="_blank"
@@ -103,7 +121,7 @@ const Footer = () => {
                 aria-label="Scroll back to top"
               >
                 <ArrowUp className="w-3.5 h-3.5 group-hover:-translate-y-0.5 transition-transform duration-200" />
-                Back to top
+                {t("footer.backToTop")}
               </button>
             </div>
           </div>
@@ -134,17 +152,17 @@ const Footer = () => {
                       x2="100%"
                       y2="100%"
                     >
-                      <stop offset="0%" stop-color="#2563eb" />
-                      <stop offset="100%" stop-color="#7c3aed" />
+                      <stop offset="0%" stopColor="#2563eb" />
+                      <stop offset="100%" stopColor="#7c3aed" />
                     </linearGradient>
                   </defs>
                   <path
                     d="M25,50 C25,35 38,30 50,50 C62,70 75,65 75,50 C75,35 62,30 50,50 C38,70 25,65 25,50 Z"
                     fill="none"
                     stroke="url(#footerInfinityGrad)"
-                    stroke-width="11"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
+                    strokeWidth="11"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   />
                   <circle cx="25" cy="50" r="6.5" fill="#2563eb" />
                   <circle cx="75" cy="50" r="6.5" fill="#7c3aed" />
@@ -156,11 +174,10 @@ const Footer = () => {
               </span>
             </div>
             <p className="text-gray-600 dark:text-gray-300 text-sm font-medium leading-snug">
-              AI-Powered Meeting Memory &amp; Management Platform
+              {t("hero.badge")}
             </p>
             <p className="text-gray-400 dark:text-gray-500 text-sm leading-relaxed">
-              Transform meetings, discussions, and organizational knowledge into
-              a searchable and structured repository using AI.
+              {t("footer.description")}
             </p>
             {/* GitHub social link */}
             <a
@@ -171,14 +188,14 @@ const Footer = () => {
               className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200 mt-1 group w-fit"
             >
               <Github className="w-4 h-4 group-hover:scale-110 transition-transform" />
-              View on GitHub
+              {t("footer.meetOnMemoryTeam")}
             </a>
           </div>
 
           {/* Column 2: Quick Links */}
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider mb-5">
-              Quick Links
+              {t("footer.product")}
             </h3>
             <ul className="flex flex-col gap-3">
               <li>
@@ -195,7 +212,7 @@ const Footer = () => {
                   className="text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 inline-block text-left"
                   aria-label="Scroll to Features section"
                 >
-                  Features
+                  {t("navbar.features")}
                 </button>
               </li>
               <li>
@@ -204,7 +221,7 @@ const Footer = () => {
                   className="text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 inline-block text-left"
                   aria-label="Scroll to How It Works section"
                 >
-                  How It Works
+                  {t("navbar.howItWorks")}
                 </button>
               </li>
               <li>
@@ -213,7 +230,7 @@ const Footer = () => {
                   className="text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 inline-block text-left"
                   aria-label="Scroll to About section"
                 >
-                  About
+                  {t("navbar.about")}
                 </button>
               </li>
               <li>
@@ -221,7 +238,7 @@ const Footer = () => {
                   to="/dashboard"
                   className="text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 inline-block"
                 >
-                  Dashboard
+                  {t("navbar.dashboard")}
                 </Link>
               </li>
               <li>
@@ -229,7 +246,7 @@ const Footer = () => {
                   to="/login"
                   className="text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 inline-block"
                 >
-                  Login
+                  {t("navbar.login")}
                 </Link>
               </li>
             </ul>
@@ -238,9 +255,17 @@ const Footer = () => {
           {/* Column 3: Resources */}
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider mb-5">
-              Resources
+              {t("footer.company")}
             </h3>
             <ul className="flex flex-col gap-3">
+              <li>
+                <Link
+                  to="/contact"
+                  className="text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 inline-block font-medium"
+                >
+                  Contact Support
+                </Link>
+              </li>
               <li>
                 <a
                   href="https://github.com/imuniqueshiv/MeetOnMemory"
@@ -291,7 +316,7 @@ const Footer = () => {
           {/* Column 4: Built with */}
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider mb-5">
-              Built with
+              {t("footer.getInTouch")}
             </h3>
             <ul className="flex flex-col gap-2.5">
               {[
@@ -319,11 +344,35 @@ const Footer = () => {
 
         {/* Bottom bar */}
         <div className="pt-8 border-t border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1">
+            <p className="text-gray-400 dark:text-gray-500 text-sm">
+              &copy; {currentYear} MeetOnMemory. {t("footer.allRightsReserved")}
+            </p>
+            <span className="hidden sm:inline text-gray-300 dark:text-gray-700">|</span>
+            <div className="flex items-center gap-3 text-xs font-medium text-gray-400 dark:text-gray-500">
+              <Link to="/privacy" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                {t("footer.privacy")}
+              </Link>
+              <span>•</span>
+              <Link to="/terms" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                {t("footer.terms")}
+              </Link>
+              <span>•</span>
+              <Link to="/security" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                {t("footer.security", "Security")}
+              </Link>
+              <span>•</span>
+              <Link to="/cookie-policy" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                Cookies
+              </Link>
+              <span>•</span>
+              <Link to="/contact" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                {t("footer.contact", "Contact")}
+              </Link>
+            </div>
+          </div>
           <p className="text-gray-400 dark:text-gray-500 text-sm">
-            &copy; {currentYear} MeetOnMemory. All rights reserved.
-          </p>
-          <p className="text-gray-400 dark:text-gray-500 text-sm">
-            Built with ❤️ by the MeetOnMemory Community.
+            {t("footer.madeWith")} ❤️ {t("footer.by")} {t("footer.meetOnMemoryTeam")}.
           </p>
           {/* Back to top */}
           <button
@@ -332,7 +381,7 @@ const Footer = () => {
             className="flex items-center gap-1.5 text-sm text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 group focus-visible:ring-2 focus-visible:ring-blue-500 rounded-md px-1"
           >
             <ArrowUp className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform duration-200" />
-            Back to top
+            {t("footer.backToTop")}
           </button>
         </div>
       </div>
@@ -341,3 +390,4 @@ const Footer = () => {
 };
 
 export default Footer;
+

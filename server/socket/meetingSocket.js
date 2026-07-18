@@ -63,8 +63,13 @@ export default (io) => {
     socket.on("join-meeting", async ({ roomId, userInfo }) => {
       try {
         // RBAC: Check if user has permission to view meetings
-        if (!socket.userRole || !hasPermission(socket.userRole, "meetings", "view")) {
-          socket.emit("error", { message: "Forbidden: Insufficient permissions" });
+        if (
+          !socket.userRole ||
+          !hasPermission(socket.userRole, "meetings", "view")
+        ) {
+          socket.emit("error", {
+            message: "Forbidden: Insufficient permissions",
+          });
           return;
         }
 
@@ -75,14 +80,18 @@ export default (io) => {
           return;
         }
 
-        const isOwner = meeting.uploadedBy?.toString() === socket.userId.toString();
+        const isOwner =
+          meeting.uploadedBy?.toString() === socket.userId.toString();
         const isInSameOrg =
           meeting.organization &&
           socket.userOrganization &&
-          meeting.organization.toString() === socket.userOrganization.toString();
+          meeting.organization.toString() ===
+            socket.userOrganization.toString();
 
         if (!isOwner && !isInSameOrg) {
-          socket.emit("error", { message: "Forbidden: You don't have access to this meeting" });
+          socket.emit("error", {
+            message: "Forbidden: You don't have access to this meeting",
+          });
           return;
         }
 

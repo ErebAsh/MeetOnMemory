@@ -15,7 +15,7 @@ export const PERMISSIONS = {
   // Meeting permissions
   meetings: {
     view: ["owner", "admin", "moderator", "member", "guest"],
-    create: ["owner", "admin", "moderator", "member"],
+    create: ["owner", "admin", "moderator"],
     edit: ["owner", "admin", "moderator"],
     delete: ["owner", "admin"],
     export: ["owner", "admin", "moderator", "member"],
@@ -32,16 +32,16 @@ export const PERMISSIONS = {
   // Task permissions
   tasks: {
     view: ["owner", "admin", "moderator", "member", "guest"],
-    create: ["owner", "admin", "moderator", "member"],
-    edit: ["owner", "admin", "moderator", "member"],
+    create: ["owner", "admin", "moderator"],
+    edit: ["owner", "admin", "moderator"],
     delete: ["owner", "admin", "moderator"],
     assign: ["owner", "admin", "moderator"],
   },
   // Calendar permissions
   calendar: {
     view: ["owner", "admin", "moderator", "member", "guest"],
-    create: ["owner", "admin", "moderator", "member"],
-    edit: ["owner", "admin", "moderator", "member"],
+    create: ["owner", "admin", "moderator"],
+    edit: ["owner", "admin", "moderator"],
     delete: ["owner", "admin", "moderator"],
   },
   // AI Search permissions
@@ -71,7 +71,7 @@ export const PERMISSIONS = {
   },
   // Reports permissions
   reports: {
-    view: ["owner", "admin", "moderator", "member"],
+    view: ["owner", "admin", "moderator"],
     export: ["owner", "admin", "moderator"],
   },
   // Admin Panel permissions
@@ -93,6 +93,10 @@ export const PERMISSIONS = {
   notifications: {
     view: ["owner", "admin", "moderator", "member", "guest"],
     manage: ["owner", "admin"],
+  },
+  // Audit Logs permissions
+  audit_logs: {
+    view: ["owner", "admin"],
   },
 };
 
@@ -162,14 +166,14 @@ export const hasHigherOrEqualRole = (role1, role2) => {
  */
 export const getRolePermissions = (role) => {
   const permissions = {};
-  
+
   Object.keys(PERMISSIONS).forEach((resource) => {
     permissions[resource] = {};
     Object.keys(PERMISSIONS[resource]).forEach((action) => {
       permissions[resource][action] = hasPermission(role, resource, action);
     });
   });
-  
+
   return permissions;
 };
 

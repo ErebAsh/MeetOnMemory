@@ -11,7 +11,8 @@ export const meetingApi = {
 
   summarizeMeeting: (data) => apiClient.post("/api/meetings/summarize", data),
 
-  getAllMeetings: (params = {}) => apiClient.get("/api/meetings/all", { params }),
+  getAllMeetings: (params = {}) =>
+    apiClient.get("/api/meetings/all", { params }),
 
   getMeetingById: (id) => apiClient.get(`/api/meetings/${id}`),
 

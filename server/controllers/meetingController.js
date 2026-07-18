@@ -17,7 +17,7 @@ import path from "path";
 import { z } from "zod";
 import * as MeetingService from "../services/MeetingService.js";
 import { ValidationError, UnauthorizedError } from "../utils/errors.js";
-
+import AuditService from "../services/AuditService.js";
 // ═══════════════════════════════════════════════════════════════
 // Zod validation schemas
 // ═══════════════════════════════════════════════════════════════
@@ -273,8 +273,7 @@ export const summarizeMeeting = async (req, res, next) => {
     if (result.queued) {
       return res.status(202).json({
         success: true,
-        message:
-          "Minutes generation started in the background. Please wait...",
+        message: "Minutes generation started in the background. Please wait...",
       });
     }
 
@@ -323,9 +322,20 @@ export const getAllMeetings = async (req, res, next) => {
 export const deleteMeeting = async (req, res, next) => {
   try {
     await MeetingService.deleteMeeting(
-      req.doc || null,  // from requireOwnerOrAdmin middleware (may be undefined)
+      req.doc || null, // from requireOwnerOrAdmin middleware (may be undefined)
       req.params.id,
     );
+
+    if (req.doc && req.doc.organization) {
+      AuditService.logAction({
+        actorId: getUserId(req),
+        action: "MEETING_DELETED",
+        entity: "Meeting",
+        entityId: req.doc._id,
+        organizationId: req.doc.organization,
+        details: { title: req.doc.title },
+      });
+    }
 
     return res
       .status(200)

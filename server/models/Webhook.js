@@ -30,9 +30,10 @@ const webhookSchema = new mongoose.Schema(
       default: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-const Webhook = mongoose.models.Webhook || mongoose.model("Webhook", webhookSchema);
+const Webhook =
+  mongoose.models.Webhook || mongoose.model("Webhook", webhookSchema);
 
 export default Webhook;

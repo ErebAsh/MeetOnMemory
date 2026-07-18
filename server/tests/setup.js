@@ -12,6 +12,7 @@ const uri = mongoServer.getUri();
 
 process.env.TEST_MONGODB_URI = uri.replace(/\/$/, "");
 process.env.NODE_ENV = "test";
+process.env.JWT_SECRET = process.env.JWT_SECRET || "test_jwt_secret";
 
 // ─── Teardown ──────────────────────────────────────────────────────────────
 afterAll(async () => {
@@ -30,8 +31,6 @@ afterEach(async () => {
   if (mongoose.connection.readyState !== 1 /* CONNECTED */) return;
 
   await Promise.all(
-    Object.values(mongoose.connection.collections).map((c) =>
-      c.deleteMany({}),
-    ),
+    Object.values(mongoose.connection.collections).map((c) => c.deleteMany({})),
   );
 });

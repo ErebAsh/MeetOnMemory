@@ -1,4 +1,3 @@
-// server/models/organizationModel.js
 import mongoose from "mongoose";
 
 const organizationSchema = new mongoose.Schema(
@@ -15,7 +14,10 @@ const organizationSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
-      match: [/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens"],
+      match: [
+        /^[a-z0-9-]+$/,
+        "Slug can only contain lowercase letters, numbers, and hyphens",
+      ],
     },
     description: {
       type: String,
@@ -49,6 +51,31 @@ const organizationSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.Mixed,
       default: {},
     },
+
+    //Slack Integration
+    slackIntegration: {
+      botToken: {
+        type: String,
+        default: "",
+        select: false,
+      },
+      channelId: {
+        type: String,
+        default: "",
+      },
+      teamId: {
+        type: String,
+        default: "",
+      },
+      teamName: {
+        type: String,
+        default: "",
+      },
+      installedAt: {
+        type: Date,
+        default: null,
+      },
+    },
   },
   { timestamps: true },
 );
@@ -62,6 +89,8 @@ organizationSchema.index({ createdAt: -1 });
 organizationSchema.index({ name: "text", slug: "text", description: "text" });
 organizationSchema.index({ visibility: 1, createdAt: -1 });
 organizationSchema.index({ visibility: 1, name: 1 });
+// Sparse index: only indexes documents that actually have a Slack teamId
+organizationSchema.index({ "slackIntegration.teamId": 1 }, { sparse: true });
 
 const Organization =
   mongoose.models.Organization ||

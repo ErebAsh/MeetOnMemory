@@ -15,6 +15,13 @@ const router = express.Router();
 // 🔹 POST /api/search
 // Protected route — requires login (JWT cookie)
 // Expects: { query: "attendance policy" }
-router.post("/", apiLimiter, userAuth, requirePermission("ai_search", "search"), cacheSearch, semanticSearch);
+router.post(
+  "/",
+  apiLimiter,
+  userAuth,
+  requirePermission("ai_search", "search"),
+  cacheSearch,
+  semanticSearch,
+);
 
 export default router;
