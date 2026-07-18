@@ -22,11 +22,11 @@
   },
   "lint-staged": {
     "client/**/*.{js,jsx}": [
-      "eslint",
+      "eslint --config client/eslint.config.js",
       "prettier --write"
     ],
     "server/**/*.{js,jsx}": [
-      "eslint",
+      "eslint --config server/eslint.config.js",
       "prettier --write"
     ]
   }

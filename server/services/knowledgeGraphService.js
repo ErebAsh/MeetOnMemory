@@ -3,26 +3,10 @@ import ActionItem from "../models/actionItemModel.js";
 import { embedText } from "../utils/embeddingUtils.js";
 import { calculateRelationshipConfidence } from "../utils/relationshipScoring.js";
 import { applyImportanceScore } from "./importanceScoringService.js";
-
-import { calculateRelationshipConfidence } from "../utils/relationshipScoring.js";
-
+import { cosineSimilarity } from "../utils/similarity.js";
 
 const SIMILARITY_THRESHOLD = 0.85;
 const CONFIDENCE_THRESHOLD = 70; // conservative, per issue's technical considerations
-
-export function cosineSimilarity(a, b) {
-  if (!a?.length || !b?.length || a.length !== b.length) return 0;
-  let dot = 0,
-    normA = 0,
-    normB = 0;
-  for (let i = 0; i < a.length; i++) {
-    dot += a[i] * b[i];
-    normA += a[i] * a[i];
-    normB += b[i] * b[i];
-  }
-  if (normA === 0 || normB === 0) return 0;
-  return dot / (Math.sqrt(normA) * Math.sqrt(normB));
-}
 
 function upsertRelationship(document, targetId, confidence) {
   const existing = document.relatesTo.find(
@@ -62,9 +46,6 @@ async function findBestMatch(Model, text, embedding, organization) {
     }
   }
 
-  return bestScore >= SIMILARITY_THRESHOLD ? best : null;
-}
-
   if (bestScore < SIMILARITY_THRESHOLD) {
     return null;
   }
@@ -80,22 +61,7 @@ async function findBestMatch(Model, text, embedding, organization) {
     }),
   };
 }
-if (bestScore < SIMILARITY_THRESHOLD) {
-  return null;
-}
 
-return {
-  match: best,
-  similarity: bestScore,
-  confidence: calculateRelationshipConfidence({
-    similarity: bestScore,
-    createdAt: best.createdAt,
-    explicitSignal:
-      best.status === "resolved" ||
-      best.status === "superseded",
-  }),
-};
-}
 /**
  * Called after a meeting's structuredMoM is generated/updated.
  * Extracts decisions/action_items, embeds them, links to prior related entries.
@@ -121,17 +87,12 @@ export async function processStructuredMoM(meeting, mom) {
       results.decisions.push(existingDecision);
       continue;
     }
+
     const decision = await Decision.create({
       text,
       sourceMeetingId: meeting._id,
       organization,
       embedding,
-      relatesTo: match ? [match._id] : [],
-    });
-
-    if (match) {
-      match.relatesTo.push(decision._id);
-      await match.save();
       relatesTo:
         match && match.confidence >= CONFIDENCE_THRESHOLD
           ? [
@@ -151,29 +112,6 @@ export async function processStructuredMoM(meeting, mom) {
       // degree (and therefore importance score) changed too.
       await applyImportanceScore(match.match);
     }
-      relatesTo:
-        match && match.confidence >= CONFIDENCE_THRESHOLD
-          ? [
-              {
-                target: match.match._id,
-                confidence: match.confidence,
-                computedAt: new Date(),
-              },
-          ]
-        : [],
-    });
-
-    if (match && match.confidence >= CONFIDENCE_THRESHOLD) {
-        upsertRelationship(
-           match.match,
-           decision._id,
-           match.confidence,
-        );
-          
-
-        await match.match.save();
-  }
-
 
     await applyImportanceScore(decision);
     results.decisions.push(decision);
@@ -211,6 +149,7 @@ export async function processStructuredMoM(meeting, mom) {
       results.actionItems.push(existingActionItem);
       continue;
     }
+
     const actionItem = await ActionItem.create({
       text,
       owner,
@@ -218,12 +157,6 @@ export async function processStructuredMoM(meeting, mom) {
       sourceMeetingId: meeting._id,
       organization,
       embedding,
-      relatesTo: match ? [match._id] : [],
-    });
-
-    if (match) {
-      match.relatesTo.push(actionItem._id);
-      await match.save();
       relatesTo:
         match && match.confidence >= CONFIDENCE_THRESHOLD
           ? [
@@ -236,40 +169,13 @@ export async function processStructuredMoM(meeting, mom) {
           : [],
     });
 
-    if (match) {
-      if (match.confidence >= CONFIDENCE_THRESHOLD) {
-        upsertRelationship(match.match, actionItem._id, match.confidence);
+    if (match && match.confidence >= CONFIDENCE_THRESHOLD) {
+      upsertRelationship(match.match, actionItem._id, match.confidence);
 
-        // The matched action item just gained a relationship, so its
-        // graph degree (and therefore importance score) changed too.
-        await applyImportanceScore(match.match);
-      }
+      // The matched action item just gained a relationship, so its
+      // graph degree (and therefore importance score) changed too.
+      await applyImportanceScore(match.match);
     }
-
-     relatesTo:
-       match && match.confidence >= CONFIDENCE_THRESHOLD
-         ? [
-             {
-               target: match.match._id,
-               confidence: match.confidence,
-               computedAt: new Date(),
-             },
-           ]
-         : [],
-    });
-
-    if (match) {
-       if (match.confidence >= CONFIDENCE_THRESHOLD) {
-         upsertRelationship(
-           match.match,
-           actionItem._id,
-           match.confidence,
-          );
-
-          await match.match.save();
-        }
-    } 
-
 
     await applyImportanceScore(actionItem);
     results.actionItems.push(actionItem);
@@ -296,20 +202,19 @@ export async function getDecisionLineage(decisionId) {
     if (!decision) return;
     chain.push(decision);
 
-    for (const relatedId of decision.relatesTo) {
-      await walk(relatedId);
     const sortedRelations = [...decision.relatesTo]
       .filter((r) => r.confidence >= CONFIDENCE_THRESHOLD)
       .sort((a, b) => b.confidence - a.confidence);
-      
+
     for (const relation of sortedRelations) {
       await walk(relation.target);
     }
+  }
 
-    await walk(decisionId);
-    chain.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-      return chain;
-    }
+  await walk(decisionId);
+  chain.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+  return chain;
+}
 
 /**
  * Attempts to detect resolution mentions of open action items within a new meeting's transcript/summary.

@@ -25,7 +25,7 @@
 
 import Decision from "../models/decisionModel.js";
 import ActionItem from "../models/actionItemModel.js";
-import { cosineSimilarity } from "./knowledgeGraphService.js";
+import { cosineSimilarity } from "../utils/similarity.js";
 import { computeTextSimilarity } from "../utils/textSimilarity.js";
 
 // Model registry: keeps the engine generic across memory types instead of
