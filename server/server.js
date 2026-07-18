@@ -9,7 +9,6 @@ import connectDB from "./config/mongodb.js";
 
 import authRoutes from "./routes/authRoutes.js";
 import organizationRoutes from "./routes/organizationRoutes.js";
-import organizationRoutesNew from "./routes/organizationRoutesNew.js";
 import membershipRoutes from "./routes/membershipRoutes.js";
 import membershipRequestRoutes from "./routes/membershipRequestRoutes.js";
 import invitationRoutes from "./routes/invitationRoutes.js";
@@ -84,7 +83,6 @@ app.get("/api/csrf-token", csrfTokenProvider, (req, res) => {
 // ROUTES
 app.use("/api/auth", authRoutes);
 app.use(["/api/organization", "/api/organizations"], organizationRoutes);
-app.use(["/api/organization/new", "/api/organizations/new"], organizationRoutesNew);
 app.use("/api/membership", membershipRoutes);
 app.use("/api/membership-request", membershipRequestRoutes);
 app.use("/api/invitation", invitationRoutes);

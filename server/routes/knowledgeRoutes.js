@@ -65,7 +65,7 @@ router.post(
   requirePermission("knowledge", "edit"),
   recalculateImportance,
 );
-=======
+
 
 // --- Memory Consolidation Engine ---
 router.post(
