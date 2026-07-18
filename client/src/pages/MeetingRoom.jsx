@@ -71,6 +71,7 @@ const MeetingRoom = () => {
   const [peers, setPeers] = useState([]);
   const [duration, setDuration] = useState(0);
   const [showNotes, setShowNotes] = useState(false);
+  const [showCaptions, setShowCaptions] = useState(true);
   const [showTranscript, setShowTranscript] = useState(false);
   const [captions, setCaptions] = useState([]);
   const [transcriptSegments, setTranscriptSegments] = useState([]);

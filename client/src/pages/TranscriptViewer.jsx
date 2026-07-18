@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
@@ -26,7 +26,7 @@ const TranscriptViewer = () => {
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-  const fetchTranscript = async () => {
+  const fetchTranscript = useCallback(async () => {
     try {
       setLoading(true);
       const token = document.cookie
@@ -51,11 +51,11 @@ const TranscriptViewer = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [meetingId, backendUrl]);
 
   useEffect(() => {
     fetchTranscript();
-  }, [meetingId]);
+  }, [fetchTranscript]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
