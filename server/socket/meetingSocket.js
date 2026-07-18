@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import userModel from "../models/userModel.js";
 import Meeting from "../models/meetingModel.js";
 import { hasPermission } from "../utils/rbacPermissions.js";
+import streamingTranscriptionService from "../services/StreamingTranscriptionService.js";
 
 const parseCookie = (str) =>
   str
@@ -159,11 +160,46 @@ export default (io) => {
         usersInRoom[roomId] = room;
         if (room.length === 0) {
           delete usersInRoom[roomId];
+          // End transcription session when last user leaves
+          streamingTranscriptionService.endSession(roomId);
         }
       }
 
       socket.to(roomId).emit("user-left", socket.id);
       delete socketToRoom[socket.id];
+    });
+
+    // Start transcription session
+    socket.on("start-transcription", async ({ roomId }) => {
+      try {
+        if (!streamingTranscriptionService.isSessionActive(roomId)) {
+          await streamingTranscriptionService.startSession(roomId, io);
+          socket.emit("transcription-started", { roomId });
+        }
+      } catch (error) {
+        console.error("Error starting transcription:", error);
+        socket.emit("transcription-error", { message: error.message });
+      }
+    });
+
+    // Stop transcription session
+    socket.on("stop-transcription", async ({ roomId }) => {
+      try {
+        await streamingTranscriptionService.endSession(roomId);
+        socket.emit("transcription-stopped", { roomId });
+      } catch (error) {
+        console.error("Error stopping transcription:", error);
+        socket.emit("transcription-error", { message: error.message });
+      }
+    });
+
+    // Process audio data for transcription
+    socket.on("audio-data", ({ roomId, audioData }) => {
+      try {
+        streamingTranscriptionService.processAudio(roomId, audioData);
+      } catch (error) {
+        console.error("Error processing audio data:", error);
+      }
     });
   });
 };

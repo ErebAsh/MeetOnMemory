@@ -17,6 +17,11 @@ import {
   Copy,
   NotebookPen,
   PanelRightClose,
+  Captions,
+  FileText,
+  Download,
+  Search,
+  X,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import ErrorState from "../components/ErrorState.jsx";
@@ -66,6 +71,13 @@ const MeetingRoom = () => {
   const [peers, setPeers] = useState([]);
   const [duration, setDuration] = useState(0);
   const [showNotes, setShowNotes] = useState(false);
+  const [showCaptions] = useState(true);
+  const [showTranscript, setShowTranscript] = useState(false);
+  const [captions, setCaptions] = useState([]);
+  const [transcriptSegments, setTranscriptSegments] = useState([]);
+  const [transcriptionEnabled, setTranscriptionEnabled] = useState(false);
+  const [audioContext, setAudioContext] = useState(null);
+  const [audioProcessor, setAudioProcessor] = useState(null);
 
   const socketRef = useRef();
   const userVideoRef = useRef();
@@ -81,6 +93,12 @@ const MeetingRoom = () => {
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
     return `${hrs > 0 ? hrs + ":" : ""}${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const formatTimestamp = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
   useEffect(() => {
@@ -171,6 +189,40 @@ const MeetingRoom = () => {
         }
         peersRef.current = peersRef.current.filter((p) => p.peerID !== id);
         setPeers([...peersRef.current]);
+      });
+
+      // Transcription events
+      socketRef.current.on("transcript-partial", (data) => {
+        if (showCaptions) {
+          setCaptions((prev) => [
+            ...prev.slice(-4),
+            { text: data.text, isFinal: false, timestamp: data.timestamp },
+          ]);
+        }
+      });
+
+      socketRef.current.on("transcript-final", (data) => {
+        const { segment } = data;
+        setCaptions((prev) => [
+          ...prev.slice(-4),
+          { text: segment.text, speaker: segment.speaker, isFinal: true, timestamp: data.timestamp },
+        ]);
+        setTranscriptSegments((prev) => [...prev, segment]);
+      });
+
+      socketRef.current.on("transcription-started", () => {
+        setTranscriptionEnabled(true);
+        toast.success("🎙️ Live transcription started");
+      });
+
+      socketRef.current.on("transcription-stopped", () => {
+        setTranscriptionEnabled(false);
+        toast.info("🎙️ Live transcription stopped");
+      });
+
+      socketRef.current.on("transcription-error", (data) => {
+        toast.error(`Transcription error: ${data.message}`);
+        setTranscriptionEnabled(false);
       });
 
       setLoading(false);
@@ -310,6 +362,72 @@ const MeetingRoom = () => {
     toast.success("Meeting link copied!");
   };
 
+  const startTranscription = async () => {
+    try {
+      socketRef.current.emit("start-transcription", { roomId });
+      setupAudioProcessing();
+    } catch (error) {
+      console.error("Failed to start transcription:", error);
+      toast.error("Failed to start transcription");
+    }
+  };
+
+  const stopTranscription = async () => {
+    try {
+      socketRef.current.emit("stop-transcription", { roomId });
+      if (audioProcessor) {
+        audioProcessor.disconnect();
+        setAudioProcessor(null);
+      }
+      if (audioContext) {
+        await audioContext.close();
+        setAudioContext(null);
+      }
+    } catch (error) {
+      console.error("Failed to stop transcription:", error);
+      toast.error("Failed to stop transcription");
+    }
+  };
+
+  const setupAudioProcessing = async () => {
+    try {
+      const context = new (window.AudioContext || window.webkitAudioContext)();
+      setAudioContext(context);
+
+      const source = context.createMediaStreamSource(streamRef.current);
+      const processor = context.createScriptProcessor(4096, 1, 1);
+
+      processor.onaudioprocess = (e) => {
+        const inputData = e.inputBuffer.getChannelData(0);
+        const audioData = new Float32Array(inputData);
+        const pcmData = new Int16Array(audioData.length);
+
+        for (let i = 0; i < audioData.length; i++) {
+          pcmData[i] = Math.max(-1, Math.min(1, audioData[i])) * 0x7fff;
+        }
+
+        socketRef.current.emit("audio-data", {
+          roomId,
+          audioData: pcmData.buffer,
+        });
+      };
+
+      source.connect(processor);
+      processor.connect(context.destination);
+      setAudioProcessor(processor);
+    } catch (error) {
+      console.error("Error setting up audio processing:", error);
+    }
+  };
+
+  const toggleTranscription = () => {
+    if (transcriptionEnabled) {
+      stopTranscription();
+    } else {
+      startTranscription();
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-900 relative overflow-hidden font-sans">
       {/* ---------- INTRO SCREEN ---------- */}
@@ -405,6 +523,38 @@ const MeetingRoom = () => {
                 {showNotes ? "Hide Notes" : "Notes"}
               </span>
             </button>
+
+            {/* Transcription Toggle */}
+            <button
+              onClick={toggleTranscription}
+              className={`flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl transition-all cursor-pointer ${
+                transcriptionEnabled
+                  ? "bg-green-600 text-white hover:bg-green-700"
+                  : "bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700"
+              }`}
+              title={transcriptionEnabled ? "Stop transcription" : "Start live transcription"}
+            >
+              <Captions size={16} />
+              <span className="hidden sm:inline">
+                {transcriptionEnabled ? "Stop" : "Captions"}
+              </span>
+            </button>
+
+            {/* Transcript Toggle */}
+            <button
+              onClick={() => setShowTranscript((v) => !v)}
+              className={`flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl transition-all cursor-pointer ${
+                showTranscript
+                  ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                  : "bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700"
+              }`}
+              title={showTranscript ? "Hide transcript" : "Show transcript"}
+            >
+              <FileText size={16} />
+              <span className="hidden sm:inline">
+                {showTranscript ? "Hide" : "Transcript"}
+              </span>
+            </button>
           </div>
 
           {/* Main content area: video grid + notes panel */}
@@ -457,7 +607,78 @@ const MeetingRoom = () => {
                 <CollaborativeEditor meetingId={roomId} />
               </div>
             )}
+
+            {/* Transcript Panel */}
+            {showTranscript && (
+              <div className="w-full md:w-[420px] lg:w-[480px] shrink-0 p-4 bg-gray-950 border-l border-gray-800 overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-white font-semibold flex items-center gap-2">
+                    <FileText size={18} />
+                    Live Transcript
+                  </h3>
+                  <button
+                    onClick={() => setShowTranscript(false)}
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+                <div className="flex-1 overflow-y-auto space-y-3">
+                  {transcriptSegments.length === 0 ? (
+                    <div className="text-gray-500 text-center py-8">
+                      <Captions size={32} className="mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No transcript yet</p>
+                      <p className="text-xs mt-1">Enable captions to start transcription</p>
+                    </div>
+                  ) : (
+                    transcriptSegments.map((segment, index) => (
+                      <div
+                        key={index}
+                        className="bg-gray-800 rounded-lg p-3 border border-gray-700"
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-indigo-400 text-sm font-medium">
+                            {segment.speaker || "Speaker"}
+                          </span>
+                          <span className="text-gray-500 text-xs">
+                            {formatTimestamp(segment.startTime)}
+                          </span>
+                        </div>
+                        <p className="text-gray-300 text-sm">{segment.text}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
           </div>
+
+          {/* Live Caption Bar */}
+          {showCaptions && captions.length > 0 && (
+            <div className="bg-gray-800/90 backdrop-blur-sm border-t border-gray-700 px-6 py-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Captions size={16} className="text-indigo-400" />
+                <span className="text-gray-400 text-xs font-medium">Live Captions</span>
+              </div>
+              <div className="space-y-1 max-h-24 overflow-y-auto">
+                {captions.map((caption, index) => (
+                  <div
+                    key={index}
+                    className={`text-sm ${
+                      caption.isFinal ? "text-white" : "text-gray-400 italic"
+                    }`}
+                  >
+                    {caption.speaker && (
+                      <span className="text-indigo-400 font-medium mr-2">
+                    {caption.speaker}:
+                  </span>
+                )}
+                    {caption.text}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Control Bar */}
           <div className="h-24 bg-gray-900 border-t border-gray-800 flex items-center justify-center gap-4 px-6 z-20 shrink-0">

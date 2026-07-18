@@ -32,6 +32,7 @@ import Reports from "./pages/Reports.jsx";
 import AiSearch from "./pages/AiSearch.jsx";
 import MeetingRoom from "./pages/MeetingRoom.jsx";
 import MeetingDetails from "./pages/MeetingDetails.jsx";
+import TranscriptViewer from "./pages/TranscriptViewer.jsx";
 import TeamMembers from "./pages/TeamMembers.jsx";
 import Profile from "./pages/Profile.jsx";
 import Calendar from "./pages/Calendar.jsx";
@@ -290,6 +291,14 @@ const App = () => {
             }
           />
           <Route path="/meeting-room/:roomId" element={<MeetingRoom />} />
+          <Route
+            path="/transcript/:meetingId"
+            element={
+              <ProtectedRoute resource="meetings" action="view">
+                <TranscriptViewer />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/meeting/:id"
             element={
