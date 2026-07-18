@@ -10,7 +10,7 @@ import {
   Users,
   Calendar,
   X,
-  Highlight,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "react-toastify";
 
@@ -25,10 +25,6 @@ const TranscriptViewer = () => {
   const [highlightedSegment, setHighlightedSegment] = useState(null);
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
-
-  useEffect(() => {
-    fetchTranscript();
-  }, [meetingId]);
 
   const fetchTranscript = async () => {
     try {
@@ -56,6 +52,10 @@ const TranscriptViewer = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchTranscript();
+  }, [meetingId]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
@@ -349,7 +349,7 @@ const TranscriptViewer = () => {
               <div className="bg-white dark:bg-slate-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 sticky top-40">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                    <Highlight size={18} className="text-indigo-600" />
+                    <Sparkles size={18} className="text-indigo-600" />
                     Search Results
                   </h3>
                   <span className="text-sm text-gray-500 dark:text-gray-400">
