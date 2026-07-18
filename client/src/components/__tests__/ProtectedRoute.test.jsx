@@ -161,4 +161,29 @@ describe("ProtectedRoute", () => {
 
     expect(screen.getByText("Protected Content")).toBeInTheDocument();
   });
+
+  it("renders forbiddenFallback when permission is denied", () => {
+    const mockHasPermission = vi.fn().mockReturnValue(false);
+    vi.spyOn(useRBACHook, "useRBAC").mockReturnValue({
+      hasPermission: mockHasPermission,
+    });
+
+    renderWithProviders(
+      <ProtectedRoute
+        resource="admin_panel"
+        action="view"
+        forbiddenFallback={<div>Access Denied Page</div>}
+      >
+        <div>Admin Content</div>
+      </ProtectedRoute>,
+      {
+        isLoading: false,
+        isLoggedin: true,
+        userData: { hasCompletedOnboarding: true },
+      },
+    );
+
+    expect(screen.getByText("Access Denied Page")).toBeInTheDocument();
+    expect(screen.queryByText("Admin Content")).not.toBeInTheDocument();
+  });
 });

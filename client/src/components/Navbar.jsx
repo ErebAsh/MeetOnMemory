@@ -1,4 +1,10 @@
-import React, { useState, useContext, useEffect, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useContext,
+  useEffect,
+  useRef,
+  useCallback,
+} from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import AppContent from "../context/AppContent";
@@ -80,7 +86,9 @@ const Navbar = () => {
     if (switchingOrg) return;
     setSwitchingOrg(true);
     try {
-      const { data } = await organizationApi.selectOrganization({ organizationId: orgId });
+      const { data } = await organizationApi.selectOrganization({
+        organizationId: orgId,
+      });
       if (data.success) {
         toast.success(data.message || "Organization switched successfully");
         setUserData(data.userData);
@@ -91,7 +99,9 @@ const Navbar = () => {
       }
     } catch (err) {
       console.error("Error switching organization:", err);
-      toast.error(err.response?.data?.message || "Failed to switch organization");
+      toast.error(
+        err.response?.data?.message || "Failed to switch organization",
+      );
     } finally {
       setSwitchingOrg(false);
     }
@@ -558,7 +568,8 @@ const Navbar = () => {
                       <div className="p-1.5 max-h-56 overflow-y-auto divide-y divide-gray-50 dark:divide-gray-700">
                         {userOrgs.length > 0 ? (
                           userOrgs.map((org) => {
-                            const isCurrent = org._id === userData.organization?._id;
+                            const isCurrent =
+                              org._id === userData.organization?._id;
                             return (
                               <button
                                 key={org._id}
@@ -586,7 +597,9 @@ const Navbar = () => {
                                     )}
                                   </div>
                                   <div className="truncate">
-                                    <p className="text-xs truncate">{org.name}</p>
+                                    <p className="text-xs truncate">
+                                      {org.name}
+                                    </p>
                                     <p className="text-[9px] text-gray-400 dark:text-gray-500 uppercase tracking-wider capitalize font-semibold">
                                       {org.role || "Member"}
                                     </p>
@@ -803,7 +816,8 @@ const Navbar = () => {
                         </button>
                       </div>
 
-                      {(secondaryLinks.length > 0 || hasPermission("admin_panel", "view")) && (
+                      {(secondaryLinks.length > 0 ||
+                        hasPermission("admin_panel", "view")) && (
                         <div className="border-t border-gray-100 dark:border-gray-700 p-1">
                           {secondaryLinks.map((link) => {
                             const LinkIcon = link.icon;
@@ -826,8 +840,8 @@ const Navbar = () => {
                           {hasPermission("admin_panel", "view") && (
                             <button
                               onClick={() => {
-                                  setMenuOpen(false);
-                                  navigate("/admin-panel");
+                                setMenuOpen(false);
+                                navigate("/admin-panel");
                               }}
                               className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-300 rounded-xl transition-colors text-left cursor-pointer"
                               role="menuitem"
@@ -871,7 +885,9 @@ const Navbar = () => {
               className="md:hidden w-10 h-10 rounded-xl flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 cursor-pointer"
               onClick={() => setMobileOpen((s) => !s)}
               aria-expanded={mobileOpen}
-              aria-label={mobileOpen ? t("navbar.closeMenu") : t("navbar.openMenu")}
+              aria-label={
+                mobileOpen ? t("navbar.closeMenu") : t("navbar.openMenu")
+              }
             >
               {mobileOpen ? (
                 <X className="w-5 h-5" />
@@ -970,8 +986,12 @@ const Navbar = () => {
                           }`}
                           disabled={switchingOrg}
                         >
-                          <span className="truncate">{org.name} ({org.role || "Member"})</span>
-                          {isCurrent && <Check className="w-3.5 h-3.5 shrink-0 text-blue-600" />}
+                          <span className="truncate">
+                            {org.name} ({org.role || "Member"})
+                          </span>
+                          {isCurrent && (
+                            <Check className="w-3.5 h-3.5 shrink-0 text-blue-600" />
+                          )}
                         </button>
                       );
                     })
@@ -1076,6 +1096,19 @@ const Navbar = () => {
                 <Settings className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                 <span>{t("navbar.settings")}</span>
               </button>
+
+              {hasPermission("admin_panel", "view") && (
+                <button
+                  onClick={() => {
+                    setMobileOpen(false);
+                    navigate("/admin-panel");
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 rounded-xl transition-all cursor-pointer"
+                >
+                  <Sparkles className="w-4 h-4 text-yellow-500" />
+                  <span>{t("navbar.adminPanel")}</span>
+                </button>
+              )}
 
               <hr className="my-1.5 border-gray-100 dark:border-gray-700" />
 
