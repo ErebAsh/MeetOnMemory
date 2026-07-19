@@ -3,8 +3,7 @@ import { toast } from "react-toastify";
 import AppContent from "./AppContent.js";
 import { RBACProvider } from "./RBACContext.jsx";
 import { useNavigate } from "react-router-dom";
-import { authApi } from "../services";
-import apiClient from "../services/apiClient.js";
+import { authApi, csrfService } from "../services";
 
 export const AppContextProvider = ({ children }) => {
   const backendUrl =
@@ -39,13 +38,8 @@ export const AppContextProvider = ({ children }) => {
 
   const getAuthState = useCallback(async () => {
     try {
-      // Fetch CSRF token first
       try {
-        const { data: csrfData } = await authApi.getCsrfToken();
-        if (csrfData && csrfData.csrfToken) {
-          apiClient.defaults.headers.common["X-CSRF-Token"] =
-            csrfData.csrfToken;
-        }
+        await csrfService.fetchToken();
       } catch (csrfErr) {
         console.error("Failed to fetch CSRF token", csrfErr);
         toast.error(
@@ -93,6 +87,7 @@ export const AppContextProvider = ({ children }) => {
       setIsLoggedin(false);
       setUserData(null);
       localStorage.removeItem("userData");
+      csrfService.clearToken();
     } catch {
       toast.error("Failed to logout");
     } finally {
