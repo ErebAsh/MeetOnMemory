@@ -54,6 +54,7 @@ router.post(
   "/summarize",
   userAuth,
   writeLimiter,
+  requireOrgMembership,
   requirePermission("meetings", "transcribe"),
   summarizeMeeting,
 );
