@@ -1,4 +1,5 @@
 import csrf from "csurf";
+import { sendCsrfInvalid } from "../utils/csrfErrors.js";
 
 const csrfProtection = csrf({
   cookie: {
@@ -25,7 +26,14 @@ export const csrfMiddleware = (req, res, next) => {
   ) {
     return next();
   }
-  return csrfProtection(req, res, next);
+
+  return csrfProtection(req, res, (err) => {
+    if (!err) return next();
+    if (err.code === "EBADCSRFTOKEN") {
+      return sendCsrfInvalid(res);
+    }
+    return next(err);
+  });
 };
 
 export const csrfTokenProvider = csrfProtection;

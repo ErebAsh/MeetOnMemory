@@ -1,5 +1,6 @@
 import { ZodError } from "zod";
 import { AppError } from "../utils/errors.js";
+import { sendCsrfInvalid } from "../utils/csrfErrors.js";
 
 /**
  * Global Express error-handling middleware.
@@ -15,17 +16,14 @@ import { AppError } from "../utils/errors.js";
  *  • ZodError — schema parse failure → 400 with per-field issue list.
  *  • Mongoose ValidationError — maps to 400 with field messages.
  *  • Mongoose CastError — maps to 400 "Invalid ID" response.
- *  • CSRF token failure (EBADCSRFTOKEN) — maps to 403.
+ *  • CSRF token failure (EBADCSRFTOKEN) — maps to 403 + CSRF_INVALID.
  *  • Everything else — 500 Internal Server Error (message hidden in prod).
  */
 // eslint-disable-next-line no-unused-vars
 const errorHandler = (err, req, res, next) => {
   // ── CSRF ────────────────────────────────────────────────────
   if (err.code === "EBADCSRFTOKEN") {
-    return res.status(403).json({
-      success: false,
-      message: "CSRF token validation failed.",
-    });
+    return sendCsrfInvalid(res);
   }
 
   // ── Zod schema validation errors ────────────────────────────
