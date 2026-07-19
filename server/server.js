@@ -30,6 +30,10 @@ import transcriptRoutes from "./routes/transcriptRoutes.js";
 // Import slackService to register its eventBus 'mom.generated' listener.
 // The import itself is enough — the listener is set up at module load time.
 import "./services/slackService.js";
+// Import conflictScanTrigger to register its eventBus 'mom.generated'
+// listener, which enqueues a background contradiction scan per
+// organization whenever new decisions/action items are extracted.
+import "./services/conflictScanTrigger.js";
 
 import { initVectorStore } from "./utils/embeddingUtils.js";
 import meetingSocket from "./socket/meetingSocket.js";
@@ -37,7 +41,11 @@ import documentSync from "./socket/documentSync.js";
 import { initRedis, getRedisClient } from "./services/redisService.js";
 import { createAdapter } from "@socket.io/redis-adapter";
 import { createClient } from "redis";
-import { initAIWorker, initDataExportWorker } from "./services/queueService.js";
+import {
+  initAIWorker,
+  initDataExportWorker,
+  initConflictScanWorker,
+} from "./services/queueService.js";
 import { initWebhookWorker } from "./services/webhookDispatcherService.js";
 import { globalLimiter } from "./middleware/rateLimiter.js";
 import errorHandler from "./middleware/errorHandler.js";
@@ -135,6 +143,7 @@ if (process.env.NODE_ENV !== "test") {
       safeInit("Redis", () => initRedis());
       safeInit("AI Worker", () => initAIWorker(app));
       safeInit("Data Export Worker", () => initDataExportWorker(app));
+      safeInit("Conflict Scan Worker", () => initConflictScanWorker(app));
       safeInit("Webhook Worker", () => initWebhookWorker());
       safeInit("Vector Store", () => initVectorStore());
     });

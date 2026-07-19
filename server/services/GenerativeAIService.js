@@ -114,6 +114,76 @@ ${textToSummarize}
   }
 };
 
+/**
+ * AI-powered contradiction classification for two candidate-conflicting
+ * memory texts (see services/conflictDetection/ContradictionAnalyzer.js).
+ * Used to refine/explain conflicts already flagged by the fast, offline
+ * heuristic in utils/contradictionSignals.js — never as the sole signal,
+ * so the pipeline degrades gracefully when no API key is configured.
+ *
+ * Returns null (rather than throwing) on any failure or missing
+ * configuration, so callers can fall back to the heuristic result.
+ */
+export const classifyContradiction = async (textA, textB) => {
+  if (!GEMINI_API_KEY) return null;
+
+  const prompt = `
+You are analyzing two statements extracted from an organization's meeting
+knowledge graph to determine whether they contradict each other.
+
+Statement A: "${textA}"
+Statement B: "${textB}"
+
+Classify their relationship as exactly one of:
+- "contradiction": they cannot both be true at the same time (e.g. a
+  deadline, owner, or decision was recorded differently)
+- "entailment": they are paraphrases / restatements of the same fact
+- "neutral": unrelated, or one is a natural update/continuation that
+  doesn't conflict (e.g. a status change from "open" to "resolved")
+
+Return ONLY a JSON object, no Markdown, no commentary:
+{
+  "relation": "contradiction" | "entailment" | "neutral",
+  "confidence": <integer 0-100>,
+  "explanation": "<one concise sentence, plain English, for a non-technical reviewer>"
+}
+`;
+
+  try {
+    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
+    const result = await model.generateContent(prompt);
+    const outputText = result.response.text();
+
+    let parsed;
+    try {
+      parsed = JSON.parse(outputText);
+    } catch {
+      const match = outputText.match(/\{[\s\S]*\}/);
+      parsed = match ? JSON.parse(match[0]) : null;
+    }
+
+    if (
+      !parsed ||
+      !["contradiction", "entailment", "neutral"].includes(parsed.relation)
+    ) {
+      return null;
+    }
+
+    return {
+      relation: parsed.relation,
+      confidence: Math.max(0, Math.min(100, Number(parsed.confidence) || 0)),
+      explanation: String(parsed.explanation || "").slice(0, 500),
+    };
+  } catch (err) {
+    console.error(
+      "❌ Gemini contradiction classification failed:",
+      err.message,
+    );
+    return null;
+  }
+};
+
 export const normalizeMoM = (structured, title, date) => ({
   title: structured.title || title || `Meeting on ${date}`,
   date: structured.date || date,
