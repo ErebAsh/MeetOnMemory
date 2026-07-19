@@ -63,6 +63,21 @@ describe("ProtectedRoute", () => {
     expect(screen.getByTestId("location-display")).toHaveTextContent("/login");
   });
 
+  it("redirects to login when logged in but user data is missing", () => {
+    vi.spyOn(useRBACHook, "useRBAC").mockReturnValue({
+      hasPermission: vi.fn(),
+    });
+
+    renderWithProviders(
+      <ProtectedRoute>
+        <div>Protected Content</div>
+      </ProtectedRoute>,
+      { loading: false, isLoggedin: true, userData: null },
+    );
+
+    expect(screen.getByTestId("location-display")).toHaveTextContent("/login");
+  });
+
   it("redirects to /organizations if onboarding is not completed and not on an onboarding page", () => {
     vi.spyOn(useRBACHook, "useRBAC").mockReturnValue({
       hasPermission: vi.fn(),

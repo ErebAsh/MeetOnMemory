@@ -24,7 +24,7 @@ const ProtectedRoute = ({
   }
 
   // If user not logged in — block access to protected routes
-  if (!isLoggedin) {
+  if (!isLoggedin || !userData) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

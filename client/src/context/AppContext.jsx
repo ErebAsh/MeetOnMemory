@@ -12,8 +12,13 @@ export const AppContextProvider = ({ children }) => {
   const [isLoggedin, setIsLoggedin] = useState(false);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
+
+  const clearAuthState = useCallback(() => {
+    setIsLoggedin(false);
+    setUserData(null);
+    localStorage.removeItem("userData");
+  }, []);
 
   const getUserData = useCallback(async () => {
     try {
@@ -36,62 +41,60 @@ export const AppContextProvider = ({ children }) => {
     }
   }, []);
 
-  const getAuthState = useCallback(async () => {
-    try {
+  // Single bootstrap path for refresh, login, and registration
+  const initializeAuth = useCallback(
+    async ({ quiet = false } = {}) => {
       try {
-        await csrfService.fetchToken();
-      } catch (csrfErr) {
-        console.error("Failed to fetch CSRF token", csrfErr);
-        toast.error(
-          "Failed to initialize secure session. Please check your connection and refresh.",
-        );
-      }
+        try {
+          await csrfService.fetchToken();
+        } catch (csrfErr) {
+          console.error("Failed to fetch CSRF token", csrfErr);
+          if (!quiet) {
+            toast.error(
+              "Failed to initialize secure session. Please check your connection and refresh.",
+            );
+          }
+        }
 
-      const { data } = await authApi.getAuthState();
+        const { data } = await authApi.getAuthState();
+        if (!data.success) {
+          clearAuthState();
+          return null;
+        }
 
-      if (data.success) {
+        const user = await getUserData();
+        if (!user) {
+          clearAuthState();
+          return null;
+        }
+
         setIsLoggedin(true);
-        await getUserData();
-      } else {
-        setIsLoggedin(false);
-        setUserData(null);
-        localStorage.removeItem("userData");
-      }
-    } catch {
-      setIsLoggedin(false);
-      setUserData(null);
-      localStorage.removeItem("userData");
-
-      if (!isLoggingOut) {
+        return user;
+      } catch {
         console.log("User not authenticated");
+        clearAuthState();
+        return null;
+      } finally {
+        setLoading(false);
       }
-    } finally {
-      setLoading(false);
-    }
-  }, [getUserData, isLoggingOut]);
+    },
+    [clearAuthState, getUserData],
+  );
 
   useEffect(() => {
-    getAuthState();
-  }, [getAuthState]);
+    initializeAuth({ quiet: true });
+  }, [initializeAuth]);
 
   const logoutUser = async () => {
     try {
-      setIsLoggingOut(true);
-
       toast.success("Logged out successfully");
-
-      navigate("/"); //FORCE REDIRECT TO LANDING PAGE (Prevents the 404 page)
+      navigate("/");
 
       await authApi.logout();
-
-      setIsLoggedin(false);
-      setUserData(null);
-      localStorage.removeItem("userData");
+      clearAuthState();
       csrfService.clearToken();
     } catch {
       toast.error("Failed to logout");
-    } finally {
-      setIsLoggingOut(false);
     }
   };
 
@@ -102,6 +105,7 @@ export const AppContextProvider = ({ children }) => {
     userData,
     setUserData,
     getUserData,
+    initializeAuth,
     logoutUser,
     loading,
   };
