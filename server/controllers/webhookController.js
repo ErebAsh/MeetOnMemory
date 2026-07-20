@@ -2,6 +2,8 @@ import mongoose from "mongoose";
 import { URL } from "url";
 import { z } from "zod";
 import Webhook from "../models/Webhook.js";
+import WebhookDelivery from "../models/WebhookDelivery.js";
+import { redeliverWebhookDelivery } from "../services/webhookDispatcherService.js";
 import Membership from "../models/membershipModel.js";
 import Organization from "../models/organizationModel.js";
 import {
@@ -333,6 +335,135 @@ export const deleteWebhook = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       message: "Webhook deleted successfully.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getDeliveriesQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(20),
+  status: z.enum(["success", "failed", "dlq"]).optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+});
+
+/**
+ * 🟢 Get delivery audit logs for a specific webhook subscription
+ * GET /api/webhooks/:id/deliveries?page=1&limit=20&status=failed&startDate=...&endDate=...
+ */
+export const getWebhookDeliveries = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const userId = getUserId(req);
+
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      throw new ValidationError("Valid Webhook ID is required.");
+    }
+
+    const webhook = await Webhook.findById(id);
+    if (!webhook) {
+      throw new NotFoundError("Webhook subscription not found.");
+    }
+
+    // Authorization check
+    const isAuthorized = await hasAdminPermission(
+      userId,
+      webhook.organizationId,
+    );
+    if (!isAuthorized) {
+      throw new ForbiddenError(
+        "Forbidden. Only organization owners and admins can view webhook delivery logs.",
+      );
+    }
+
+    const { page, limit, status, startDate, endDate } =
+      getDeliveriesQuerySchema.parse(req.query);
+
+    // Build typed query object avoiding taint flags for static analysis (CodeQL)
+    const cleanWebhookId = new mongoose.Types.ObjectId(id);
+    const query = { webhookId: cleanWebhookId };
+
+    if (status) {
+      query.status = String(status);
+    }
+
+    if (startDate || endDate) {
+      const dateFilter = {};
+      if (startDate && !isNaN(Date.parse(startDate))) {
+        dateFilter.$gte = new Date(startDate);
+      }
+      if (endDate && !isNaN(Date.parse(endDate))) {
+        dateFilter.$lte = new Date(endDate);
+      }
+      if (Object.keys(dateFilter).length > 0) {
+        query.createdAt = dateFilter;
+      }
+    }
+
+    const total = await WebhookDelivery.countDocuments(query);
+    const deliveries = await WebhookDelivery.find(query)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    return res.status(200).json({
+      success: true,
+      deliveries,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit) || 1,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * 🟢 Manually redeliver a past webhook delivery payload
+ * POST /api/webhooks/deliveries/:deliveryId/redeliver
+ */
+export const redeliverWebhookPayload = async (req, res, next) => {
+  try {
+    const { deliveryId } = req.params;
+    const userId = getUserId(req);
+
+    if (!deliveryId || !mongoose.Types.ObjectId.isValid(deliveryId)) {
+      throw new ValidationError("Valid Webhook Delivery ID is required.");
+    }
+
+    const deliveryRecord = await WebhookDelivery.findById(deliveryId);
+    if (!deliveryRecord) {
+      throw new NotFoundError("Webhook delivery log record not found.");
+    }
+
+    // Authorization check
+    const isAuthorized = await hasAdminPermission(
+      userId,
+      deliveryRecord.organizationId,
+    );
+    if (!isAuthorized) {
+      throw new ForbiddenError(
+        "Forbidden. Only organization owners and admins can trigger webhook redeliveries.",
+      );
+    }
+
+    const newDelivery = await redeliverWebhookDelivery(deliveryId);
+
+    if (!newDelivery) {
+      throw new ValidationError(
+        "Redelivery skipped: the target webhook is inactive or paused.",
+      );
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Webhook payload redelivered successfully.",
+      delivery: newDelivery,
     });
   } catch (error) {
     next(error);
