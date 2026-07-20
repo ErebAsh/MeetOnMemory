@@ -1,11 +1,18 @@
 import rateLimit from "express-rate-limit";
-import { RedisStore } from "rate-limit-redis";
 import { getRedisClient } from "../services/redisService.js";
+
+let RedisStore;
+try {
+  const mod = await import("rate-limit-redis");
+  RedisStore = mod.RedisStore || mod.default;
+} catch (e) {
+  // rate-limit-redis optional dependency fallback
+}
 
 // Create a shared store that uses Redis if available, otherwise falls back to in-memory
 const createStore = () => {
   const redisClient = getRedisClient();
-  if (redisClient) {
+  if (redisClient && RedisStore) {
     return new RedisStore({
       sendCommand: (...args) => redisClient.sendCommand(...args),
     });

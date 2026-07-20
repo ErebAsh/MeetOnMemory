@@ -285,7 +285,7 @@ export const generateMeetingMoM = async (
     throw new ValidationError("No transcript provided.");
   }
 
-  if (aiQueue) {
+  if (aiQueue && aiQueue.isActive) {
     console.log(
       `🚀 Queueing MoM generation job for ${meetingId || "transcript-only"}...`,
     );
