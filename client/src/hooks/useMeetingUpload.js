@@ -32,7 +32,9 @@ const useMeetingUpload = () => {
   };
 
   const { isDragging, handlers } = useDragAndDrop(handleDropCallback);
-  const { uploadProgress, isUploading, uploadMeeting } = useUploadMeetingApi();
+  const { status, progress, uploadMeeting } = useUploadMeetingApi();
+  const isUploading = status === "pending";
+  const uploadProgress = progress;
 
   const resetUpload = (setSummary, setTitle) => {
     setFile(null);
@@ -52,10 +54,16 @@ const useMeetingUpload = () => {
     }
     setTranscript("");
     setMeetingId(null);
-    uploadMeeting(file, title, (data) => {
-      setTranscript(data.transcript || "");
-      setMeetingId(data.meetingId || null);
-      if (data.autoTitle && setTitle) setTitle(data.autoTitle);
+    uploadMeeting(file, title, {
+      onSuccess: (data) => {
+        toast.success("Transcription complete!");
+        setTranscript(data.transcript || "");
+        setMeetingId(data.meetingId || null);
+        if (data.autoTitle && setTitle) setTitle(data.autoTitle);
+      },
+      onError: (error) => {
+        toast.error(error.message || "Upload failed");
+      },
     });
   };
 

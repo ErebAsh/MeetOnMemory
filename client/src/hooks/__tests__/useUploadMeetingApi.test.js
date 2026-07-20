@@ -2,14 +2,6 @@ import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import useUploadMeetingApi from "../useUploadMeetingApi";
 import { meetingApi } from "../../services";
-import { toast } from "react-toastify";
-
-vi.mock("react-toastify", () => ({
-  toast: {
-    error: vi.fn(),
-    success: vi.fn(),
-  },
-}));
 
 vi.mock("../../services", () => ({
   meetingApi: {
@@ -25,20 +17,25 @@ describe("useUploadMeetingApi hook", () => {
   it("should initialize with default states", () => {
     const { result } = renderHook(() => useUploadMeetingApi());
 
-    expect(result.current.uploadProgress).toBe(0);
-    expect(result.current.isUploading).toBe(false);
+    expect(result.current.progress).toBe(0);
+    expect(result.current.status).toBe("idle");
+    expect(result.current.data).toBeNull();
+    expect(result.current.error).toBeNull();
   });
 
   it("should show error if no file is provided", async () => {
     const { result } = renderHook(() => useUploadMeetingApi());
+    const onError = vi.fn();
 
     await act(async () => {
-      await result.current.uploadMeeting(null, "Test Title", vi.fn());
+      await result.current.uploadMeeting(null, "Test Title", { onError });
     });
 
-    expect(toast.error).toHaveBeenCalledWith(
+    expect(result.current.status).toBe("error");
+    expect(result.current.error?.message).toBe(
       "Please select an audio file first.",
     );
+    expect(onError).toHaveBeenCalled();
   });
 
   it("should successfully upload a file and call onSuccess", async () => {
@@ -50,13 +47,13 @@ describe("useUploadMeetingApi hook", () => {
     const onSuccess = vi.fn();
 
     await act(async () => {
-      await result.current.uploadMeeting(file, "Title", onSuccess);
+      await result.current.uploadMeeting(file, "Title", { onSuccess });
     });
 
     expect(meetingApi.uploadMeeting).toHaveBeenCalled();
-    expect(toast.success).toHaveBeenCalledWith("Transcription complete!");
     expect(onSuccess).toHaveBeenCalledWith(mockResponse.data);
-    expect(result.current.isUploading).toBe(false);
+    expect(result.current.status).toBe("success");
+    expect(result.current.progress).toBe(100);
   });
 
   it("should handle upload failure", async () => {
@@ -65,12 +62,14 @@ describe("useUploadMeetingApi hook", () => {
 
     const { result } = renderHook(() => useUploadMeetingApi());
     const file = new File(["dummy content"], "test.mp3", { type: "audio/mp3" });
+    const onError = vi.fn();
 
     await act(async () => {
-      await result.current.uploadMeeting(file, "Title", vi.fn());
+      await result.current.uploadMeeting(file, "Title", { onError });
     });
 
-    expect(toast.error).toHaveBeenCalledWith("Upload failed");
-    expect(result.current.isUploading).toBe(false);
+    expect(onError).toHaveBeenCalled();
+    expect(result.current.status).toBe("error");
+    expect(result.current.error?.message).toBe("Upload failed");
   });
 });
