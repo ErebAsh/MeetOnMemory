@@ -13,6 +13,9 @@
  */
 
 import Organization from "../models/organizationModel.js";
+import User from "../models/userModel.js";
+import jwt from "jsonwebtoken";
+import { hasPermission } from "../utils/rbacPermissions.js";
 import * as MeetingService from "../services/MeetingService.js";
 import {
   verifySlackSignature,
@@ -80,13 +83,20 @@ export const slackInstall = async (req, res, next) => {
       });
     }
 
+    // Generate JWT for state to protect against CSRF and verify authorization on callback
+    const stateToken = jwt.sign(
+      { orgId: organizationId, userId: req.user._id.toString() },
+      process.env.JWT_SECRET,
+      { expiresIn: "15m" }
+    );
+
     const redirectUri = process.env.SLACK_REDIRECT_URI;
     const scopes = "commands,chat:write,channels:read";
 
     const params = new URLSearchParams({
       client_id: clientId,
       scope: scopes,
-      state: organizationId,
+      state: stateToken,
       ...(redirectUri && { redirect_uri: redirectUri }),
     });
 
@@ -108,13 +118,23 @@ export const slackInstall = async (req, res, next) => {
  */
 export const slackOAuthRedirect = async (req, res, next) => {
   try {
-    const { code, state: organizationId, error: slackError } = req.query;
+    const { code, state: stateToken, error: slackError } = req.query;
 
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
 
-    if (organizationId && (typeof organizationId !== "string" || !/^[0-9a-fA-F]{24}$/.test(organizationId))) {
-      return res.status(400).json({ success: false, message: "Invalid organizationId format." });
+    if (!stateToken || typeof stateToken !== "string") {
+      return res.status(400).json({ success: false, message: "Missing OAuth state." });
     }
+
+    let decodedState;
+    try {
+      decodedState = jwt.verify(stateToken, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(400).json({ success: false, message: "Invalid or expired OAuth state." });
+    }
+
+    const organizationId = decodedState.orgId;
+    const userId = decodedState.userId;
 
     // Handle user-denied or Slack error cases
     if (slackError) {
@@ -130,10 +150,14 @@ export const slackOAuthRedirect = async (req, res, next) => {
         .json({ success: false, message: "Missing or invalid OAuth code from Slack." });
     }
 
-    if (!organizationId) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Missing organizationId in OAuth state." });
+    // Verify the user who initiated the install is still authorized for this org
+    const user = await User.findById(userId);
+    if (!user || user.organization?.toString() !== organizationId) {
+      return res.status(403).json({ success: false, message: "Unauthorized organization binding." });
+    }
+
+    if (!hasPermission(user.role || "guest", "settings", "edit")) {
+      return res.status(403).json({ success: false, message: "Insufficient permissions to install integrations." });
     }
 
     // Verify the organization exists before persisting anything

@@ -286,51 +286,94 @@ describe("GET /api/slack/install", () => {
 // Integration tests — /api/slack/oauth_redirect
 
 describe("GET /api/slack/oauth_redirect", () => {
+  const JWT_SECRET = process.env.JWT_SECRET || "test_jwt_secret";
+
+  const createValidState = (orgId, userId) => {
+    return jwt.sign({ orgId: orgId.toString(), userId: userId.toString() }, JWT_SECRET, { expiresIn: "15m" });
+  };
+
   it("returns 400 when no code is provided", async () => {
+    const fakeOrgId = new mongoose.Types.ObjectId();
+    const fakeUserId = new mongoose.Types.ObjectId();
+    const stateToken = createValidState(fakeOrgId, fakeUserId);
+
     const res = await request(app)
       .get("/api/slack/oauth_redirect")
-      .query({ state: new mongoose.Types.ObjectId().toString() });
+      .query({ state: stateToken });
 
     expect(res.status).toBe(400);
     expect(res.body.message).toMatch(/code/i);
   });
 
-  it("returns 400 when no state (organizationId) is provided", async () => {
+  it("returns 400 when no state is provided", async () => {
     const res = await request(app)
       .get("/api/slack/oauth_redirect")
       .query({ code: "fake_code" });
 
     expect(res.status).toBe(400);
-    expect(res.body.message).toMatch(/organizationId/i);
+    expect(res.body.message).toMatch(/oauth state/i);
   });
 
-  it("returns 404 when organization does not exist", async () => {
-    const fakeOrgId = new mongoose.Types.ObjectId().toString();
+  it("returns 403 when user is not authorized for the organization", async () => {
+    // Seed user without organization or permissions
+    const user = await User.create({
+      name: "Unauthorized User",
+      email: `unauth-${Math.random()}@example.com`,
+      password: "password123",
+      role: "guest",
+    });
+    const fakeOrgId = new mongoose.Types.ObjectId();
+    const stateToken = createValidState(fakeOrgId, user._id);
 
     const res = await request(app)
       .get("/api/slack/oauth_redirect")
-      .query({ code: "fake_code", state: fakeOrgId });
+      .query({ code: "fake_code", state: stateToken });
+
+    expect(res.status).toBe(403);
+    expect(res.body.message).toMatch(/unauthorized organization binding/i);
+  });
+
+  it("returns 404 when organization does not exist", async () => {
+    const fakeOrgId = new mongoose.Types.ObjectId();
+    const owner = await User.create({
+      name: "Fake Org Owner",
+      email: `fakeorg-${Math.random()}@example.com`,
+      password: "password123",
+      role: "admin",
+      organization: fakeOrgId, // Bind user to the fake org
+    });
+
+    const stateToken = createValidState(fakeOrgId, owner._id);
+
+    const res = await request(app)
+      .get("/api/slack/oauth_redirect")
+      .query({ code: "fake_code", state: stateToken });
 
     expect(res.status).toBe(404);
     expect(res.body.message).toMatch(/organization not found/i);
   });
 
   it("saves Slack integration to org on successful OAuth", async () => {
-    // Seed org
+    // Seed org and authorized owner
     const owner = await User.create({
       name: "OAuth Owner",
       email: `oauthowner-${Math.random()}@example.com`,
       password: "password123",
+      role: "admin",
     });
     const org = await Organization.create({
       name: "OAuth Org",
       slug: "oauth-org-" + Math.random().toString(36).substring(7),
       owner: owner._id,
     });
+    // Associate user with the org so they pass the binding check
+    await User.findByIdAndUpdate(owner._id, { organization: org._id });
+
+    const stateToken = createValidState(org._id, owner._id);
 
     const res = await request(app)
       .get("/api/slack/oauth_redirect")
-      .query({ code: "valid_code", state: org._id.toString() });
+      .query({ code: "valid_code", state: stateToken });
 
     // axios.post is mocked to return a successful Slack response
     // So this should redirect (302) to the frontend with ?slackInstall=success
