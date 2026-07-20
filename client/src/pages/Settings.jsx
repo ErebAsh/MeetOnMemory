@@ -16,8 +16,10 @@ import {
   Lock,
   ChevronRight,
   Loader2,
+  Zap,
 } from "lucide-react";
 import useTheme from "../context/useTheme.jsx";
+import WebhooksManager from "../components/WebhooksManager.jsx";
 
 const Settings = () => {
   const { userData, logoutUser } = useContext(AppContent);
@@ -560,6 +562,19 @@ const Settings = () => {
               </div>
             </div>
           </div>
+
+          {/* Webhooks Management Section */}
+          {userData.organization && (
+            <div className="pt-2 fade-in-up stagger-6">
+              <WebhooksManager
+                organizationId={
+                  typeof userData.organization === "object"
+                    ? userData.organization._id
+                    : userData.organization
+                }
+              />
+            </div>
+          )}
         </div>
       </main>
     </div>

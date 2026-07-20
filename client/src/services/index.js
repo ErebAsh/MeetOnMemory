@@ -11,3 +11,4 @@ export * from "./notificationApi";
 export * from "./analyticsApi";
 export * from "./membershipRequestApi";
 export * from "./invitationApi";
+export * from "./webhookApi";
