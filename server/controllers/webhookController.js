@@ -11,47 +11,53 @@ import {
   NotFoundError,
 } from "../utils/errors.js";
 
-const isSafeWebhookUrl = (urlStr) => {
+import dns from "dns/promises";
+import ipaddr from "ipaddr.js";
+
+const isSafeWebhookUrl = async (urlStr) => {
   try {
     const parsed = new URL(urlStr);
     const hostname = parsed.hostname.toLowerCase();
 
-    // Block localhost names
+    // Block obvious localhosts immediately
     if (hostname === "localhost" || hostname === "localhost.localdomain") {
       return false;
     }
 
-    // Block IPv6 localhost
-    if (hostname === "[::1]" || hostname === "::1") {
+    // Resolve the hostname to an IP address
+    let resolvedIp;
+    try {
+      // dns.lookup checks /etc/hosts and DNS, returning the IP
+      const { address } = await dns.lookup(hostname);
+      resolvedIp = address;
+    } catch (err) {
+      // If we can't resolve it, it's not a valid safe public URL
       return false;
     }
 
-    // Block IPv4 loopback, private, and link-local ranges
-    const ipv4Regex = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
-    const match = hostname.match(ipv4Regex);
-    if (match) {
-      const parts = match.slice(1).map(Number);
-      if (parts.some((p) => p < 0 || p > 255)) return false;
+    // Parse the resolved IP using ipaddr.js
+    let addr;
+    try {
+      addr = ipaddr.parse(resolvedIp);
+    } catch (err) {
+      return false;
+    }
 
-      const [p1, p2] = parts;
+    // Check if the address is in a private, loopback, link-local, or otherwise restricted range
+    const range = addr.range();
 
-      // 127.x.x.x (Loopback)
-      if (p1 === 127) return false;
+    // ipaddr.js classifies public addresses as 'unicast'
+    // Private ranges are classified as 'private', 'loopback', 'linkLocal', etc.
+    if (range !== "unicast") {
+      return false;
+    }
 
-      // 10.x.x.x (Private class A)
-      if (p1 === 10) return false;
-
-      // 172.16.x.x - 172.31.x.x (Private class B)
-      if (p1 === 172 && p2 >= 16 && p2 <= 31) return false;
-
-      // 192.168.x.x (Private class C)
-      if (p1 === 192 && p2 === 168) return false;
-
-      // 169.254.x.x (Link-local)
-      if (p1 === 169 && p2 === 254) return false;
-
-      // 0.x.x.x or broadcast/any
-      if (p1 === 0) return false;
+    // Explicitly block known IPv4 mapped IPv6 loopbacks just in case
+    if (addr.kind() === "ipv6" && addr.isIPv4MappedAddress()) {
+      const v4addr = addr.toIPv4Address();
+      if (v4addr.range() !== "unicast") {
+        return false;
+      }
     }
 
     return true;
