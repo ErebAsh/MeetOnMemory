@@ -119,5 +119,26 @@ describe("Auth & CSRF regression", () => {
       expect(res.statusCode).not.toBe(403);
       expect(res.body.success).toBe(true);
     });
+
+    it("accepts organization join mutation with valid CSRF token", async () => {
+      const agent = request.agent(app);
+      const user = {
+        name: "Csrf Join",
+        email: uniqueEmail("csrf-join"),
+        password: "password123",
+      };
+
+      await agent.post("/api/auth/register").send(user);
+      const csrfRes = await agent.get("/api/csrf-token");
+      
+      const res = await agent
+        .post("/api/organizations/join")
+        .set("X-CSRF-Token", csrfRes.body.csrfToken)
+        .send({ inviteCode: "dummy-code" });
+
+      expect(res.body.code).not.toBe("CSRF_INVALID");
+      // The join will fail due to invalid invite code, but NOT due to CSRF
+      expect(res.statusCode).not.toBe(403);
+    });
   });
 });
