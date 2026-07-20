@@ -1,20 +1,26 @@
-import { useState } from "react";
-import { toast } from "react-toastify";
+import { useState, useCallback } from "react";
 import { meetingApi } from "../services";
 
 const useUploadMeetingApi = () => {
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [isUploading, setIsUploading] = useState(false);
+  const [state, setState] = useState({
+    status: "idle", // 'idle' | 'pending' | 'success' | 'error'
+    data: null,
+    error: null,
+    progress: 0,
+  });
 
-  const uploadMeeting = async (file, title, onSuccess) => {
+  const uploadMeeting = useCallback(async (file, title, options = {}) => {
+    const { onSuccess, onError } = options;
+
     if (!file) {
-      toast.error("Please select an audio file first.");
+      const error = new Error("Please select an audio file first.");
+      setState({ status: "error", data: null, error, progress: 0 });
+      if (onError) onError(error);
       return;
     }
 
     try {
-      setIsUploading(true);
-      setUploadProgress(0);
+      setState({ status: "pending", data: null, error: null, progress: 0 });
 
       const formData = new FormData();
       formData.append("file", file);
@@ -25,30 +31,37 @@ const useUploadMeetingApi = () => {
           const percent = Math.round(
             (progressEvent.loaded * 100) / progressEvent.total,
           );
-          setUploadProgress(percent);
+          setState((prev) => ({ ...prev, progress: percent }));
         },
       });
 
       if (res.data?.success) {
-        toast.success("Transcription complete!");
+        setState({
+          status: "success",
+          data: res.data,
+          error: null,
+          progress: 100,
+        });
         if (onSuccess) onSuccess(res.data);
       } else {
-        toast.error(res.data?.message || "Upload failed");
+        const errorMsg = res.data?.message || "Upload failed";
+        const error = new Error(errorMsg);
+        setState({ status: "error", data: null, error, progress: 0 });
+        if (onError) onError(error);
       }
     } catch (err) {
       console.error("Upload error:", err);
-      toast.error(
+      const errorMsg =
         err.response?.data?.message ||
-          err.message ||
-          "Server error during upload",
-      );
-    } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
+        err.message ||
+        "Server error during upload";
+      const error = new Error(errorMsg);
+      setState({ status: "error", data: null, error, progress: 0 });
+      if (onError) onError(error);
     }
-  };
+  }, []);
 
-  return { uploadProgress, isUploading, uploadMeeting };
+  return { ...state, uploadMeeting };
 };
 
 export default useUploadMeetingApi;
