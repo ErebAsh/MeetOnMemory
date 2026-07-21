@@ -4,6 +4,7 @@
 // All business logic lives in server/services/InvitationService.js.
 
 import * as InvitationService from "../services/InvitationService.js";
+import { sendSuccess, sendError } from "../utils/responseHandler.js";
 
 /**
  * ✅ Create Invitation
@@ -12,9 +13,7 @@ import * as InvitationService from "../services/InvitationService.js";
 export const createInvitation = async (req, res) => {
   try {
     if (!req.user || !req.user.id) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Authentication failed." });
+      return sendError(res, 401, "Authentication failed.");
     }
 
     const result = await InvitationService.createInvitation(
@@ -26,17 +25,13 @@ export const createInvitation = async (req, res) => {
       },
     );
 
-    res.status(201).json(result);
+    sendSuccess(res, result, null, 201);
   } catch (error) {
     console.error("❌ Error creating invitation:", error);
     if (error.code === 11000) {
-      return res
-        .status(409)
-        .json({ success: false, message: "Duplicate invitation not allowed." });
+      return sendError(res, 409, "Duplicate invitation not allowed.");
     }
-    res
-      .status(error.statusCode || 500)
-      .json({ success: false, message: error.message || "Server error" });
+    sendError(res, error.statusCode || 500, error.message || "Server error");
   }
 };
 
@@ -47,9 +42,7 @@ export const createInvitation = async (req, res) => {
 export const getOrganizationInvitations = async (req, res) => {
   try {
     if (!req.user || !req.user.id) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Authentication failed." });
+      return sendError(res, 401, "Authentication failed.");
     }
 
     const result = await InvitationService.getOrganizationInvitations(
@@ -58,12 +51,10 @@ export const getOrganizationInvitations = async (req, res) => {
       req.query.status,
     );
 
-    res.status(200).json(result);
+    sendSuccess(res, result);
   } catch (error) {
     console.error("❌ Error fetching invitations:", error);
-    res
-      .status(error.statusCode || 500)
-      .json({ success: false, message: error.message || "Server error" });
+    sendError(res, error.statusCode || 500, error.message || "Server error");
   }
 };
 
@@ -74,19 +65,15 @@ export const getOrganizationInvitations = async (req, res) => {
 export const getUserInvitations = async (req, res) => {
   try {
     if (!req.user || !req.user.id) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Authentication failed." });
+      return sendError(res, 401, "Authentication failed.");
     }
 
     const result = await InvitationService.getUserInvitations(req.user.id);
 
-    res.status(200).json(result);
+    sendSuccess(res, result);
   } catch (error) {
     console.error("❌ Error fetching user invitations:", error);
-    res
-      .status(error.statusCode || 500)
-      .json({ success: false, message: error.message || "Server error" });
+    sendError(res, error.statusCode || 500, error.message || "Server error");
   }
 };
 
@@ -97,9 +84,7 @@ export const getUserInvitations = async (req, res) => {
 export const acceptInvitation = async (req, res) => {
   try {
     if (!req.user || !req.user.id) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Authentication failed." });
+      return sendError(res, 401, "Authentication failed.");
     }
 
     const result = await InvitationService.acceptInvitation(
@@ -107,12 +92,10 @@ export const acceptInvitation = async (req, res) => {
       req.params.token,
     );
 
-    res.status(200).json(result);
+    sendSuccess(res, result);
   } catch (error) {
     console.error("❌ Error accepting invitation:", error);
-    res
-      .status(error.statusCode || 500)
-      .json({ success: false, message: error.message || "Server error" });
+    sendError(res, error.statusCode || 500, error.message || "Server error");
   }
 };
 
@@ -123,9 +106,7 @@ export const acceptInvitation = async (req, res) => {
 export const rejectInvitation = async (req, res) => {
   try {
     if (!req.user || !req.user.id) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Authentication failed." });
+      return sendError(res, 401, "Authentication failed.");
     }
 
     const result = await InvitationService.rejectInvitation(
@@ -133,12 +114,10 @@ export const rejectInvitation = async (req, res) => {
       req.params.token,
     );
 
-    res.status(200).json(result);
+    sendSuccess(res, result);
   } catch (error) {
     console.error("❌ Error rejecting invitation:", error);
-    res
-      .status(error.statusCode || 500)
-      .json({ success: false, message: error.message || "Server error" });
+    sendError(res, error.statusCode || 500, error.message || "Server error");
   }
 };
 
@@ -149,9 +128,7 @@ export const rejectInvitation = async (req, res) => {
 export const revokeInvitation = async (req, res) => {
   try {
     if (!req.user || !req.user.id) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Authentication failed." });
+      return sendError(res, 401, "Authentication failed.");
     }
 
     const result = await InvitationService.revokeInvitation(
@@ -159,12 +136,10 @@ export const revokeInvitation = async (req, res) => {
       req.params.id,
     );
 
-    res.status(200).json(result);
+    sendSuccess(res, result);
   } catch (error) {
     console.error("❌ Error revoking invitation:", error);
-    res
-      .status(error.statusCode || 500)
-      .json({ success: false, message: error.message || "Server error" });
+    sendError(res, error.statusCode || 500, error.message || "Server error");
   }
 };
 
@@ -178,12 +153,10 @@ export const getInvitationByToken = async (req, res) => {
       req.params.token,
     );
 
-    res.status(200).json(result);
+    sendSuccess(res, result);
   } catch (error) {
     console.error("❌ Error fetching invitation:", error);
-    res
-      .status(error.statusCode || 500)
-      .json({ success: false, message: error.message || "Server error" });
+    sendError(res, error.statusCode || 500, error.message || "Server error");
   }
 };
 
@@ -194,9 +167,7 @@ export const getInvitationByToken = async (req, res) => {
 export const resendInvitation = async (req, res) => {
   try {
     if (!req.user || !req.user.id) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Authentication failed." });
+      return sendError(res, 401, "Authentication failed.");
     }
 
     const result = await InvitationService.resendInvitation(
@@ -208,12 +179,10 @@ export const resendInvitation = async (req, res) => {
       },
     );
 
-    res.status(200).json(result);
+    sendSuccess(res, result);
   } catch (error) {
     console.error("❌ Error resending invitation:", error);
-    res
-      .status(error.statusCode || 500)
-      .json({ success: false, message: error.message || "Server error" });
+    sendError(res, error.statusCode || 500, error.message || "Server error");
   }
 };
 
@@ -224,9 +193,7 @@ export const resendInvitation = async (req, res) => {
 export const expireInvitation = async (req, res) => {
   try {
     if (!req.user || !req.user.id) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Authentication failed." });
+      return sendError(res, 401, "Authentication failed.");
     }
 
     const result = await InvitationService.expireInvitation(
@@ -234,11 +201,9 @@ export const expireInvitation = async (req, res) => {
       req.params.id,
     );
 
-    res.status(200).json(result);
+    sendSuccess(res, result);
   } catch (error) {
     console.error("❌ Error expiring invitation:", error);
-    res
-      .status(error.statusCode || 500)
-      .json({ success: false, message: error.message || "Server error" });
+    sendError(res, error.statusCode || 500, error.message || "Server error");
   }
 };
