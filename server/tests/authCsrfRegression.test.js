@@ -140,5 +140,30 @@ describe("Auth & CSRF regression", () => {
       // The join will fail due to invalid invite code, but NOT due to CSRF
       expect(res.statusCode).not.toBe(403);
     });
+
+    it("emits CSRF cookie with sameSite=strict in development and sameSite=none; secure in production", async () => {
+      // 1. Test development environment behavior
+      process.env.NODE_ENV = "development";
+      const devAgent = request.agent(app);
+      const devCsrfRes = await devAgent.get("/api/csrf-token");
+      const devCookies = devCsrfRes.headers["set-cookie"] || [];
+      const devCsrfCookie = devCookies.find((c) => c.startsWith("_csrf="));
+
+      expect(devCsrfCookie).toBeDefined();
+      expect(devCsrfCookie).toMatch(/SameSite=Strict/i);
+      expect(devCsrfCookie).not.toMatch(/Secure/i);
+
+      // 2. Test production environment behavior
+      process.env.NODE_ENV = "production";
+      const prodAgent = request.agent(app);
+      const prodCsrfRes = await prodAgent.get("/api/csrf-token");
+      const prodCookies = prodCsrfRes.headers["set-cookie"] || [];
+      const prodCsrfCookie = prodCookies.find((c) => c.startsWith("_csrf="));
+
+      expect(prodCsrfCookie).toBeDefined();
+      expect(prodCsrfCookie).toMatch(/SameSite=None/i);
+      expect(prodCsrfCookie).toMatch(/Secure/i);
+    });
   });
 });
+
