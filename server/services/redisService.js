@@ -60,4 +60,117 @@ export const initRedis = async () => {
   }
 };
 
-export const getRedisClient = () => (isRedisDisabled ? null : redisClient);
+let customTestClient = null;
+
+export const overrideRedisClientForTesting = (client) => {
+  customTestClient = client;
+};
+
+export const getRedisClient = () =>
+  customTestClient !== null
+    ? customTestClient
+    : isRedisDisabled
+      ? null
+      : redisClient;
+
+export const acquireLock = async (lockKey, ttlMs = 5000) => {
+  const client = getRedisClient();
+  if (!client || !client.isReady) return false;
+  try {
+    const res = await client.set(lockKey, "1", { NX: true, PX: ttlMs });
+    return res === "OK";
+  } catch (err) {
+    console.error(`⚠️ acquireLock error for ${lockKey}:`, err.message);
+    return false;
+  }
+};
+
+export const releaseLock = async (lockKey) => {
+  const client = getRedisClient();
+  if (!client || !client.isReady) return false;
+  try {
+    await client.del(lockKey);
+    return true;
+  } catch (err) {
+    console.error(`⚠️ releaseLock error for ${lockKey}:`, err.message);
+    return false;
+  }
+};
+
+export const setSearchCache = async (
+  cacheKey,
+  organizationId = "global",
+  payload,
+  softTTLSec = 300,
+  hardTTLSec = 3600,
+) => {
+  const client = getRedisClient();
+  if (!client || !client.isReady) return false;
+  try {
+    const orgId = organizationId || "global";
+    const cacheValue = {
+      payload,
+      cachedAt: Date.now(),
+      softTTL: softTTLSec,
+      hardTTL: hardTTLSec,
+    };
+    await client.setEx(cacheKey, hardTTLSec, JSON.stringify(cacheValue));
+    const setKey = `org:${orgId}:search_keys`;
+    await client.sAdd(setKey, cacheKey);
+    return true;
+  } catch (err) {
+    console.error(`⚠️ setSearchCache error for ${cacheKey}:`, err.message);
+    return false;
+  }
+};
+
+export const addKeyToOrgSet = async (organizationId = "global", cacheKey) => {
+  const client = getRedisClient();
+  if (!client || !client.isReady) return false;
+  try {
+    const orgId = organizationId || "global";
+    await client.sAdd(`org:${orgId}:search_keys`, cacheKey);
+    return true;
+  } catch (err) {
+    console.error(`⚠️ addKeyToOrgSet error:`, err.message);
+    return false;
+  }
+};
+
+export const getOrgKeys = async (organizationId = "global") => {
+  const client = getRedisClient();
+  if (!client || !client.isReady) return [];
+  try {
+    const orgId = organizationId || "global";
+    const setKey = `org:${orgId}:search_keys`;
+    return await client.sMembers(setKey);
+  } catch (err) {
+    console.error(`⚠️ getOrgKeys error:`, err.message);
+    return [];
+  }
+};
+
+export const clearOrgSetAndKeys = async (organizationId = "global") => {
+  const client = getRedisClient();
+  if (!client || !client.isReady) return 0;
+  try {
+    const orgId = organizationId || "global";
+    const setKey = `org:${orgId}:search_keys`;
+    const keys = await client.sMembers(setKey);
+
+    let deletedCount = 0;
+    if (keys && keys.length > 0) {
+      const multi = client.multi();
+      keys.forEach((key) => multi.del(key));
+      multi.del(setKey);
+      await multi.exec();
+      deletedCount = keys.length;
+    } else {
+      await client.del(setKey);
+    }
+    return deletedCount;
+  } catch (err) {
+    console.error(`⚠️ clearOrgSetAndKeys error:`, err.message);
+    return 0;
+  }
+};
