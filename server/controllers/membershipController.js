@@ -225,8 +225,17 @@ export const removeMembership = async (req, res) => {
     await membership.save();
 
     // Update user model for backward compatibility if it was their primary org
-    if (isSelf) {
-      await userModel.findByIdAndUpdate(req.user.id, {
+    const targetUserId = isSelf ? req.user.id : membership.user;
+    const removedOrgId =
+      membership.organization._id || membership.organization;
+
+    const targetUser = await userModel.findById(targetUserId);
+    if (
+      targetUser &&
+      targetUser.organization &&
+      targetUser.organization.toString() === removedOrgId.toString()
+    ) {
+      await userModel.findByIdAndUpdate(targetUserId, {
         organization: null,
         role: null,
       });
