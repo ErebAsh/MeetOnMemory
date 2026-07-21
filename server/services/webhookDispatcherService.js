@@ -380,7 +380,7 @@ export const initWebhookWorker = () => {
 // ─────────────────────────────────────────────────────────────
 
 eventBus.on("meeting.created", (meeting) => {
-  const orgId = meeting.organization;
+  const orgId = meeting?.organization;
   if (!orgId) return;
 
   const data = {
@@ -396,7 +396,7 @@ eventBus.on("meeting.created", (meeting) => {
 });
 
 eventBus.on("mom.generated", (meeting) => {
-  const orgId = meeting.organization;
+  const orgId = meeting?.organization;
   if (!orgId) return;
 
   const data = {

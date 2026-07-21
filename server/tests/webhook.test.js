@@ -117,7 +117,8 @@ describe("Webhook Endpoints & Dispatcher", () => {
           organizationId: organization._id.toString(),
           secret: "test_secret_key",
         });
-
+      if (res.statusCode !== 201)
+        console.log("CREATE WEBHOOK FAILED:", res.body);
       expect(res.statusCode).toEqual(201);
       expect(res.body.success).toBe(true);
       expect(res.body.webhook.targetUrl).toBe("https://example.com/webhook");
@@ -147,7 +148,7 @@ describe("Webhook Endpoints & Dispatcher", () => {
           events: ["meeting.created"],
           organizationId: organization._id.toString(),
         });
-
+      if (res.statusCode !== 400) console.log("VALIDATE URL FAILED:", res.body);
       expect(res.statusCode).toEqual(400);
     });
   });
@@ -187,7 +188,8 @@ describe("Webhook Endpoints & Dispatcher", () => {
           targetUrl: "https://example.com/new",
           isActive: false,
         });
-
+      if (res.statusCode !== 200)
+        console.log("UPDATE WEBHOOK FAILED:", res.body);
       expect(res.statusCode).toEqual(200);
       expect(res.body.webhook.targetUrl).toBe("https://example.com/new");
       expect(res.body.webhook.isActive).toBe(false);

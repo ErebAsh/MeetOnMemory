@@ -8,6 +8,7 @@ import {
 } from "../services/knowledgeGraphService.js";
 import User from "../models/userModel.js";
 import { createAndPushNotification } from "../services/notificationService.js";
+import { indexMeeting } from "../utils/embeddingUtils.js";
 
 export default async function processAudioJob(job, app) {
   const { meetingId, transcript, date, title, userId } = job.data;
@@ -171,9 +172,7 @@ ${textToSummarize}
 
     if (mom.agenda.length) {
       humanReadable += "📋 Agenda:\n";
-      mom.agenda.forEach(
-        (item, i) => (humanReadable += `${i + 1}. ${item}\n`),
-      );
+      mom.agenda.forEach((item, i) => (humanReadable += `${i + 1}. ${item}\n`));
       humanReadable += "\n";
     }
 
@@ -187,9 +186,7 @@ ${textToSummarize}
 
     if (mom.decisions.length) {
       humanReadable += "✅ Decisions:\n";
-      mom.decisions.forEach(
-        (d, i) => (humanReadable += `${i + 1}. ${d}\n`),
-      );
+      mom.decisions.forEach((d, i) => (humanReadable += `${i + 1}. ${d}\n`));
       humanReadable += "\n";
     }
 

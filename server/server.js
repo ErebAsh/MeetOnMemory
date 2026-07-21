@@ -30,6 +30,9 @@ import transcriptRoutes from "./routes/transcriptRoutes.js";
 // Import slackService, cacheInvalidationService, and conflictScanTrigger to register eventBus listeners.
 import "./services/slackService.js";
 import "./services/cacheInvalidationService.js";
+// Import conflictScanTrigger to register its eventBus 'mom.generated'
+// listener, which enqueues a background contradiction scan per
+// organization whenever new decisions/action items are extracted.
 import "./services/conflictScanTrigger.js";
 
 import { initVectorStore } from "./utils/embeddingUtils.js";

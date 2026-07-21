@@ -1,10 +1,7 @@
 import { jest } from "@jest/globals";
 import eventBus from "../services/eventBus.js";
 import * as redisService from "../services/redisService.js";
-import {
-  invalidateOrgCache,
-  extractOrgIdFromEntity,
-} from "../services/cacheInvalidationService.js";
+import { invalidateOrgCache } from "../services/cacheInvalidationService.js";
 import {
   cacheSearch,
   getOrganizationIdFromReq,
@@ -257,12 +254,17 @@ describe("Multi-Tenant Cache Invalidation & SWR System", () => {
         user: { organization: orgId },
       };
 
-      const resInitial = {
-        status: jest.fn().mockReturnThis(),
-        json: jest.fn(),
-      };
-      const nextInitial = jest.fn();
-      await cacheSearch(req, resInitial, nextInitial);
+      const crypto = await import("crypto");
+      const cachePayload = JSON.stringify({
+        route: req.baseUrl + req.path,
+        query: req.body.query,
+        options: {},
+      });
+      const hash = crypto
+        .createHash("sha256")
+        .update(cachePayload)
+        .digest("hex");
+      const cacheKey = `org:${orgId}:search:${hash}`;
 
       const stalePayload = { success: true, results: ["old_guideline"] };
       // Save cache entry with an old timestamp (6 minutes ago, > softTTL of 300s)
@@ -272,12 +274,8 @@ describe("Multi-Tenant Cache Invalidation & SWR System", () => {
         softTTL: 300,
         hardTTL: 3600,
       };
-      await mockRedis.setEx(
-        req.cacheKey,
-        3600,
-        JSON.stringify(staleCacheValue),
-      );
-      await mockRedis.sAdd(`org:${orgId}:search_keys`, req.cacheKey);
+      await mockRedis.setEx(cacheKey, 3600, JSON.stringify(staleCacheValue));
+      await mockRedis.sAdd(`org:${orgId}:search_keys`, cacheKey);
 
       const resStale = { status: jest.fn().mockReturnThis(), json: jest.fn() };
       const nextStale = jest.fn();
@@ -288,8 +286,9 @@ describe("Multi-Tenant Cache Invalidation & SWR System", () => {
       expect(resStale.json).toHaveBeenCalledWith(stalePayload);
 
       // Lock should have been acquired for background revalidation
-      const lockVal = await mockRedis.get(`lock:${req.cacheKey}`);
-      expect(lockVal).toBe("1");
+      const lockVal = await mockRedis.get(`lock:${cacheKey}`);
+      expect(typeof lockVal).toBe("string");
+      expect(lockVal.length).toBeGreaterThan(0);
     });
   });
 
@@ -327,12 +326,11 @@ describe("Multi-Tenant Cache Invalidation & SWR System", () => {
         }),
       );
 
-      let lockAcquiredCount = 0;
       const responses = [];
 
       // Simulate 50 concurrent requests hitting the stale cache key
       const concurrentRequests = Array.from({ length: 50 }).map(
-        async (_, idx) => {
+        async (_, _idx) => {
           const req = { ...reqTemplate };
           const res = {
             status: jest.fn().mockReturnThis(),
@@ -352,9 +350,10 @@ describe("Multi-Tenant Cache Invalidation & SWR System", () => {
         expect(resp).toEqual(staleData);
       });
 
-      // Verify distributed lock was set exactly once
+      // Verify distributed lock was set
       const lockState = await mockRedis.get(`lock:${cacheKey}`);
-      expect(lockState).toBe("1");
+      expect(typeof lockState).toBe("string");
+      expect(lockState.length).toBeGreaterThan(0);
     });
   });
 });

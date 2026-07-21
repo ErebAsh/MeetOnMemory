@@ -1,5 +1,6 @@
 import { createClient } from "redis";
 import dotenv from "dotenv";
+import crypto from "crypto";
 
 dotenv.config();
 
@@ -75,21 +76,40 @@ export const getRedisClient = () =>
 
 export const acquireLock = async (lockKey, ttlMs = 5000) => {
   const client = getRedisClient();
-  if (!client || !client.isReady) return false;
+  if (!client || !client.isReady) return null;
   try {
-    const res = await client.set(lockKey, "1", { NX: true, PX: ttlMs });
-    return res === "OK";
+    const lockToken = crypto.randomUUID();
+    const res = await client.set(lockKey, lockToken, { NX: true, PX: ttlMs });
+    return res === "OK" ? lockToken : null;
   } catch (err) {
     console.error(`⚠️ acquireLock error for ${lockKey}:`, err.message);
-    return false;
+    return null;
   }
 };
 
-export const releaseLock = async (lockKey) => {
+export const releaseLock = async (lockKey, lockToken) => {
+  if (!lockToken) return false;
   const client = getRedisClient();
   if (!client || !client.isReady) return false;
   try {
-    await client.del(lockKey);
+    if (typeof client.eval === "function") {
+      const luaScript = `
+        if redis.call("get", KEYS[1]) == ARGV[1] then
+          return redis.call("del", KEYS[1])
+        else
+          return 0
+        end
+      `;
+      await client.eval(luaScript, {
+        keys: [lockKey],
+        arguments: [lockToken],
+      });
+    } else {
+      const current = await client.get(lockKey);
+      if (current === lockToken) {
+        await client.del(lockKey);
+      }
+    }
     return true;
   } catch (err) {
     console.error(`⚠️ releaseLock error for ${lockKey}:`, err.message);
@@ -117,6 +137,8 @@ export const setSearchCache = async (
     await client.setEx(cacheKey, hardTTLSec, JSON.stringify(cacheValue));
     const setKey = `org:${orgId}:search_keys`;
     await client.sAdd(setKey, cacheKey);
+    // Set 24h expiration on the org search key index set to prevent unbounded growth
+    await client.expire(setKey, 86400).catch(() => {});
     return true;
   } catch (err) {
     console.error(`⚠️ setSearchCache error for ${cacheKey}:`, err.message);
@@ -129,7 +151,9 @@ export const addKeyToOrgSet = async (organizationId = "global", cacheKey) => {
   if (!client || !client.isReady) return false;
   try {
     const orgId = organizationId || "global";
-    await client.sAdd(`org:${orgId}:search_keys`, cacheKey);
+    const setKey = `org:${orgId}:search_keys`;
+    await client.sAdd(setKey, cacheKey);
+    await client.expire(setKey, 86400).catch(() => {});
     return true;
   } catch (err) {
     console.error(`⚠️ addKeyToOrgSet error:`, err.message);
@@ -156,19 +180,34 @@ export const clearOrgSetAndKeys = async (organizationId = "global") => {
   try {
     const orgId = organizationId || "global";
     const setKey = `org:${orgId}:search_keys`;
-    const keys = await client.sMembers(setKey);
-
-    let deletedCount = 0;
-    if (keys && keys.length > 0) {
-      const multi = client.multi();
-      keys.forEach((key) => multi.del(key));
-      multi.del(setKey);
-      await multi.exec();
-      deletedCount = keys.length;
+    if (typeof client.eval === "function") {
+      const luaScript = `
+        local keys = redis.call('smembers', KEYS[1])
+        local count = #keys
+        if count > 0 then
+          for i, key in ipairs(keys) do
+            redis.call('del', key)
+          end
+        end
+        redis.call('del', KEYS[1])
+        return count
+      `;
+      const res = await client.eval(luaScript, { keys: [setKey] });
+      return Number(res) || 0;
     } else {
-      await client.del(setKey);
+      const keys = await client.sMembers(setKey);
+      let deletedCount = 0;
+      if (keys && keys.length > 0) {
+        const multi = client.multi();
+        keys.forEach((key) => multi.del(key));
+        multi.del(setKey);
+        await multi.exec();
+        deletedCount = keys.length;
+      } else {
+        await client.del(setKey);
+      }
+      return deletedCount;
     }
-    return deletedCount;
   } catch (err) {
     console.error(`⚠️ clearOrgSetAndKeys error:`, err.message);
     return 0;

@@ -99,9 +99,9 @@ export const cacheSearch = async (req, res, next) => {
 
       // Stale cache hit (SWR flow)
       console.log(`⏳ Serving stale Redis cache (SWR) for query: "${query}"`);
-      const lockAcquired = await acquireLock(lockKey, 5000);
+      const lockToken = await acquireLock(lockKey, 5000);
 
-      if (!lockAcquired) {
+      if (!lockToken) {
         // Background revalidation is already in progress by another concurrent request
         return res.status(200).json(payload);
       }
@@ -109,32 +109,35 @@ export const cacheSearch = async (req, res, next) => {
       // Return stale payload immediately to client
       res.status(200).json(payload);
 
-      // Perform background revalidation asynchronously
-      const mockRes = {
-        headersSent: false,
-        status: function () {
-          return this;
-        },
-        json: function (freshData) {
+      // Perform background revalidation asynchronously without writing duplicate HTTP headers
+      res.headersSent = true;
+      const originalJson = res.json;
+      const swrJsonHook = function (freshData) {
+        if (freshData && freshData.success !== false) {
           setSearchCache(cacheKey, organizationId, freshData).finally(() => {
-            releaseLock(lockKey);
+            releaseLock(lockKey, lockToken);
           });
-          return this;
-        },
+        } else {
+          releaseLock(lockKey, lockToken);
+        }
+        return this;
       };
+      if (originalJson && typeof originalJson === "function") {
+        Object.setPrototypeOf(swrJsonHook, originalJson);
+        Object.assign(swrJsonHook, originalJson);
+      }
+      res.json = swrJsonHook;
 
       (globalThis.setImmediate || setTimeout)(() => {
-        // Trigger downstream middleware/controller with mock response wrapper
-        req.res = mockRes;
         next();
       }, 0);
       return;
     }
 
     // Cache Miss -> Lock acquisition for stampede protection
-    const lockAcquired = await acquireLock(lockKey, 5000);
+    const lockToken = await acquireLock(lockKey, 5000);
 
-    if (!lockAcquired) {
+    if (!lockToken) {
       // Another request is executing the search query; poll Redis until cache is populated
       for (let i = 0; i < 50; i++) {
         await new Promise((resolve) => setTimeout(resolve, 50));
@@ -157,10 +160,10 @@ export const cacheSearch = async (req, res, next) => {
     res.json = function (body) {
       if (req.cacheKey && body && body.success !== false) {
         setSearchCache(cacheKey, organizationId, body).finally(() => {
-          if (lockAcquired) releaseLock(lockKey);
+          if (lockToken) releaseLock(lockKey, lockToken);
         });
-      } else if (lockAcquired) {
-        releaseLock(lockKey);
+      } else if (lockToken) {
+        releaseLock(lockKey, lockToken);
       }
       return originalJson(body);
     };
