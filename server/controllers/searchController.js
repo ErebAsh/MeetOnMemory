@@ -5,6 +5,7 @@
 
 import { searchVectorStore } from "../utils/embeddingUtils.js";
 import Meeting from "../models/meetingModel.js";
+import Membership from "../models/membershipModel.js";
 import { getRedisClient } from "../services/redisService.js";
 import { buildExplanation } from "../utils/explanationBuilder.js";
 
@@ -48,13 +49,26 @@ export const semanticSearch = async (req, res) => {
       });
     }
 
-    // ✅ Step 4 — Fetch full meeting data for context
+    // ✅ Step 4 — Get user's active organizations for access control
+    const memberships = await Membership.find(
+      { user: req.user._id, status: "active" },
+      "organization",
+    ).lean();
+    const userOrgIds = memberships.map((m) => m.organization.toString());
+
+    // ✅ Step 5 — Fetch full meeting data for context, scoped to user's orgs
     const meetingIds = results.map((r) => r.meetingId);
-    const meetings = await Meeting.find({ _id: { $in: meetingIds } })
+    const meetings = await Meeting.find({
+      _id: { $in: meetingIds },
+      $or: [
+        { organization: { $in: userOrgIds } },
+        { uploadedBy: req.user._id },
+      ],
+    })
       .select("title summary createdAt")
       .lean();
 
-    // ✅ Step 5 — Merge vector results with DB data and filter out deleted meetings
+    // ✅ Step 6 — Merge vector results with DB data and filter out deleted meetings
     const mergedResults = results
       .map((r, index) => {
         const m = meetings.find((mt) => mt._id.toString() === r.meetingId);
@@ -85,7 +99,7 @@ export const semanticSearch = async (req, res) => {
       results: mergedResults,
     };
 
-    // ✅ Step 6 — Save to Redis Cache (if applicable)
+    // ✅ Step 7 — Save to Redis Cache (if applicable)
     if (req.cacheKey) {
       const redisClient = getRedisClient();
       if (redisClient && redisClient.isReady) {
@@ -98,7 +112,7 @@ export const semanticSearch = async (req, res) => {
       }
     }
 
-    // ✅ Step 7 — Send response
+    // ✅ Step 8 — Send response
     return res.status(200).json(responsePayload);
   } catch (error) {
     console.error("❌ Semantic search error:", error);
