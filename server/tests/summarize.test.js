@@ -30,26 +30,30 @@ describe("Meeting Summarization Authentication and Authorization", () => {
   let geminiSpy;
 
   beforeAll(() => {
-    geminiSpy = jest.spyOn(GoogleGenerativeAI.prototype, "getGenerativeModel").mockImplementation(() => {
-      return {
-        generateContent: jest.fn().mockResolvedValue({
-          response: {
-            text: () => JSON.stringify({
-              title: "AI Integration Strategy Discussion",
-              summary: "This is a summary of the meeting about AI Integration.",
-              agenda: ["AI Integration", "Timeline"],
-              key_discussions: ["discussion points"],
-              decisions: ["decision 1"],
-              action_items: [{ task: "action 1", owner: "User A" }],
-              questions_raised: ["question 1"],
-              keywords: ["AI"],
-              attendees: ["User A"],
-              notes: "some notes"
-            })
-          }
-        })
-      };
-    });
+    geminiSpy = jest
+      .spyOn(GoogleGenerativeAI.prototype, "getGenerativeModel")
+      .mockImplementation(() => {
+        return {
+          generateContent: jest.fn().mockResolvedValue({
+            response: {
+              text: () =>
+                JSON.stringify({
+                  title: "AI Integration Strategy Discussion",
+                  summary:
+                    "This is a summary of the meeting about AI Integration.",
+                  agenda: ["AI Integration", "Timeline"],
+                  key_discussions: ["discussion points"],
+                  decisions: ["decision 1"],
+                  action_items: [{ task: "action 1", owner: "User A" }],
+                  questions_raised: ["question 1"],
+                  keywords: ["AI"],
+                  attendees: ["User A"],
+                  notes: "some notes",
+                }),
+            },
+          }),
+        };
+      });
   });
 
   afterAll(() => {
@@ -166,9 +170,9 @@ describe("Meeting Summarization Authentication and Authorization", () => {
         .set("Authorization", `Bearer ${tokenA}`)
         .send({ meetingId: meetingA._id, date: new Date().toISOString() });
 
-      expect(res.statusCode).toEqual(200);
+      expect(res.statusCode).toEqual(202);
       expect(res.body.success).toBe(true);
-      expect(res.body.mom.title).toBe("AI Integration Strategy Discussion");
+      expect(res.body.message).toContain("started in the background");
     });
   });
 });
