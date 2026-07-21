@@ -61,7 +61,7 @@ describe("Gemini AI Endpoint Authentication and Authorization", () => {
       email: `member-${Math.random()}@example.com`,
       password: "password123",
       organization: organization._id,
-      role: "member",
+      role: "admin",
     });
     userToken = jwt.sign(
       { id: user._id },
@@ -71,7 +71,7 @@ describe("Gemini AI Endpoint Authentication and Authorization", () => {
     await Membership.create({
       user: user._id,
       organization: organization._id,
-      role: "member",
+      role: "admin",
       status: "active",
     });
 
@@ -117,7 +117,9 @@ describe("Gemini AI Endpoint Authentication and Authorization", () => {
 
       expect(res.statusCode).toEqual(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.insight).toBe("This is a mocked professional analytics summary highlighting trends and insights.");
+      expect(res.body.insight).toBe(
+        "This is a mocked professional analytics summary highlighting trends and insights.",
+      );
     });
   });
 });

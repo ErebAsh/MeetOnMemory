@@ -28,17 +28,17 @@ import {
   DEFAULT_DUPLICATE_EMBEDDING_CEILING,
   detectContradiction,
   isSameTopic,
-} from "./conflictDetection/ContradictionAnalyzer.js";
+} from "./ContradictionAnalyzer.js";
 import {
   buildConflictClusters,
   fetchMemoriesForConflictScan,
-} from "./conflictDetection/ConflictAggregator.js";
+} from "./ConflictAggregator.js";
 import {
   storeConflictCluster,
   resolveConflictSet,
   listConflictSets,
   getConflictSetById,
-} from "./conflictDetection/ConflictStorage.js";
+} from "./ConflictStorage.js";
 
 /**
  * Runs the full contradiction-detection pipeline for a single memory

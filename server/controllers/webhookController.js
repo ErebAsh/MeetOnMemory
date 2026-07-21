@@ -163,7 +163,7 @@ export const createWebhook = async (req, res, next) => {
 
     let validated;
     try {
-      validated = createWebhookSchema.parse(req.body);
+      validated = await createWebhookSchema.parseAsync(req.body);
     } catch (zodErr) {
       return next(zodErr);
     }
@@ -205,6 +205,7 @@ export const createWebhook = async (req, res, next) => {
       },
     });
   } catch (error) {
+    console.error("DEBUG WEBHOOK ERROR:", error);
     next(error);
   }
 };
@@ -271,7 +272,7 @@ export const updateWebhook = async (req, res, next) => {
 
     let validated;
     try {
-      validated = updateWebhookSchema.parse(req.body);
+      validated = await updateWebhookSchema.parseAsync(req.body);
     } catch (zodErr) {
       return next(zodErr);
     }
