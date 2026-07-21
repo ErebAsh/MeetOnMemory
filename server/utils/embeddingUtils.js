@@ -157,6 +157,7 @@ export const indexMeeting = async (meeting) => {
           summary,
           transcript: meeting.transcript,
           createdAt: meeting.createdAt || new Date(),
+          organization: meeting.organization?.toString() || null,
         },
       });
     }
