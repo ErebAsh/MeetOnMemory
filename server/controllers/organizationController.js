@@ -30,11 +30,9 @@ export const createOrJoinOrganization = async (req, res) => {
       });
     }
 
-    const io = req.app.get("io");
     const result = await OrganizationService.createOrJoinOrganization(
       req.user.id,
       name.trim(),
-      io,
     );
 
     res.status(200).json(result);
@@ -74,11 +72,9 @@ export const joinOrganization = async (req, res) => {
         .json({ success: false, message: "Authentication failed." });
     }
 
-    const io = req.app.get("io");
     const result = await OrganizationService.joinOrganizationById(
       req.user.id,
       req.body.organizationId,
-      io,
     );
 
     res.status(200).json(result);

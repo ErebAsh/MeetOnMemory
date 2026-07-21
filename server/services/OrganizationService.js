@@ -7,7 +7,7 @@
 import Organization from "../models/organizationModel.js";
 import userModel from "../models/userModel.js";
 import Membership from "../models/membershipModel.js";
-import { createAndPushNotification } from "./notificationService.js";
+import eventBus from "./eventBus.js";
 import AuditService from "./AuditService.js";
 import mongoose from "mongoose";
 import crypto from "crypto";
@@ -71,7 +71,7 @@ const generateSlug = (name) => {
  * - If not → create new org as Admin
  * - Returns the response payload (success, message, userData)
  */
-export const createOrJoinOrganization = async (userId, orgName, io) => {
+export const createOrJoinOrganization = async (userId, orgName) => {
   // Check if organization already exists (case-insensitive match)
   let organization = await Organization.findOne({
     name: { $regex: `^${orgName}$`, $options: "i" },
@@ -99,24 +99,13 @@ export const createOrJoinOrganization = async (userId, orgName, io) => {
     message = "Joined existing organization successfully.";
 
     // Notify the organization admin
-    if (
-      io &&
-      organization.createdBy &&
-      organization.createdBy.toString() !== userId.toString()
-    ) {
-      try {
-        await createAndPushNotification(
-          io,
-          organization.createdBy,
-          "New Member Joined",
-          `A new user has joined your organization: ${organization.name}.`,
-          "organizations",
-          "/team-members",
-          "View Team",
-        );
-      } catch (notifErr) {
-        console.error("⚠️ Notification error:", notifErr.message);
-      }
+    if (organization.createdBy && organization.createdBy.toString() !== userId.toString()) {
+      eventBus.emit("organization.joined", {
+        userId,
+        organizationId: organization._id,
+        organizationName: organization.name,
+        adminId: organization.createdBy
+      });
     }
   } else {
     // --- Create new organization ---
@@ -201,7 +190,7 @@ export const getAllOrganizations = async () => {
 /**
  * ✅ Join organization by ID (member flow)
  */
-export const joinOrganizationById = async (userId, organizationId, io) => {
+export const joinOrganizationById = async (userId, organizationId) => {
   if (!organizationId) {
     throw new ValidationError("organizationId is required.");
   }
@@ -235,25 +224,14 @@ export const joinOrganizationById = async (userId, organizationId, io) => {
     .findById(userId)
     .populate("organization", "name logo");
 
-  // Notify the organization admin
-  if (
-    io &&
-    organization.createdBy &&
-    organization.createdBy.toString() !== userId.toString()
-  ) {
-    try {
-      await createAndPushNotification(
-        io,
-        organization.createdBy,
-        "New Member Joined",
-        `A new user has joined your organization: ${organization.name}.`,
-        "organizations",
-        "/team-members",
-        "View Team",
-      );
-    } catch (notifErr) {
-      console.error("⚠️ Notification error:", notifErr.message);
-    }
+  // Notify organization admin
+  if (organization.createdBy) {
+    eventBus.emit("organization.joined", {
+      userId,
+      organizationId: organization._id,
+      organizationName: organization.name,
+      adminId: organization.createdBy
+    });
   }
 
   return {

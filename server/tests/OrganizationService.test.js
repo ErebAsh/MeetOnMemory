@@ -35,8 +35,10 @@ vi.mock("../services/AuditService.js", () => ({
   },
 }));
 
-vi.mock("../services/notificationService.js", () => ({
-  createAndPushNotification: vi.fn(),
+vi.mock("../services/eventBus.js", () => ({
+  default: {
+    emit: vi.fn(),
+  },
 }));
 
 import * as OrganizationService from "../services/OrganizationService.js";

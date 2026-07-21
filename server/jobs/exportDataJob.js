@@ -6,7 +6,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import jwt from "jsonwebtoken";
 import transporter from "../config/nodeMailer.js";
-import { createAndPushNotification } from "../services/notificationService.js";
+import eventBus from "../services/eventBus.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -113,18 +113,7 @@ export default async function exportDataJob(job, app) {
     await transporter.sendMail(mailOptions);
     console.log(`📧 Notification email sent to ${email}`);
 
-    const io = app ? app.get("io") : null;
-    if (io) {
-      await createAndPushNotification(
-        io,
-        userId,
-        "Data Export Ready",
-        "Your data export has been completed and emailed to you.",
-        "system",
-        downloadUrl,
-        "Download"
-      );
-    }
+    eventBus.emit("export.ready", { userId, downloadUrl });
 
     return { success: true, fileName };
   } catch (error) {

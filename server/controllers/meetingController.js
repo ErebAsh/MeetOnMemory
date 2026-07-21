@@ -144,7 +144,6 @@ export const createMeeting = async (req, res, next) => {
       uploaderId,
       req.user?.organization || null,
       validated,
-      req.app.get("io"),
     );
 
     return res.status(200).json({
@@ -267,7 +266,6 @@ export const summarizeMeeting = async (req, res, next) => {
       validated.transcript || "",
       validated.date,
       validated.title || null,
-      req.app.get("io"),
     );
 
     if (result.queued) {
@@ -439,13 +437,7 @@ export const notifyLiveMeeting = async (req, res, next) => {
       return next(zodErr);
     }
 
-    const io = req.app.get("io");
-    if (!io) {
-      throw new Error("Socket.IO not initialized");
-    }
-
     const { count } = await MeetingService.notifyLiveMeetingParticipants(
-      io,
       uploaderId,
       validated.roomId,
       validated.participants,

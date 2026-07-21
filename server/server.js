@@ -41,6 +41,7 @@ import documentSync from "./socket/documentSync.js";
 import { initRedis, getRedisClient } from "./services/redisService.js";
 import { createAdapter } from "@socket.io/redis-adapter";
 import { createClient } from "redis";
+import { initListeners } from "./events/listeners.js";
 import {
   initAIWorker,
   initDataExportWorker,
@@ -165,6 +166,9 @@ const io = new Server(server, {
 });
 
 app.set("io", io);
+
+// Initialize event listeners for WebSocket and Notifications
+initListeners(io);
 
 // REDIS PUB/SUB ADAPTER (Horizontal Scaling)
 // Enables collaborative editing to work across multiple server instances.

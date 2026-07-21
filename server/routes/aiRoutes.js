@@ -94,30 +94,4 @@ const authorizedResults = results.filter((r) =>
     }
   },
 );
-const memberships = await Membership.find(
-  {
-    user: req.user._id,
-    status: "active",
-  },
-  "organization",
-).lean();
-
-const userOrgIds = memberships.map((m) => m.organization.toString());
-const allowedMeetings = await Meeting.find(
-  {
-    _id: { $in: meetingIds },
-    $or: [
-      { organization: { $in: userOrgIds } },
-      { uploadedBy: req.user._id },
-    ],
-  },
-  "_id",
-).lean();
-const allowedMeetingIds = new Set(
-  allowedMeetings.map((m) => m._id.toString()),
-);
-
-const authorizedResults = results.filter((r) =>
-  allowedMeetingIds.has(r.meetingId.toString()),
-);
 export default router;
