@@ -25,6 +25,8 @@ import {
   updateMeeting, // NEW: Update meeting (rename)
   deleteMeeting, // EXISTING: Delete meeting
   searchMeetingsByText, // 🆕 NEW: Voice/Text Search
+  archiveMeeting,
+  restoreMeeting,
   notifyLiveMeeting, // NEW: Notify participants of a live meeting
 } from "../controllers/meetingController.js";
 import { exportMeeting } from "../controllers/exportController.js";
@@ -93,6 +95,26 @@ router.get(
   requireOrgAccess(Meeting),
   requirePermission("meetings", "export"),
   exportMeeting,
+);
+
+// ✅ Archive Meeting
+router.patch(
+  "/:id/archive",
+  userAuth,
+  writeLimiter,
+  requireOwnerOrAdmin(Meeting),
+  requirePermission("meetings", "edit"),
+  archiveMeeting,
+);
+
+// ✅ Restore Meeting
+router.patch(
+  "/:id/restore",
+  userAuth,
+  writeLimiter,
+  requireOwnerOrAdmin(Meeting),
+  requirePermission("meetings", "edit"),
+  restoreMeeting,
 );
 
 // ✅ Delete Meeting

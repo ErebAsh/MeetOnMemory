@@ -369,7 +369,7 @@ export const generateMeetingMoM = async (
 };
 
 export const getAllMeetings = async (userId, orgId, queryParams = {}) => {
-  const { page = 1, limit = 10, startDate, endDate } = queryParams;
+  const { page = 1, limit = 10, startDate, endDate, includeArchived } = queryParams;
 
   const queryOptions = [{ uploadedBy: userId }];
   if (orgId) {
@@ -377,6 +377,10 @@ export const getAllMeetings = async (userId, orgId, queryParams = {}) => {
   }
 
   const query = { $or: queryOptions };
+
+  if (!includeArchived) {
+    query.archived = { $ne: true };
+  }
 
   if (startDate || endDate) {
     query.date = {};
@@ -519,6 +523,34 @@ export const deleteMeeting = async (doc, meetingId) => {
         console.error("⚠️ Calendar delete sync error:", err.message),
       );
   }
+};
+
+export const archiveMeeting = async (meetingId) => {
+  if (!isValidObjectId(meetingId)) {
+    throw new ValidationError("Invalid meeting ID");
+  }
+
+  const meeting = await MeetingStorageService.findMeetingById(meetingId);
+  if (!meeting) throw new NotFoundError("Meeting not found");
+
+  meeting.archived = true;
+  await meeting.save();
+
+  return meeting;
+};
+
+export const restoreMeeting = async (meetingId) => {
+  if (!isValidObjectId(meetingId)) {
+    throw new ValidationError("Invalid meeting ID");
+  }
+
+  const meeting = await MeetingStorageService.findMeetingById(meetingId);
+  if (!meeting) throw new NotFoundError("Meeting not found");
+
+  meeting.archived = false;
+  await meeting.save();
+
+  return meeting;
 };
 
 export const searchMeetings = async (
