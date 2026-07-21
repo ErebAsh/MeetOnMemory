@@ -5,7 +5,7 @@
 
 import { searchVectorStore } from "../utils/embeddingUtils.js";
 import Meeting from "../models/meetingModel.js";
-import { getRedisClient } from "../services/redisService.js";
+import { getRedisClient, setSearchCache } from "../services/redisService.js";
 import { buildExplanation } from "../utils/explanationBuilder.js";
 
 /**
@@ -87,15 +87,7 @@ export const semanticSearch = async (req, res) => {
 
     // ✅ Step 6 — Save to Redis Cache (if applicable)
     if (req.cacheKey) {
-      const redisClient = getRedisClient();
-      if (redisClient && redisClient.isReady) {
-        // Cache for 1 hour (3600 seconds)
-        await redisClient.setEx(
-          req.cacheKey,
-          3600,
-          JSON.stringify(responsePayload),
-        );
-      }
+      await setSearchCache(req.cacheKey, req.organizationId, responsePayload);
     }
 
     // ✅ Step 7 — Send response
