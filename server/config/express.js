@@ -2,10 +2,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { corsOptions } from "./corsOptions.js";
-import {
-  csrfMiddleware,
-  csrfTokenProvider,
-} from "../middleware/csrfProtection.js";
+import { csrfTokenProvider } from "../middleware/csrfProtection.js";
 import { globalLimiter } from "../middleware/rateLimiter.js";
 import errorHandler from "../middleware/errorHandler.js";
 
@@ -19,9 +16,6 @@ export function configureExpress(app) {
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ extended: true, limit: "50mb" }));
   app.use(cookieParser());
-
-  // Enforce CSRF protection on mutation routes
-  app.use(csrfMiddleware);
 
   // CSRF token provider
   app.get("/api/csrf-token", csrfTokenProvider, (req, res) => {
