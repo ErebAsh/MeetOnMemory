@@ -41,27 +41,34 @@ router.post(
       const meetingIds = results.map((r) => r.meetingId);
 
       // ✅ Get organizations the user belongs to
-      const memberships = await Membership.find({
-        user: req.user._id,
-        status: "active",
-      });
+      const memberships = await Membership.find(
+  {
+    user: req.user._id,
+    status: "active",
+  },
+  "organization",
+).lean();
       const userOrgIds = memberships.map((m) => m.organization.toString());
 
       // ✅ Enforce RBAC: Fetch matching meetings from DB where the user has access
-      const allowedMeetings = await Meeting.find({
-        _id: { $in: meetingIds },
-        $or: [
-          { organization: { $in: userOrgIds } },
-          { uploadedBy: req.user._id },
-        ],
-      }).lean();
+      const allowedMeetings = await Meeting.find(
+  {
+    _id: { $in: meetingIds },
+    $or: [
+      { organization: { $in: userOrgIds } },
+      { uploadedBy: req.user._id },
+    ],
+  },
+  "_id",
+).lean();
 
-      const allowedMeetingIds = allowedMeetings.map((m) => m._id.toString());
+      const allowedMeetingIds = new Set(
+  allowedMeetings.map((m) => m._id.toString()),
+);
 
-      // ✅ Filter vector results
-      const authorizedResults = results.filter((r) =>
-        allowedMeetingIds.includes(r.meetingId.toString()),
-      );
+const authorizedResults = results.filter((r) =>
+  allowedMeetingIds.has(r.meetingId.toString()),
+);
 
       // ✅ Debug log
       console.log(
@@ -83,5 +90,30 @@ router.post(
     }
   },
 );
+const memberships = await Membership.find(
+  {
+    user: req.user._id,
+    status: "active",
+  },
+  "organization",
+).lean();
 
+const userOrgIds = memberships.map((m) => m.organization.toString());
+const allowedMeetings = await Meeting.find(
+  {
+    _id: { $in: meetingIds },
+    $or: [
+      { organization: { $in: userOrgIds } },
+      { uploadedBy: req.user._id },
+    ],
+  },
+  "_id",
+).lean();
+const allowedMeetingIds = new Set(
+  allowedMeetings.map((m) => m._id.toString()),
+);
+
+const authorizedResults = results.filter((r) =>
+  allowedMeetingIds.has(r.meetingId.toString()),
+);
 export default router;
