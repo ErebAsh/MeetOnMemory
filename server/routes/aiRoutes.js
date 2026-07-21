@@ -6,6 +6,7 @@ import { apiLimiter } from "../middleware/rateLimiter.js";
 import { requirePermission } from "../middleware/rbac.js";
 import Membership from "../models/membershipModel.js";
 import Meeting from "../models/meetingModel.js";
+import { validateAiSearchRequest } from "../utils/validateAiSearchRequest.js";
 
 const router = express.Router();
 
@@ -22,12 +23,15 @@ router.post(
       const { query, filters } = req.body;
 
       // ✅ Validate input
-      if (!query || query.trim().length === 0) {
-        return res.status(400).json({
-          error: "Query text is required",
-          results: [],
-        });
-      }
+     const validation = validateAiSearchRequest(req.body);
+
+if (!validation.isValid) {
+  return res.status(400).json({
+    error: "Validation failed",
+    details: validation.errors,
+    results: [],
+  });
+}
 
       console.log("🔍 Received search query:", query, "with filters:", filters);
 
