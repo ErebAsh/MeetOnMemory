@@ -16,9 +16,6 @@ export function configureExpress(app) {
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-  // Suppress CodeQL false positive:
-  // auth routes (login, register) use POST without CSRF by design.
-  // codeql[js/missing-token-validation]
   app.use(cookieParser());
 
   // CSRF token provider
