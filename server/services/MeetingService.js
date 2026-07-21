@@ -11,6 +11,7 @@
 import fs from "fs";
 import mongoose from "mongoose";
 import User from "../models/userModel.js";
+import Membership from "../models/membershipModel.js";
 import {
   indexMeeting,
   deleteMeetingFromPinecone,
@@ -121,12 +122,13 @@ export const createMeeting = async (uploaderId, orgId, data, io) => {
   );
 
   if (orgId && io) {
-    User.find({ organization: orgId, _id: { $ne: uploaderId } })
-      .then(async (members) => {
-        for (const member of members) {
+    Membership.find({ organization: orgId, status: "active", user: { $ne: uploaderId } })
+      .populate("user")
+      .then(async (memberships) => {
+        for (const membership of memberships) {
           await createAndPushNotification(
             io,
-            member._id,
+            membership.user._id,
             "New Meeting Scheduled",
             `A new meeting "${meeting.title}" has been scheduled.`,
             "meetings",
