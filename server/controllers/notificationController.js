@@ -1,5 +1,6 @@
 // server/controllers/notificationController.js
 import notificationModel from "../models/notificationModel.js";
+import NotificationPreference from "../models/notificationPreferenceModel.js";
 
 // Helper to format notification response
 const formatNotificationResponse = (notification) => {
@@ -190,6 +191,87 @@ export const getUnreadCount = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in getUnreadCount:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+// @desc    Get notification preferences for a user
+// @route   GET /api/notifications/preferences
+// @access  Private
+export const getPreferences = async (req, res) => {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication error, user ID not found.",
+      });
+    }
+
+    let preferences = await NotificationPreference.findOne({
+      user: req.user.id,
+    });
+
+    if (!preferences) {
+      preferences = await NotificationPreference.create({
+        user: req.user.id,
+      });
+    }
+
+    res.status(200).json({ success: true, preferences });
+  } catch (error) {
+    console.error("Error in getPreferences:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+// @desc    Update notification preferences
+// @route   PUT /api/notifications/preferences
+// @access  Private
+export const updatePreferences = async (req, res) => {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication error, user ID not found.",
+      });
+    }
+
+    const allowedFields = [
+      "emailMeetingReminders",
+      "emailTaskAssignments",
+      "emailWeeklyDigest",
+      "pushMeetingReminders",
+      "pushTaskAssignments",
+      "pushAiProcessingComplete",
+    ];
+
+    const updates = {};
+    for (const field of allowedFields) {
+      if (typeof req.body[field] === "boolean") {
+        updates[field] = req.body[field];
+      }
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No valid preference fields provided.",
+      });
+    }
+
+    const preferences = await NotificationPreference.findOneAndUpdate(
+      { user: req.user.id },
+      { $set: updates },
+      { new: true, upsert: true },
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Preferences updated successfully",
+      preferences,
+    });
+  } catch (error) {
+    console.error("Error in updatePreferences:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
