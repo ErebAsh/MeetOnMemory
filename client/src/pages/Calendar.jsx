@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { meetingApi } from "../services";
+import axios from "axios";
 import AppContent from "../context/AppContent";
 import Navbar from "../components/Navbar.jsx";
 import {
@@ -22,6 +23,7 @@ import {
   Loader2,
   Inbox,
   X,
+  Cloud,
 } from "lucide-react";
 
 const Calendar = () => {
@@ -29,10 +31,12 @@ const Calendar = () => {
 
   // States
   const [meetings, setMeetings] = useState([]);
+  const [externalEvents, setExternalEvents] = useState({ google: [], microsoft: [] });
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState("month"); // 'month' | 'week' | 'day'
   const [selectedMeeting, setSelectedMeeting] = useState(null);
+  const [showExternalEvents, setShowExternalEvents] = useState(true);
 
   // Filter States
   const [statusFilter, setStatusFilter] = useState("all");
@@ -60,6 +64,44 @@ const Calendar = () => {
 
     fetchMeetings();
   }, []);
+
+  // Fetch external calendar events
+  useEffect(() => {
+    const fetchExternalEvents = async () => {
+      if (!showExternalEvents) return;
+
+      try {
+        const token = localStorage.getItem("token");
+        
+        // Calculate date range for current view
+        const timeMin = new Date(currentDate);
+        timeMin.setDate(1); // Start of month
+        timeMin.setHours(0, 0, 0, 0);
+        
+        const timeMax = new Date(currentDate);
+        timeMax.setMonth(timeMax.getMonth() + 1);
+        timeMax.setDate(0); // End of month
+        timeMax.setHours(23, 59, 59, 999);
+
+        const response = await axios.get("/api/calendar/external-events", {
+          headers: { Authorization: `Bearer ${token}` },
+          params: {
+            timeMin: timeMin.toISOString(),
+            timeMax: timeMax.toISOString(),
+          },
+        });
+
+        if (response.data.success) {
+          setExternalEvents(response.data.events);
+        }
+      } catch (error) {
+        console.error("Error fetching external events:", error);
+        // Don't show error - external events are optional
+      }
+    };
+
+    fetchExternalEvents();
+  }, [currentDate, showExternalEvents]);
 
   // Handle outside click to close modal
   useEffect(() => {
@@ -262,6 +304,67 @@ const Calendar = () => {
     return `${displayHours}:${minutes} ${ampm}`;
   };
 
+  // Get all events for a specific date (meetings + external events)
+  const getEventsForDate = (date) => {
+    const dayEvents = [];
+
+    // Add internal meetings
+    filteredMeetings.forEach((meeting) => {
+      const meetingDate = new Date(meeting.date);
+      if (isSameDay(meetingDate, date)) {
+        dayEvents.push({
+          ...meeting,
+          type: "internal",
+        });
+      }
+    });
+
+    // Add external events if enabled
+    if (showExternalEvents) {
+      externalEvents.google?.forEach((event) => {
+        const eventDate = new Date(event.start?.dateTime || event.start?.date);
+        if (isSameDay(eventDate, date)) {
+          dayEvents.push({
+            ...event,
+            type: "external",
+            source: "google",
+          });
+        }
+      });
+
+      externalEvents.microsoft?.forEach((event) => {
+        const eventDate = new Date(event.start?.dateTime || event.start?.date);
+        if (isSameDay(eventDate, date)) {
+          dayEvents.push({
+            ...event,
+            type: "external",
+            source: "microsoft",
+          });
+        }
+      });
+    }
+
+    return dayEvents.sort((a, b) => {
+      const timeA = new Date(a.start?.dateTime || a.date).getTime();
+      const timeB = new Date(b.start?.dateTime || b.date).getTime();
+      return timeA - timeB;
+    });
+  };
+
+  // Get event styling based on type
+  const getEventStyle = (event) => {
+    if (event.type === "external") {
+      const baseStyle = "bg-purple-50 hover:bg-purple-100/80 border-purple-200 text-purple-800";
+      return {
+        bg: baseStyle,
+        dot: "bg-purple-500",
+        badge: "bg-purple-50 text-purple-700 border-purple-100",
+        icon: Cloud,
+      };
+    }
+    return getStatusStyle(event.status);
+  };
+
   // Format Date string title
   const getHeaderDateString = () => {
     if (view === "month") {
@@ -384,6 +487,19 @@ const Calendar = () => {
               <span>Filters:</span>
             </div>
 
+            {/* External events toggle */}
+            <button
+              onClick={() => setShowExternalEvents(!showExternalEvents)}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                showExternalEvents
+                  ? "bg-purple-50 dark:bg-purple-900/30 border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-300"
+                  : "bg-slate-50 dark:bg-slate-800 border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-400"
+              }`}
+            >
+              <Cloud className="w-3.5 h-3.5" />
+              <span>External Events</span>
+            </button>
+
             {/* Date filter (Jump to Date) */}
             <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-2.5 py-1 text-slate-700 dark:text-slate-300 select-none">
               <span className="text-[10px] text-slate-400 uppercase font-bold mr-1">
@@ -493,9 +609,7 @@ const Calendar = () => {
                 {/* Days Grid */}
                 <div className="grid grid-cols-7 flex-1 min-h-[500px]">
                   {buildMonthGrid().map((cell, idx) => {
-                    const dayEvents = filteredMeetings.filter((m) =>
-                      isSameDay(new Date(m.date), cell.date),
-                    );
+                    const dayEvents = getEventsForDate(cell.date);
                     const isToday = isSameDay(new Date(), cell.date);
 
                     return (
@@ -525,17 +639,24 @@ const Calendar = () => {
                         {/* Events list */}
                         <div className="flex-1 space-y-1.5 overflow-y-auto max-h-[85px] py-1">
                           {dayEvents.slice(0, 3).map((event) => {
-                            const style = getStatusStyle(event.status);
+                            const style = getEventStyle(event);
+                            const eventTitle = event.type === "external" 
+                              ? (event.summary || event.title || "External Event")
+                              : event.title;
+                            const eventId = event.type === "external" 
+                              ? `${event.source}-${event.id}`
+                              : event._id;
+                            
                             return (
                               <button
-                                key={event._id}
+                                key={eventId}
                                 onClick={() => setSelectedMeeting(event)}
                                 className={`w-full text-left p-1.5 rounded-lg border text-[10px] font-semibold truncate flex items-center gap-1.5 transition-all cursor-pointer select-none ${style.bg}`}
                               >
                                 <span
                                   className={`w-1.5 h-1.5 rounded-full shrink-0 ${style.dot}`}
                                 />
-                                <span className="truncate">{event.title}</span>
+                                <span className="truncate">{eventTitle}</span>
                               </button>
                             );
                           })}

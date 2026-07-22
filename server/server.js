@@ -26,6 +26,8 @@ import policyComplianceRoutes from "./routes/policyComplianceRoutes.js";
 import sessionRoutes from "./routes/sessionRoutes.js";
 import webhookRoutes from "./routes/webhookRoutes.js";
 import slackRoutes from "./routes/slackRoutes.js";
+import calendarRoutes from "./routes/calendarRoutes.js";
+import transcriptRoutes from "./routes/transcriptRoutes.js";
 
 // Import slackService to register its eventBus 'mom.generated' listener.
 // The import itself is enough — the listener is set up at module load time.
@@ -34,8 +36,10 @@ import "./services/slackService.js";
 import { initVectorStore } from "./utils/embeddingUtils.js";
 import meetingSocket from "./socket/meetingSocket.js";
 import documentSync from "./socket/documentSync.js";
+import transcriptSocket from "./socket/transcriptSocket.js";
 import { initRedis, getRedisClient } from "./services/redisService.js";
 import { createAdapter } from "@socket.io/redis-adapter";
+import { startCalendarSyncJob } from "./jobs/calendarSyncJob.js";
 import { createClient } from "redis";
 import { initAIWorker, initDataExportWorker } from "./services/queueService.js";
 import { initWebhookWorker } from "./services/webhookDispatcherService.js";
@@ -102,6 +106,8 @@ import { slackWebhookParser } from "./middleware/slackWebhookParser.js";
 app.use("/api/sessions", sessionRoutes);
 app.use("/api/webhooks", webhookRoutes);
 app.use("/api/slack", slackWebhookParser, slackRoutes);
+app.use("/api/calendar", calendarRoutes);
+app.use("/api", transcriptRoutes);
 
 // Health check endpoint — registered BEFORE the global rate limiter so
 // keep-alive pings (e.g. from GitHub Actions cron job) are never blocked.
@@ -189,6 +195,11 @@ app.set("io", io);
 
 meetingSocket(io);
 documentSync(io);
+transcriptSocket(io);
+
+// Start calendar sync job
+startCalendarSyncJob();
+
 // (AI, Data Export, and Webhook workers are initialized inside server.listen callback)
 
 // ERROR HANDLER

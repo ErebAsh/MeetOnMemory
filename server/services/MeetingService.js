@@ -116,19 +116,42 @@ export const createMeeting = async (uploaderId, orgId, data, io) => {
       );
   }
 
-  User.findById(uploaderId)
-    .then(async (user) => {
-      if (user?.calendarSyncEnabled) {
-        const eventId = await calendarService.createEvent(user, meeting);
-        if (eventId) {
-          meeting.googleEventId = eventId;
-          await meeting.save();
-        }
+  // Sync with connected calendars (Google and Microsoft)
+  (async () => {
+    try {
+      // Sync with Google Calendar
+      const googleEventId = await calendarService.createGoogleEvent(
+        uploaderId,
+        meeting,
+      );
+      if (googleEventId) {
+        meeting.calendarEvents = meeting.calendarEvents || {};
+        meeting.calendarEvents.google = {
+          eventId: googleEventId,
+          syncedAt: new Date(),
+        };
+        // Update legacy field for backward compatibility
+        meeting.googleEventId = googleEventId;
+        await meeting.save();
       }
-    })
-    .catch((err) =>
-      console.error("⚠️ Google Calendar sync error (continuing):", err.message),
-    );
+
+      // Sync with Microsoft Calendar
+      const microsoftEventId = await calendarService.createMicrosoftEvent(
+        uploaderId,
+        meeting,
+      );
+      if (microsoftEventId) {
+        meeting.calendarEvents = meeting.calendarEvents || {};
+        meeting.calendarEvents.microsoft = {
+          eventId: microsoftEventId,
+          syncedAt: new Date(),
+        };
+        await meeting.save();
+      }
+    } catch (err) {
+      console.error("⚠️ Calendar sync error (continuing):", err.message);
+    }
+  })();
 
   try {
     eventBus.emit("meeting.created", meeting);
@@ -405,17 +428,29 @@ export const updateMeeting = async (userId, meetingId, data, doc = null) => {
     console.error("⚠️ indexMeeting error (continuing):", err.message),
   );
 
-  if (meeting.googleEventId) {
-    User.findById(userId)
-      .then(async (user) => {
-        if (user?.calendarSyncEnabled) {
-          await calendarService.updateEvent(user, meeting);
-        }
-      })
-      .catch((err) =>
-        console.error("⚠️ Google Calendar update sync error:", err.message),
-      );
-  }
+  // Sync updates with connected calendars
+  (async () => {
+    try {
+      // Update Google Calendar event
+      if (meeting.calendarEvents?.google?.eventId) {
+        await calendarService.updateGoogleEvent(
+          userId,
+          meeting,
+          meeting.calendarEvents.google.eventId,
+        );
+      }
+      // Update Microsoft Calendar event
+      if (meeting.calendarEvents?.microsoft?.eventId) {
+        await calendarService.updateMicrosoftEvent(
+          userId,
+          meeting,
+          meeting.calendarEvents.microsoft.eventId,
+        );
+      }
+    } catch (err) {
+      console.error("⚠️ Calendar update sync error:", err.message);
+    }
+  })();
 
   return meeting;
 };
@@ -424,7 +459,8 @@ export const deleteMeeting = async (doc, meetingId) => {
   let deleted;
 
   if (doc) {
-    const googleEventId = doc.googleEventId;
+    const googleEventId = doc.calendarEvents?.google?.eventId || doc.googleEventId;
+    const microsoftEventId = doc.calendarEvents?.microsoft?.eventId;
     const uploadedBy = doc.uploadedBy;
     const meetingIdToDelete = doc._id.toString();
     await doc.deleteOne();
@@ -434,17 +470,19 @@ export const deleteMeeting = async (doc, meetingId) => {
       console.error("⚠️ Pinecone deletion error (continuing):", err.message),
     );
 
-    if (googleEventId) {
-      User.findById(uploadedBy)
-        .then(async (user) => {
-          if (user?.calendarSyncEnabled) {
-            await calendarService.deleteEvent(user, googleEventId);
-          }
-        })
-        .catch((err) =>
-          console.error("⚠️ Calendar delete sync error:", err.message),
-        );
-    }
+    // Delete from connected calendars
+    (async () => {
+      try {
+        if (googleEventId) {
+          await calendarService.deleteGoogleEvent(uploadedBy, googleEventId);
+        }
+        if (microsoftEventId) {
+          await calendarService.deleteMicrosoftEvent(uploadedBy, microsoftEventId);
+        }
+      } catch (err) {
+        console.error("⚠️ Calendar delete sync error:", err.message);
+      }
+    })();
     return;
   }
 
@@ -460,17 +498,21 @@ export const deleteMeeting = async (doc, meetingId) => {
     console.error("⚠️ Pinecone deletion error (continuing):", err.message),
   );
 
-  if (deleted.googleEventId) {
-    User.findById(deleted.uploadedBy)
-      .then(async (user) => {
-        if (user?.calendarSyncEnabled) {
-          await calendarService.deleteEvent(user, deleted.googleEventId);
-        }
-      })
-      .catch((err) =>
-        console.error("⚠️ Calendar delete sync error:", err.message),
-      );
-  }
+  // Delete from connected calendars
+  (async () => {
+    try {
+      const googleEventId = deleted.calendarEvents?.google?.eventId || deleted.googleEventId;
+      const microsoftEventId = deleted.calendarEvents?.microsoft?.eventId;
+      if (googleEventId) {
+        await calendarService.deleteGoogleEvent(deleted.uploadedBy, googleEventId);
+      }
+      if (microsoftEventId) {
+        await calendarService.deleteMicrosoftEvent(deleted.uploadedBy, microsoftEventId);
+      }
+    } catch (err) {
+      console.error("⚠️ Calendar delete sync error:", err.message);
+    }
+  })();
 };
 
 export const searchMeetings = async ({ query, audioUrl }) => {

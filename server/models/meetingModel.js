@@ -97,7 +97,19 @@ const meetingSchema = new mongoose.Schema(
     },
     tags: [String], // e.g., ["policy", "finance", "staff"]
 
-    // Google Calendar integration
+    // Calendar integration - store external event IDs for both providers
+    calendarEvents: {
+      google: {
+        eventId: { type: String, default: null },
+        syncedAt: { type: Date, default: null },
+      },
+      microsoft: {
+        eventId: { type: String, default: null },
+        syncedAt: { type: Date, default: null },
+      },
+    },
+
+    // Legacy field for backward compatibility
     googleEventId: {
       type: String,
       default: null,

@@ -330,3 +330,70 @@ export const reindexAllMeetings = async () => {
     console.error("❌ Failed to reindex all meetings:", error);
   }
 };
+
+// ===================================================
+// 🎙️ 8️⃣ Index Transcript in Pinecone (for live meeting transcripts)
+// ===================================================
+export const indexTranscript = async (transcript) => {
+  try {
+    const indexInstance = await initVectorStore();
+
+    if (!transcript || !transcript.fullText) {
+      console.warn("⚠️ Skipping empty transcript embedding");
+      return;
+    }
+
+    const vectors = [];
+
+    // Chunk the full transcript text
+    const transcriptChunks = chunkText(transcript.fullText);
+
+    for (let i = 0; i < transcriptChunks.length; i++) {
+      const chunkText = transcriptChunks[i];
+      const embedding = await embedText(chunkText);
+
+      vectors.push({
+        id: `transcript-${transcript._id.toString()}-chunk-${i}`,
+        values: embedding,
+        metadata: {
+          meetingId: transcript.meetingId.toString(),
+          organizationId: transcript.organizationId.toString(),
+          type: "transcript",
+          segmentIndex: i,
+          startTime: transcript.segments[i]?.startTime || 0,
+          text: chunkText,
+          createdAt: transcript.createdAt || new Date(),
+        },
+      });
+    }
+
+    await indexInstance.upsert(vectors);
+
+    console.log(`✅ Indexed transcript: ${transcript._id} (${transcriptChunks.length} chunks)`);
+  } catch (error) {
+    console.error("❌ Failed to index transcript:", error);
+  }
+};
+
+// ===================================================
+// 🗑️ 9️⃣ Delete Transcript from Pinecone
+// ===================================================
+export const deleteTranscriptFromPinecone = async (transcriptId) => {
+  try {
+    const indexInstance = await initVectorStore();
+
+    if (!transcriptId) {
+      console.warn("⚠️ No transcriptId provided for Pinecone deletion");
+      return;
+    }
+
+    await indexInstance.deleteMany({
+      filter: {
+        id: { $eq: `transcript-${transcriptId.toString()}` },
+      },
+    });
+    console.log(`✅ Deleted transcript chunks from Pinecone: ${transcriptId}`);
+  } catch (error) {
+    console.error("❌ Failed to delete transcript from Pinecone:", error);
+  }
+};
