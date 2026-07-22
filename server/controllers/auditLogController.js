@@ -1,4 +1,5 @@
 import AuditLog from "../models/auditLogModel.js";
+import { sendSuccess, sendError } from "../utils/responseHandler.js";
 
 /**
  * ✅ Get Audit Logs for an Organization (Admin/Owner only)
@@ -38,8 +39,7 @@ export const getOrganizationAuditLogs = async (req, res) => {
 
     const total = await AuditLog.countDocuments(filter);
 
-    res.status(200).json({
-      success: true,
+    sendSuccess(res, {
       logs,
       pagination: {
         page: pageNum,
@@ -50,8 +50,6 @@ export const getOrganizationAuditLogs = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Error fetching audit logs:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Server error fetching audit logs." });
+    sendError(res, 500, "Server error fetching audit logs.");
   }
 };

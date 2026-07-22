@@ -18,6 +18,7 @@ import { z } from "zod";
 import * as MeetingService from "../services/MeetingService.js";
 import { ValidationError, UnauthorizedError } from "../utils/errors.js";
 import AuditService from "../services/AuditService.js";
+import { sendSuccess } from "../utils/responseHandler.js";
 // ═══════════════════════════════════════════════════════════════
 // Zod validation schemas
 // ═══════════════════════════════════════════════════════════════
@@ -151,16 +152,18 @@ export const createMeeting = async (req, res, next) => {
       req.app.get("io"),
     );
 
-    return res.status(200).json({
-      success: true,
-      message: "Meeting scheduled successfully",
-      meeting: {
-        _id: meeting._id,
-        title: meeting.title,
-        meetingType: meeting.meetingType,
-        date: meeting.date,
+    return sendSuccess(
+      res,
+      {
+        meeting: {
+          _id: meeting._id,
+          title: meeting.title,
+          meetingType: meeting.meetingType,
+          date: meeting.date,
+        },
       },
-    });
+      "Meeting scheduled successfully",
+    );
   } catch (err) {
     next(err);
   }
@@ -205,12 +208,14 @@ export const uploadMeeting = async (req, res, next) => {
         validated,
       );
 
-    return res.status(200).json({
-      success: true,
-      message: "Meeting transcribed successfully",
-      meetingId: meeting._id,
-      transcript,
-    });
+    return sendSuccess(
+      res,
+      {
+        meetingId: meeting._id,
+        transcript,
+      },
+      "Meeting transcribed successfully",
+    );
   } catch (err) {
     next(err);
   }
@@ -239,12 +244,14 @@ export const uploadAudioForMeeting = async (req, res, next) => {
         req.file,
       );
 
-    return res.status(200).json({
-      success: true,
-      message: "Audio uploaded and transcribed successfully",
-      meetingId: meeting._id,
-      transcript,
-    });
+    return sendSuccess(
+      res,
+      {
+        meetingId: meeting._id,
+        transcript,
+      },
+      "Audio uploaded and transcribed successfully",
+    );
   } catch (err) {
     next(err);
   }
@@ -275,19 +282,23 @@ export const summarizeMeeting = async (req, res, next) => {
     );
 
     if (result.queued) {
-      return res.status(202).json({
-        success: true,
-        message: "Minutes generation started in the background. Please wait...",
-      });
+      return sendSuccess(
+        res,
+        null,
+        "Minutes generation started in the background. Please wait...",
+        202,
+      );
     }
 
-    return res.status(200).json({
-      success: true,
-      message: "Minutes generated successfully",
-      mom: result.mom,
-      momText: result.momText,
-      meetingId: result.meetingId,
-    });
+    return sendSuccess(
+      res,
+      {
+        mom: result.mom,
+        momText: result.momText,
+        meetingId: result.meetingId,
+      },
+      "Minutes generated successfully",
+    );
   } catch (err) {
     next(err);
   }
@@ -314,7 +325,7 @@ export const getAllMeetings = async (req, res, next) => {
       validatedQuery,
     );
 
-    return res.status(200).json({ success: true, meetings, pagination });
+    return sendSuccess(res, { meetings, pagination });
   } catch (err) {
     next(err);
   }
@@ -341,9 +352,7 @@ export const deleteMeeting = async (req, res, next) => {
       });
     }
 
-    return res
-      .status(200)
-      .json({ success: true, message: "Meeting deleted successfully" });
+    return sendSuccess(res, null, "Meeting deleted successfully");
   } catch (err) {
     next(err);
   }
@@ -357,7 +366,7 @@ export const getMeetingById = async (req, res, next) => {
   try {
     getUserId(req); // ensure authenticated
     const meeting = await MeetingService.getMeetingById(req.params.id);
-    return res.status(200).json({ success: true, meeting });
+    return sendSuccess(res, { meeting });
   } catch (err) {
     next(err);
   }
@@ -385,17 +394,19 @@ export const updateMeeting = async (req, res, next) => {
       req.doc || null, // from requireOwner middleware
     );
 
-    return res.status(200).json({
-      success: true,
-      message: "Meeting updated successfully",
-      meeting: {
-        _id: meeting._id,
-        title: meeting.title,
-        description: meeting.description,
-        meetingType: meeting.meetingType,
-        date: meeting.date,
+    return sendSuccess(
+      res,
+      {
+        meeting: {
+          _id: meeting._id,
+          title: meeting.title,
+          description: meeting.description,
+          meetingType: meeting.meetingType,
+          date: meeting.date,
+        },
       },
-    });
+      "Meeting updated successfully",
+    );
   } catch (err) {
     next(err);
   }
@@ -423,7 +434,7 @@ export const searchMeetingsByText = async (req, res, next) => {
       userId,
     );
 
-    return res.status(200).json({ success: true, ...result });
+    return sendSuccess(res, result);
   } catch (err) {
     next(err);
   }
@@ -490,11 +501,7 @@ export const notifyLiveMeeting = async (req, res, next) => {
       req.user.organization,
     );
 
-    return res.status(200).json({
-      success: true,
-      message: "Participants notified",
-      count,
-    });
+    return sendSuccess(res, { count }, "Participants notified");
   } catch (err) {
     next(err);
   }

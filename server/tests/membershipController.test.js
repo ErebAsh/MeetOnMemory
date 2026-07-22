@@ -10,7 +10,6 @@ describe("MembershipController - removeMembership", () => {
   let adminUser;
   let adminToken;
   let memberUser;
-  let memberToken;
   let organization;
   let memberMembership;
 
@@ -52,10 +51,6 @@ describe("MembershipController - removeMembership", () => {
       role: "member",
       isAccountVerified: true,
     });
-    memberToken = jwt.sign(
-      { id: memberUser._id },
-      process.env.JWT_SECRET || "fallback_secret",
-    );
 
     memberMembership = await Membership.create({
       user: memberUser._id,

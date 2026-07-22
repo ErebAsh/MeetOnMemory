@@ -98,7 +98,7 @@ app.get("/api/csrf-token", csrfTokenProvider, (req, res) => {
 // ROUTES
 app.use("/api/auth", authRoutes);
 app.use(["/api/organization", "/api/organizations"], organizationRoutes);
-app.use("/api/membership", membershipRoutes);
+app.use(["/api/membership", "/api/memberships"], membershipRoutes);
 app.use("/api/membership-request", membershipRequestRoutes);
 app.use("/api/invitation", invitationRoutes);
 app.use("/api/meetings", meetingRoutes);

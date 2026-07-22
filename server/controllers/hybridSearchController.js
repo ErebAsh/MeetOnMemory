@@ -7,6 +7,7 @@
 
 import { hybridRetrieve } from "../services/hybridRetrievalService.js";
 import { getRedisClient, setSearchCache } from "../services/redisService.js";
+import { sendSuccess, sendError } from "../utils/responseHandler.js";
 
 /**
  * @desc  Hybrid retrieval: semantic vector search fused with knowledge-graph
@@ -30,21 +31,21 @@ import { getRedisClient, setSearchCache } from "../services/redisService.js";
 export const hybridSearch = async (req, res) => {
   try {
     if (!req.body || Object.keys(req.body).length === 0) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Missing request body. Please send a valid JSON with { query: 'your question' }.",
-      });
+      return sendError(
+        res,
+        400,
+        "Missing request body. Please send a valid JSON with { query: 'your question' }.",
+      );
     }
 
     const { query, ...options } = req.body;
 
     if (!query || typeof query !== "string" || query.trim().length < 3) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Please provide a valid search query (minimum 3 characters). Example: { query: 'attendance policy' }",
-      });
+      return sendError(
+        res,
+        400,
+        "Please provide a valid search query (minimum 3 characters). Example: { query: 'attendance policy' }",
+      );
     }
 
     const organization = req.user?.organization || null;
@@ -59,11 +60,13 @@ export const hybridSearch = async (req, res) => {
       options,
     );
 
+    const message = results.length
+      ? "Hybrid search successful."
+      : "No relevant memories found.";
+
     const responsePayload = {
       success: true,
-      message: results.length
-        ? "Hybrid search successful."
-        : "No relevant memories found.",
+      message,
       results,
       meta,
     };
@@ -72,20 +75,20 @@ export const hybridSearch = async (req, res) => {
       await setSearchCache(req.cacheKey, req.organizationId, responsePayload);
     }
 
-    return res.status(200).json(responsePayload);
+    return sendSuccess(res, { results, meta }, message);
   } catch (error) {
     console.error("❌ Hybrid search error:", error);
 
     if (error.message === "A non-empty query string is required") {
-      return res.status(400).json({ success: false, message: error.message });
+      return sendError(res, 400, error.message);
     }
 
-    res.status(500).json({
-      success: false,
-      message:
-        error.response?.data?.error ||
+    sendError(
+      res,
+      500,
+      error.response?.data?.error ||
         error.message ||
         "Server error during hybrid search.",
-    });
+    );
   }
 };

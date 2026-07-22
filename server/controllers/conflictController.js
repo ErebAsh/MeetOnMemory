@@ -6,6 +6,7 @@ import {
   resolveConflictSet,
   MODEL_REGISTRY,
 } from "../services/conflictDetection/conflictDetectionService.js";
+import { sendSuccess, sendError } from "../utils/responseHandler.js";
 
 const VALID_MODEL_TYPES = Object.keys(MODEL_REGISTRY);
 const VALID_STATUSES = ["open", "resolved", "dismissed", "all"];
@@ -40,10 +41,11 @@ export const scanForConflicts = async (req, res) => {
     const modelTypes = parseModelsParam(models);
     const invalid = modelTypes.filter((m) => !VALID_MODEL_TYPES.includes(m));
     if (invalid.length || modelTypes.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: `Invalid memory type(s): ${invalid.join(", ") || "none provided"}. Expected one or more of: ${VALID_MODEL_TYPES.join(", ")}`,
-      });
+      return sendError(
+        res,
+        400,
+        `Invalid memory type(s): ${invalid.join(", ") || "none provided"}. Expected one or more of: ${VALID_MODEL_TYPES.join(", ")}`,
+      );
     }
 
     if (
@@ -52,10 +54,11 @@ export const scanForConflicts = async (req, res) => {
         minConfidence < 0 ||
         minConfidence > 100)
     ) {
-      return res.status(400).json({
-        success: false,
-        message: "minConfidence must be a number between 0 and 100",
-      });
+      return sendError(
+        res,
+        400,
+        "minConfidence must be a number between 0 and 100",
+      );
     }
 
     const report = await detectConflicts({
@@ -80,13 +83,10 @@ export const scanForConflicts = async (req, res) => {
       });
     }
 
-    res.status(200).json({ success: true, report });
+    sendSuccess(res, { report });
   } catch (error) {
     console.error("scanForConflicts error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to run contradiction detection",
-    });
+    sendError(res, 500, "Failed to run contradiction detection");
   }
 };
 
@@ -100,16 +100,18 @@ export const getConflicts = async (req, res) => {
     const { model, status = "open", limit = 50 } = req.query;
 
     if (model && !VALID_MODEL_TYPES.includes(model)) {
-      return res.status(400).json({
-        success: false,
-        message: `Invalid memory type "${model}". Expected one of: ${VALID_MODEL_TYPES.join(", ")}`,
-      });
+      return sendError(
+        res,
+        400,
+        `Invalid memory type "${model}". Expected one of: ${VALID_MODEL_TYPES.join(", ")}`,
+      );
     }
     if (!VALID_STATUSES.includes(status)) {
-      return res.status(400).json({
-        success: false,
-        message: `Invalid status "${status}". Expected one of: ${VALID_STATUSES.join(", ")}`,
-      });
+      return sendError(
+        res,
+        400,
+        `Invalid status "${status}". Expected one of: ${VALID_STATUSES.join(", ")}`,
+      );
     }
 
     const parsedLimit = Number(limit);
@@ -122,13 +124,10 @@ export const getConflicts = async (req, res) => {
       limit: safeLimit,
     });
 
-    res.status(200).json({ success: true, count: conflicts.length, conflicts });
+    sendSuccess(res, { count: conflicts.length, conflicts });
   } catch (error) {
     console.error("getConflicts error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch conflicts",
-    });
+    sendError(res, 500, "Failed to fetch conflicts");
   }
 };
 
@@ -141,9 +140,7 @@ export const getConflictDetail = async (req, res) => {
   try {
     const conflict = await getConflictSetById(req.params.id);
     if (!conflict) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Conflict set not found" });
+      return sendError(res, 404, "Conflict set not found");
     }
 
     const organization = req.user.organization || null;
@@ -151,16 +148,13 @@ export const getConflictDetail = async (req, res) => {
       ? conflict.organization.toString()
       : null;
     if (conflictOrg !== (organization ? organization.toString() : null)) {
-      return res.status(403).json({ success: false, message: "Forbidden" });
+      return sendError(res, 403, "Forbidden");
     }
 
-    res.status(200).json({ success: true, conflict });
+    sendSuccess(res, { conflict });
   } catch (error) {
     console.error("getConflictDetail error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch conflict",
-    });
+    sendError(res, 500, "Failed to fetch conflict");
   }
 };
 
@@ -175,9 +169,7 @@ export const resolveConflict = async (req, res) => {
   try {
     const conflict = await getConflictSetById(req.params.id);
     if (!conflict) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Conflict set not found" });
+      return sendError(res, 404, "Conflict set not found");
     }
 
     const organization = req.user.organization || null;
@@ -185,7 +177,7 @@ export const resolveConflict = async (req, res) => {
       ? conflict.organization.toString()
       : null;
     if (conflictOrg !== (organization ? organization.toString() : null)) {
-      return res.status(403).json({ success: false, message: "Forbidden" });
+      return sendError(res, 403, "Forbidden");
     }
 
     const { resolutionType, keptMemoryId, customValue, note } = req.body || {};
@@ -213,7 +205,7 @@ export const resolveConflict = async (req, res) => {
       });
     }
 
-    res.status(200).json({ success: true, conflict: resolved });
+    sendSuccess(res, { conflict: resolved });
   } catch (error) {
     console.error("resolveConflict error:", error);
     const clientErrors = [
@@ -225,9 +217,10 @@ export const resolveConflict = async (req, res) => {
     const isClientError = clientErrors.some((msg) =>
       error.message?.includes(msg),
     );
-    res.status(isClientError ? 400 : 500).json({
-      success: false,
-      message: error.message || "Failed to resolve conflict",
-    });
+    sendError(
+      res,
+      isClientError ? 400 : 500,
+      error.message || "Failed to resolve conflict",
+    );
   }
 };
