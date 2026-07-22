@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Navbar from "../components/Navbar.jsx";
 import {
   CheckCircle2,
@@ -23,6 +23,15 @@ const Status = () => {
   const [refreshCountdown, setRefreshCountdown] = useState(15);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(new Date());
+
+  const lastMetricsRef = useRef({
+    api: 120,
+    web: 38,
+    ai: 284,
+    vector: 112,
+    socket: 74,
+    storage: 53,
+  });
 
   // Real-time backend status state
   const [backendHealth, setBackendHealth] = useState({
@@ -142,121 +151,128 @@ const Status = () => {
     setIsRefreshing(true);
     const startTime = performance.now();
 
+    let resolvedBackend = { status: "checking", latency: null, error: null };
+
+    // Attempt 1: /health
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
-
-      let response;
-      try {
-        response = await fetch(`${BACKEND_URL}/health`, {
-          signal: controller.signal,
-        });
-      } catch {
-        response = await fetch(`${BACKEND_URL}/api/health`, {
-          signal: controller.signal,
-        });
-      }
-
-      clearTimeout(timeoutId);
+      const controller1 = new AbortController();
+      const timeout1 = setTimeout(() => controller1.abort(), 4000);
+      const response = await fetch(`${BACKEND_URL}/health`, {
+        signal: controller1.signal,
+      });
+      clearTimeout(timeout1);
       const endTime = performance.now();
       const realLatency = Math.round(endTime - startTime);
 
       if (response.ok) {
-        setBackendHealth({
-          status: "UP",
-          latency: realLatency,
-          error: null,
-        });
+        resolvedBackend = { status: "UP", latency: realLatency, error: null };
       } else {
-        setBackendHealth({
+        throw new Error(`HTTP Error: ${response.status}`);
+      }
+    } catch {
+      // Attempt 2: /api/health with a fresh controller
+      try {
+        const controller2 = new AbortController();
+        const timeout2 = setTimeout(() => controller2.abort(), 4000);
+        const startTime2 = performance.now();
+        const response = await fetch(`${BACKEND_URL}/api/health`, {
+          signal: controller2.signal,
+        });
+        clearTimeout(timeout2);
+        const endTime2 = performance.now();
+        const realLatency2 = Math.round(endTime2 - startTime2);
+
+        if (response.ok) {
+          resolvedBackend = {
+            status: "UP",
+            latency: realLatency2,
+            error: null,
+          };
+        } else {
+          resolvedBackend = {
+            status: "DOWN",
+            latency: null,
+            error: `HTTP Error: ${response.status}`,
+          };
+        }
+      } catch (err2) {
+        resolvedBackend = {
           status: "DOWN",
           latency: null,
-          error: `HTTP Error: ${response.status}`,
-        });
+          error:
+            err2.name === "AbortError"
+              ? "Request Timeout"
+              : "Network Unreachable",
+        };
       }
-    } catch (err) {
-      setBackendHealth({
-        status: "DOWN",
-        latency: null,
-        error:
-          err.name === "AbortError" ? "Request Timeout" : "Network Unreachable",
-      });
     }
 
-    // Simulate minor jitters for other components
-    setSimulatedMetrics((prev) => ({
-      webApp: {
-        latency: Math.max(
-          15,
-          Math.min(
-            80,
-            Math.round(prev.webApp.latency + (Math.random() * 8 - 4)),
-          ),
-        ),
-        status: "UP",
-      },
-      geminiAi: {
-        latency: Math.max(
-          150,
-          Math.min(
-            450,
-            Math.round(prev.geminiAi.latency + (Math.random() * 40 - 20)),
-          ),
-        ),
-        status: "UP",
-      },
-      vectorDb: {
-        latency: Math.max(
-          80,
-          Math.min(
-            180,
-            Math.round(prev.vectorDb.latency + (Math.random() * 16 - 8)),
-          ),
-        ),
-        status: "UP",
-      },
-      webSocket: {
-        latency: Math.max(
-          40,
-          Math.min(
-            120,
-            Math.round(prev.webSocket.latency + (Math.random() * 10 - 5)),
-          ),
-        ),
-        status: "UP",
-      },
-      storage: {
-        latency: Math.max(
-          30,
-          Math.min(
-            100,
-            Math.round(prev.storage.latency + (Math.random() * 12 - 6)),
-          ),
-        ),
-        status: "UP",
-      },
-    }));
+    setBackendHealth(resolvedBackend);
+
+    // Simulate minor jitters for other components using latest ref values
+    const lastMetrics = lastMetricsRef.current;
+    const newWebLat = Math.max(
+      15,
+      Math.min(80, Math.round(lastMetrics.web + (Math.random() * 8 - 4))),
+    );
+    const newAiLat = Math.max(
+      150,
+      Math.min(450, Math.round(lastMetrics.ai + (Math.random() * 40 - 20))),
+    );
+    const newVectorLat = Math.max(
+      80,
+      Math.min(180, Math.round(lastMetrics.vector + (Math.random() * 16 - 8))),
+    );
+    const newSocketLat = Math.max(
+      40,
+      Math.min(120, Math.round(lastMetrics.socket + (Math.random() * 10 - 5))),
+    );
+    const newStorageLat = Math.max(
+      30,
+      Math.min(100, Math.round(lastMetrics.storage + (Math.random() * 12 - 6))),
+    );
+    const newApiLat =
+      resolvedBackend.status === "DOWN"
+        ? 0
+        : resolvedBackend.latency || Math.round(100 + Math.random() * 30);
+
+    // Update ref for next interval run
+    lastMetricsRef.current = {
+      api: newApiLat,
+      web: newWebLat,
+      ai: newAiLat,
+      vector: newVectorLat,
+      socket: newSocketLat,
+      storage: newStorageLat,
+    };
+
+    setSimulatedMetrics({
+      webApp: { latency: newWebLat, status: "UP" },
+      geminiAi: { latency: newAiLat, status: "UP" },
+      vectorDb: { latency: newVectorLat, status: "UP" },
+      webSocket: { latency: newSocketLat, status: "UP" },
+      storage: { latency: newStorageLat, status: "UP" },
+    });
 
     setLastUpdated(new Date());
 
-    // Add point to latency history
+    // Add point to latency history using the fresh values
     setLatencyHistory((prev) => {
       const nowStr = new Date().toLocaleTimeString("en-US", {
         hour12: false,
         hour: "2-digit",
         minute: "2-digit",
       });
-      const apiLat =
-        backendHealth.status === "DOWN"
-          ? 0
-          : backendHealth.latency || Math.round(100 + Math.random() * 30);
-      const webLat = simulatedMetrics.webApp.latency;
-      const aiLat = simulatedMetrics.geminiAi.latency;
       const nextId = prev.length > 0 ? prev[prev.length - 1].id + 1 : 1;
-
       const newHistory = [
         ...prev,
-        { id: nextId, time: nowStr, api: apiLat, web: webLat, ai: aiLat },
+        {
+          id: nextId,
+          time: nowStr,
+          api: newApiLat,
+          web: newWebLat,
+          ai: newAiLat,
+        },
       ];
       if (newHistory.length > 10) {
         newHistory.shift(); // Keep only last 10 values
@@ -283,7 +299,6 @@ const Status = () => {
     }, 1000);
 
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Determine overall status
@@ -844,7 +859,7 @@ const Status = () => {
                       day.status === "up"
                         ? "bg-emerald-500 dark:bg-emerald-600 hover:bg-emerald-400"
                         : day.status === "degraded"
-                          ? "bg-amber-500 hover:bg-amber-450"
+                          ? "bg-amber-500 hover:bg-amber-400"
                           : "bg-rose-500 hover:bg-rose-400"
                     }`}
                   />
@@ -1119,7 +1134,7 @@ const Status = () => {
                 </div>
 
                 {/* Filter buttons */}
-                <div className="flex bg-slate-105 dark:bg-slate-850 p-1 rounded-lg border border-slate-205 dark:border-slate-805 self-start sm:self-auto">
+                <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-800 self-start sm:self-auto">
                   <button
                     onClick={() => setActiveFilter("all")}
                     className={`px-3 py-1 text-xs font-semibold rounded-md transition ${activeFilter === "all" ? "bg-white dark:bg-slate-800 shadow-xs text-slate-900 dark:text-white" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
@@ -1173,7 +1188,7 @@ const Status = () => {
                             {inc.date} • {inc.timestamp}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-600 dark:text-slate-455 leading-relaxed">
+                        <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                           {inc.description}
                         </p>
                       </div>
@@ -1196,7 +1211,7 @@ const Status = () => {
           </div>
           <a
             href="mailto:support@meetonmemory.com"
-            className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-350 hover:bg-slate-200 dark:hover:bg-slate-750 font-semibold text-xs rounded-xl shadow-xs whitespace-nowrap transition"
+            className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 font-semibold text-xs rounded-xl shadow-xs whitespace-nowrap transition"
           >
             Contact Support
           </a>
