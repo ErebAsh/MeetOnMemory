@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 import jwt from "jsonwebtoken";
 import transporter from "../config/nodeMailer.js";
 import eventBus from "../services/eventBus.js";
+import auditLogExportJob from "./auditLogExportJob.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -37,6 +38,7 @@ export const sanitizeUserForExport = (user) => {
 };
 
 export default async function exportDataJob(job, app) {
+  if (job.name === "audit-log-export") return auditLogExportJob(job);
   const { userId, email } = job.data;
   console.log(`📦 Starting data export for user ${userId}...`);
 
