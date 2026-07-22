@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useCallback, useContext } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { Calendar, Loader2 } from "lucide-react";
@@ -9,7 +9,7 @@ const CalendarIntegrations = () => {
   const [integrations, setIntegrations] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchIntegrations = async () => {
+  const fetchIntegrations = useCallback(async () => {
     try {
       const res = await axios.get(`${backendUrl}/api/calendar/status`, {
         withCredentials: true,
@@ -17,12 +17,12 @@ const CalendarIntegrations = () => {
       if (res.data.success) {
         setIntegrations(res.data.integrations);
       }
-    } catch (err) {
-      console.error("Failed to fetch calendar integrations", err);
+    } catch (fetchErr) {
+      console.error("Failed to fetch calendar integrations", fetchErr);
     } finally {
       setLoading(false);
     }
-  };
+  }, [backendUrl]);
 
   useEffect(() => {
     fetchIntegrations();
@@ -35,7 +35,7 @@ const CalendarIntegrations = () => {
     } else if (error === "outlook_sync_failed") {
       toast.error("Failed to connect Outlook Calendar");
     }
-  }, []);
+  }, [fetchIntegrations]);
 
   const connectProvider = async (provider) => {
     try {
@@ -46,7 +46,8 @@ const CalendarIntegrations = () => {
       if (res.data.success && res.data.url) {
         window.location.href = res.data.url;
       }
-    } catch (err) {
+    } catch (connectErr) {
+      console.error(`Failed to connect to ${provider}`, connectErr);
       toast.error(`Failed to connect to ${provider}`);
     }
   };
@@ -62,7 +63,8 @@ const CalendarIntegrations = () => {
         toast.success(`Disconnected ${provider} calendar`);
         setIntegrations(integrations.filter((i) => i.provider !== provider));
       }
-    } catch (err) {
+    } catch (disconnectErr) {
+      console.error(`Failed to disconnect ${provider}`, disconnectErr);
       toast.error(`Failed to disconnect ${provider}`);
     }
   };

@@ -7,8 +7,12 @@ import {
 } from "../services/calendarSyncService.js";
 import CalendarIntegration from "../models/calendarIntegrationModel.js";
 import axios from "axios";
+import mongoose from "mongoose";
+import { apiLimiter, writeLimiter } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
+
+router.use(apiLimiter);
 
 router.get("/status", userAuth, async (req, res) => {
   try {
@@ -29,7 +33,7 @@ router.get("/status", userAuth, async (req, res) => {
   }
 });
 
-router.post("/disconnect/:provider", userAuth, async (req, res) => {
+router.post("/disconnect/:provider", userAuth, writeLimiter, async (req, res) => {
   try {
     const { provider } = req.params;
     await CalendarIntegration.findOneAndDelete({
@@ -57,8 +61,13 @@ router.get("/google/connect", userAuth, (req, res) => {
 
 router.get("/google/callback", async (req, res) => {
   try {
-    const { code, state: userId } = req.query;
+    let { code, state: userId } = req.query;
     if (!code || !userId) throw new Error("Missing code or state");
+    
+    userId = String(userId);
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      throw new Error("Invalid state/userId");
+    }
 
     const oauth2Client = getGoogleOAuthClient();
     const { tokens } = await oauth2Client.getToken(code);
@@ -105,8 +114,13 @@ router.get("/outlook/connect", userAuth, (req, res) => {
 
 router.get("/outlook/callback", async (req, res) => {
   try {
-    const { code, state: userId } = req.query;
+    let { code, state: userId } = req.query;
     if (!code || !userId) throw new Error("Missing code or state");
+    
+    userId = String(userId);
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      throw new Error("Invalid state/userId");
+    }
 
     const params = new URLSearchParams({
       client_id: process.env.MS_CLIENT_ID,
