@@ -96,6 +96,12 @@ const meetingSchema = new mongoose.Schema(
       default: "uploaded",
     },
     tags: [String], // e.g., ["policy", "finance", "staff"]
+    externalCalendarRefs: [
+      {
+        provider: { type: String, enum: ["google", "outlook"], required: true },
+        eventId: { type: String, required: true },
+      },
+    ],
   },
   { timestamps: true },
 );

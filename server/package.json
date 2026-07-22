@@ -11,6 +11,7 @@
     "server": "nodemon server.js"
   },
   "dependencies": {
+    "@azure/msal-node": "^5.4.2",
     "@chroma-core/default-embed": "^0.1.8",
     "@google/generative-ai": "^0.24.1",
     "@huggingface/inference": "^4.13.0",
@@ -34,6 +35,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.19.3",
     "multer": "^2.0.2",
+    "node-cron": "^4.6.0",
     "nodemailer": "^7.0.10",
     "onnxruntime-web": "^1.23.0",
     "openai": "^6.8.1",

@@ -17,6 +17,8 @@ import analyticsRoutes from "./routes/analyticsRoutes.js";
 import geminiRoutes from "./routes/geminiRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
+import calendarRoutes from "./routes/calendarRoutes.js";
+import { initCalendarSyncCron } from "./services/calendarSyncService.js";
 
 import { initVectorStore } from "./utils/embeddingUtils.js";
 import meetingSocket from "./socket/meetingSocket.js";
@@ -144,6 +146,7 @@ app.use("/api/gemini", geminiRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/knowledge", knowledgeRoutes);
+app.use("/api/calendar", calendarRoutes);
 
 // ================================
 // VECTOR STORE INIT
@@ -162,6 +165,9 @@ const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`🌐 Allowed Origins: ${allowedOrigins.join(", ")}`);
 });
+
+// Init Calendar Sync Cron
+initCalendarSyncCron();
 
 // ================================
 // SOCKET.IO

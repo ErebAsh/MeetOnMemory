@@ -290,6 +290,18 @@ PINECONE_ENVIRONMENT=your_environment
 INDEX_NAME=your_index_name
 
 TRANSFORMERS_BACKEND=onnxruntime-web
+
+# Calendar Integrations
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_REDIRECT_URI=http://localhost:4000/api/calendar/google/callback
+
+MS_CLIENT_ID=your_microsoft_client_id
+MS_CLIENT_SECRET=your_microsoft_client_secret
+MS_TENANT_ID=common
+MS_REDIRECT_URI=http://localhost:4000/api/calendar/outlook/callback
+
+TOKEN_ENCRYPTION_KEY=32_byte_string_for_encryption
 ```
 
 Start Backend:

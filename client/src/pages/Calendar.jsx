@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { meetingApi } from "../services";
@@ -26,6 +27,7 @@ import {
 
 const Calendar = () => {
   const navigate = useNavigate();
+  const { backendUrl } = useContext(AppContent);
 
   // States
   const [meetings, setMeetings] = useState([]);
@@ -45,11 +47,42 @@ const Calendar = () => {
       setLoading(true);
       try {
         const { data } = await meetingApi.getAllMeetings();
+        let internalMeetings = [];
         if (data.success) {
-          setMeetings(data.meetings || []);
+          internalMeetings = data.meetings || [];
         } else {
           toast.error(data.message || "Failed to fetch meetings.");
         }
+
+        // Fetch external events
+        try {
+          const { data: extData } = await axios.get(
+            `${backendUrl || "http://localhost:4000"}/api/calendar/events`,
+            { withCredentials: true },
+          );
+          if (extData.success && extData.events) {
+            const externalEvents = extData.events.map((e) => ({
+              _id: e.id,
+              title: e.title,
+              date: new Date(e.start),
+              time: new Date(e.start).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+              duration: (new Date(e.end) - new Date(e.start)) / 60000,
+              venue: e.location,
+              meetingType: "external",
+              status: "upcoming",
+              provider: e.provider,
+              isExternal: true,
+            }));
+            internalMeetings = [...internalMeetings, ...externalEvents];
+          }
+        } catch (extErr) {
+          console.error("External events fetch err:", extErr);
+        }
+
+        setMeetings(internalMeetings);
       } catch (err) {
         console.error("Fetch meetings error:", err);
         toast.error("Error loading calendar data.");

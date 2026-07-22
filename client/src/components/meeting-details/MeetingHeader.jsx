@@ -1,5 +1,6 @@
 import React from "react";
 import { format } from "date-fns";
+import CalendarSyncBadge from "../CalendarSyncBadge.jsx";
 
 const MeetingHeader = ({ meeting }) => {
   if (!meeting) return null;
@@ -94,7 +95,8 @@ const MeetingHeader = ({ meeting }) => {
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <CalendarSyncBadge externalCalendarRefs={meeting.externalCalendarRefs} />
           <span
             className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${getStatusColor(meeting.status)}`}
           >

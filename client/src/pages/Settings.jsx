@@ -17,6 +17,7 @@ import {
   ChevronRight,
   Loader2,
 } from "lucide-react";
+import CalendarIntegrations from "../components/CalendarIntegrations.jsx";
 
 const Settings = () => {
   const { userData, logoutUser } = useContext(AppContent);
@@ -368,6 +369,9 @@ const Settings = () => {
               </div>
             </div>
           </div>
+
+          {/* Calendar Integrations */}
+          <CalendarIntegrations />
 
           {/* Security Section */}
           <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm fade-in-up stagger-5">

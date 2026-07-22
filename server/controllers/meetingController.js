@@ -10,6 +10,7 @@ import {
   detectResolutions,
 } from "../services/knowledgeGraphService.js";
 import { createAndPushNotification } from "../services/notificationService.js";
+import { pushMeetingToIntegrations, deleteMeetingFromIntegrations } from "../services/calendarSyncService.js";
 /**
  * Meeting Controller - Handles all meeting operations
  *
@@ -114,6 +115,10 @@ export const createMeeting = async (req, res) => {
       } catch (notifErr) {
         console.error("⚠️ Notification error (continuing):", notifErr.message);
       }
+    }
+
+    if (req.body.syncToCalendar) {
+      pushMeetingToIntegrations(uploaderId, meeting).catch(console.error);
     }
 
     return res.status(200).json({
@@ -745,13 +750,17 @@ export const deleteMeeting = async (req, res) => {
     const meeting = req.doc; // from requireOwnerOrAdmin middleware
     if (!meeting) {
       // Fallback if middleware isn't used
-      const deleted = await Meeting.findByIdAndDelete(req.params.id);
-      if (!deleted) {
+      const meetingToDelete = await Meeting.findById(req.params.id);
+      if (!meetingToDelete) {
         return res
           .status(404)
           .json({ success: false, message: "Meeting not found" });
       }
+      
+      deleteMeetingFromIntegrations(meetingToDelete.uploadedBy, meetingToDelete.externalCalendarRefs).catch(console.error);
+      await meetingToDelete.deleteOne();
     } else {
+      deleteMeetingFromIntegrations(meeting.uploadedBy, meeting.externalCalendarRefs).catch(console.error);
       await meeting.deleteOne();
     }
 
@@ -848,6 +857,8 @@ export const updateMeeting = async (req, res) => {
     } catch (idxErr) {
       console.error("⚠️ indexMeeting error (continuing):", idxErr.message);
     }
+
+    pushMeetingToIntegrations(userId, meeting).catch(console.error);
 
     return res.status(200).json({
       success: true,
