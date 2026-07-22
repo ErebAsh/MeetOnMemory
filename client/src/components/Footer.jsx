@@ -67,7 +67,8 @@ const Footer = () => {
                 |
               </span>
               <span className="text-xs text-gray-500 dark:text-gray-400">
-                &copy; {currentYear} MeetOnMemory. {t("footer.allRightsReserved")}
+                &copy; {currentYear} MeetOnMemory.{" "}
+                {t("footer.allRightsReserved")}
               </span>
               <span className="px-2 py-0.5 text-[10px] font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full">
                 v1.0.0
@@ -363,35 +364,56 @@ const Footer = () => {
             <p className="text-gray-400 dark:text-gray-500 text-sm">
               &copy; {currentYear} MeetOnMemory. {t("footer.allRightsReserved")}
             </p>
-            <span className="hidden sm:inline text-gray-300 dark:text-gray-700">|</span>
+            <span className="hidden sm:inline text-gray-300 dark:text-gray-700">
+              |
+            </span>
             <div className="flex items-center gap-3 text-xs font-medium text-gray-400 dark:text-gray-500">
-              <Link to="/privacy" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+              <Link
+                to="/privacy"
+                className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              >
                 {t("footer.privacy")}
               </Link>
               <span>•</span>
-              <Link to="/terms" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+              <Link
+                to="/terms"
+                className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              >
                 {t("footer.terms")}
               </Link>
               <span>•</span>
-              <Link to="/security" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+              <Link
+                to="/security"
+                className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              >
                 {t("footer.security", "Security")}
               </Link>
               <span>•</span>
-              <Link to="/cookie-policy" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+              <Link
+                to="/cookie-policy"
+                className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              >
                 Cookies
               </Link>
               <span>•</span>
-              <Link to="/help-center" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+              <Link
+                to="/help-center"
+                className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              >
                 {t("footer.helpCenter", "Help Center")}
               </Link>
               <span>•</span>
-              <Link to="/contact" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+              <Link
+                to="/contact"
+                className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              >
                 {t("footer.contact", "Contact")}
               </Link>
             </div>
           </div>
           <p className="text-gray-400 dark:text-gray-500 text-sm">
-            {t("footer.madeWith")} ❤️ {t("footer.by")} {t("footer.meetOnMemoryTeam")}.
+            {t("footer.madeWith")} ❤️ {t("footer.by")}{" "}
+            {t("footer.meetOnMemoryTeam")}.
           </p>
           {/* Back to top */}
           <button
@@ -409,4 +431,3 @@ const Footer = () => {
 };
 
 export default Footer;
-

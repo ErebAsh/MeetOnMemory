@@ -72,7 +72,8 @@ const faqs = [
 const troubleshootingGuides = [
   {
     title: "Meeting Upload Fails mid-way",
-    problem: "The file upload progress bar stops or shows a network error when uploading meeting recordings.",
+    problem:
+      "The file upload progress bar stops or shows a network error when uploading meeting recordings.",
     steps: [
       "Check your file size: Ensure the file does not exceed the 250MB limit for your plan.",
       "Check your connection: Large file uploads require a stable internet connection. If you are on VPN or proxy, try disabling it momentarily.",
@@ -84,7 +85,8 @@ const troubleshootingGuides = [
   },
   {
     title: "Slack Notification Integration is not posting updates",
-    problem: "Meeting alerts or action items are not syncing to your configured Slack channels.",
+    problem:
+      "Meeting alerts or action items are not syncing to your configured Slack channels.",
     steps: [
       "Verify Slack Workspace connection: Go to Organization Settings > Integrations, and make sure the Slack workspace is marked as connected.",
       "Check Channel Permissions: Ensure the MeetOnMemory Bot has been invited to the channel. You can type `/invite @MeetOnMemory` in Slack.",
@@ -95,7 +97,8 @@ const troubleshootingGuides = [
   },
   {
     title: "AI Search returns no results",
-    problem: "When querying the vector knowledge base, you receive a 'No results found' screen.",
+    problem:
+      "When querying the vector knowledge base, you receive a 'No results found' screen.",
     steps: [
       "Ensure transcripts are complete: Check if the meetings you uploaded have finished processing and show a 'Completed' status badge.",
       "Simplify query: Try searching for a broader concept or key names (e.g., 'API integration' instead of a very long sentence).",
@@ -115,7 +118,8 @@ const HelpCenter = () => {
   // Live filter logic
   const filteredFaqs = useMemo(() => {
     return faqs.filter((faq) => {
-      const matchesCategory = activeCategory === "all" || faq.category === activeCategory;
+      const matchesCategory =
+        activeCategory === "all" || faq.category === activeCategory;
       const matchesSearch =
         !searchQuery.trim() ||
         faq.q.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -130,7 +134,9 @@ const HelpCenter = () => {
       (guide) =>
         guide.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         guide.problem.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        guide.steps.some((step) => step.toLowerCase().includes(searchQuery.toLowerCase())),
+        guide.steps.some((step) =>
+          step.toLowerCase().includes(searchQuery.toLowerCase()),
+        ),
     );
   }, [searchQuery]);
 
@@ -158,7 +164,8 @@ const HelpCenter = () => {
             How can we help you today?
           </h1>
           <p className="text-slate-500 dark:text-slate-400 max-w-xl mx-auto text-sm sm:text-base mb-8">
-            Search our knowledge base for setup guides, FAQs, troubleshooting tips, and self-service articles.
+            Search our knowledge base for setup guides, FAQs, troubleshooting
+            tips, and self-service articles.
           </p>
 
           {/* Search Box */}
@@ -286,7 +293,9 @@ const HelpCenter = () => {
                         </button>
                         <div
                           className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                            isOpen ? "max-h-96 border-t border-slate-100 dark:border-slate-800" : "max-h-0"
+                            isOpen
+                              ? "max-h-96 border-t border-slate-100 dark:border-slate-800"
+                              : "max-h-0"
                           }`}
                         >
                           <div className="px-6 py-5 text-sm leading-relaxed text-slate-600 dark:text-slate-300 bg-slate-50/50 dark:bg-slate-800/30">
@@ -343,7 +352,9 @@ const HelpCenter = () => {
                       className={`bg-white dark:bg-slate-900/40 rounded-2xl p-6 shadow-sm border ${borderClass} hover:shadow-lg transition-all duration-300`}
                     >
                       <div className="flex items-start gap-4 mb-4">
-                        <div className={`p-3 rounded-xl ${iconBg} flex-shrink-0`}>
+                        <div
+                          className={`p-3 rounded-xl ${iconBg} flex-shrink-0`}
+                        >
                           <Icon className="w-6 h-6" />
                         </div>
                         <div>
@@ -363,11 +374,16 @@ const HelpCenter = () => {
                         </h4>
                         <ol className="space-y-3">
                           {guide.steps.map((step, stepIdx) => (
-                            <li key={stepIdx} className="flex items-start gap-3 text-sm">
+                            <li
+                              key={stepIdx}
+                              className="flex items-start gap-3 text-sm"
+                            >
                               <span className="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
                                 {stepIdx + 1}
                               </span>
-                              <span className="text-slate-600 dark:text-slate-300">{step}</span>
+                              <span className="text-slate-600 dark:text-slate-300">
+                                {step}
+                              </span>
                             </li>
                           ))}
                         </ol>
@@ -393,7 +409,8 @@ const HelpCenter = () => {
               Still have questions?
             </h2>
             <p className="text-slate-500 dark:text-slate-400 text-sm sm:text-base mb-8 max-w-md mx-auto">
-              If you couldn't find the answers you need in our self-service center, our support team is happy to help you.
+              If you couldn't find the answers you need in our self-service
+              center, our support team is happy to help you.
             </p>
             <Link
               to="/contact"

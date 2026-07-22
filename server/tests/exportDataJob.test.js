@@ -25,8 +25,10 @@ jest.unstable_mockModule('../config/nodeMailer.js', () => ({
   }
 }));
 
-jest.unstable_mockModule('../services/notificationService.js', () => ({
-  createAndPushNotification: jest.fn()
+jest.unstable_mockModule('../services/eventBus.js', () => ({
+  default: {
+    emit: jest.fn()
+  }
 }));
 
 jest.unstable_mockModule('jsonwebtoken', () => ({

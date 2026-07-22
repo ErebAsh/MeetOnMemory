@@ -35,8 +35,10 @@ vi.mock("../services/AuditService.js", () => ({
   },
 }));
 
-vi.mock("../services/notificationService.js", () => ({
-  createAndPushNotification: vi.fn(),
+vi.mock("../services/eventBus.js", () => ({
+  default: {
+    emit: vi.fn(),
+  },
 }));
 
 import * as OrganizationService from "../services/OrganizationService.js";
@@ -277,7 +279,13 @@ describe("OrganizationService", () => {
   describe("browsePublicOrganizations", () => {
     it("should return public organizations with correct pagination and counts", async () => {
       const mockOrgs = [
-        { _id: "org1", name: "Public Org A", slug: "public-org-a", visibility: "public", members: ["user1", "user2"] },
+        {
+          _id: "org1",
+          name: "Public Org A",
+          slug: "public-org-a",
+          visibility: "public",
+          members: ["user1", "user2"],
+        },
       ];
       const mockQueryChain = {
         select: vi.fn().mockReturnThis(),
@@ -301,7 +309,9 @@ describe("OrganizationService", () => {
       expect(result.organizations).toHaveLength(1);
       expect(result.organizations[0].memberCount).toBe(2);
       expect(result.pagination.total).toBe(1);
-      expect(Organization.find).toHaveBeenCalledWith(expect.objectContaining({ visibility: "public" }));
+      expect(Organization.find).toHaveBeenCalledWith(
+        expect.objectContaining({ visibility: "public" }),
+      );
     });
   });
 
@@ -309,7 +319,13 @@ describe("OrganizationService", () => {
   describe("searchOrganizations", () => {
     it("should search public organizations matching query q", async () => {
       const mockOrgs = [
-        { _id: "org2", name: "Searched Public Org", slug: "search-org", visibility: "public", members: [] },
+        {
+          _id: "org2",
+          name: "Searched Public Org",
+          slug: "search-org",
+          visibility: "public",
+          members: [],
+        },
       ];
       const mockQueryChain = {
         sort: vi.fn().mockReturnThis(),
@@ -321,15 +337,21 @@ describe("OrganizationService", () => {
       Organization.find.mockReturnValue(mockQueryChain);
       Organization.countDocuments.mockResolvedValue(1);
 
-      const result = await OrganizationService.searchOrganizations("Search", 1, 12);
+      const result = await OrganizationService.searchOrganizations(
+        "Search",
+        1,
+        12,
+      );
 
       expect(result.success).toBe(true);
       expect(result.organizations).toHaveLength(1);
       expect(result.organizations[0].name).toBe("Searched Public Org");
-      expect(Organization.find).toHaveBeenCalledWith(expect.objectContaining({
-        visibility: "public",
-        $or: expect.any(Array),
-      }));
+      expect(Organization.find).toHaveBeenCalledWith(
+        expect.objectContaining({
+          visibility: "public",
+          $or: expect.any(Array),
+        }),
+      );
     });
   });
 });

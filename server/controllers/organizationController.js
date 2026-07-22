@@ -29,11 +29,9 @@ export const createOrJoinOrganization = async (req, res) => {
       });
     }
 
-    const io = req.app.get("io");
     const result = await OrganizationService.createOrJoinOrganization(
       req.user.id,
       name.trim(),
-      io,
     );
 
     sendSuccess(res, result);
@@ -67,11 +65,9 @@ export const joinOrganization = async (req, res) => {
       return sendError(res, 401, "Authentication failed.");
     }
 
-    const io = req.app.get("io");
     const result = await OrganizationService.joinOrganizationById(
       req.user.id,
       req.body.organizationId,
-      io,
     );
 
     sendSuccess(res, result);

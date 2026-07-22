@@ -46,7 +46,11 @@ const ProtectedRoute = ({
     "/create-organization",
     "/join-organization",
   ];
-  if (userData && userData.hasCompletedOnboarding && onboardingOnlyPages.includes(location.pathname)) {
+  if (
+    userData &&
+    userData.hasCompletedOnboarding &&
+    onboardingOnlyPages.includes(location.pathname)
+  ) {
     return <Navigate to="/dashboard" replace />;
   }
 
