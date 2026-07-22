@@ -7,6 +7,7 @@ import Transcript from "../models/transcriptModel.js";
 import Meeting from "../models/meetingModel.js";
 import { indexMeeting } from "../utils/embeddingUtils.js";
 import { indexTranscriptChunks } from "../utils/transcriptEmbeddingUtils.js";
+import { sendSuccess, sendError } from "../utils/responseHandler.js";
 
 /**
  * Get transcript by meeting ID
@@ -15,19 +16,18 @@ export const getTranscriptByMeeting = async (req, res) => {
   try {
     const { meetingId } = req.params;
 
-    const transcript = await Transcript.findOne({ meeting: meetingId }).populate(
-      "meeting",
-      "title date participants"
-    );
+    const transcript = await Transcript.findOne({
+      meeting: meetingId,
+    }).populate("meeting", "title date participants");
 
     if (!transcript) {
-      return res.status(404).json({ message: "Transcript not found" });
+      return sendError(res, 404, "Transcript not found");
     }
 
-    res.json(transcript);
+    sendSuccess(res, transcript);
   } catch (error) {
     console.error("Error fetching transcript:", error);
-    res.status(500).json({ message: "Failed to fetch transcript" });
+    sendError(res, 500, "Failed to fetch transcript");
   }
 };
 
@@ -40,28 +40,28 @@ export const searchTranscript = async (req, res) => {
     const { query } = req.body;
 
     if (!query || query.trim() === "") {
-      return res.status(400).json({ message: "Search query is required" });
+      return sendError(res, 400, "Search query is required");
     }
 
     const transcript = await Transcript.findOne({ meeting: meetingId });
 
     if (!transcript) {
-      return res.status(404).json({ message: "Transcript not found" });
+      return sendError(res, 404, "Transcript not found");
     }
 
     const searchTerms = query.toLowerCase().split(" ");
     const matchingSegments = transcript.segments.filter((segment) =>
-      searchTerms.some((term) => segment.text.toLowerCase().includes(term))
+      searchTerms.some((term) => segment.text.toLowerCase().includes(term)),
     );
 
-    res.json({
+    sendSuccess(res, {
       query,
       matches: matchingSegments,
       totalMatches: matchingSegments.length,
     });
   } catch (error) {
     console.error("Error searching transcript:", error);
-    res.status(500).json({ message: "Failed to search transcript" });
+    sendError(res, 500, "Failed to search transcript");
   }
 };
 
@@ -72,23 +72,26 @@ export const exportTranscriptAsText = async (req, res) => {
   try {
     const { meetingId } = req.params;
 
-    const transcript = await Transcript.findOne({ meeting: meetingId }).populate(
-      "meeting",
-      "title date"
-    );
+    const transcript = await Transcript.findOne({
+      meeting: meetingId,
+    }).populate("meeting", "title date");
 
     if (!transcript) {
-      return res.status(404).json({ message: "Transcript not found" });
+      return sendError(res, 404, "Transcript not found");
     }
 
     const meeting = transcript.meeting;
     const textContent = [
       `Meeting: ${meeting.title}`,
       `Date: ${meeting.date?.toLocaleDateString() || "N/A"}`,
-      `Duration: ${Math.floor(transcript.duration / 60)}:${Math.floor(transcript.duration % 60).toString().padStart(2, "0")}`,
+      `Duration: ${Math.floor(transcript.duration / 60)}:${Math.floor(
+        transcript.duration % 60,
+      )
+        .toString()
+        .padStart(2, "0")}`,
       "",
       "TRANSCRIPT",
-      "=" .repeat(50),
+      "=".repeat(50),
       "",
     ];
 
@@ -105,7 +108,7 @@ export const exportTranscriptAsText = async (req, res) => {
     res.send(textContent.join("\n"));
   } catch (error) {
     console.error("Error exporting transcript as text:", error);
-    res.status(500).json({ message: "Failed to export transcript" });
+    sendError(res, 500, "Failed to export transcript");
   }
 };
 
@@ -118,13 +121,12 @@ export const exportTranscriptAsPDF = async (req, res) => {
     const PDFDocument = await import("pdfkit");
     const doc = new PDFDocument.default();
 
-    const transcript = await Transcript.findOne({ meeting: meetingId }).populate(
-      "meeting",
-      "title date"
-    );
+    const transcript = await Transcript.findOne({
+      meeting: meetingId,
+    }).populate("meeting", "title date");
 
     if (!transcript) {
-      return res.status(404).json({ message: "Transcript not found" });
+      return sendError(res, 404, "Transcript not found");
     }
 
     const meeting = transcript.meeting;
@@ -132,7 +134,7 @@ export const exportTranscriptAsPDF = async (req, res) => {
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename="transcript-${meetingId}.pdf"`
+      `attachment; filename="transcript-${meetingId}.pdf"`,
     );
 
     doc.pipe(res);
@@ -145,7 +147,11 @@ export const exportTranscriptAsPDF = async (req, res) => {
     doc.fontSize(12).text(`Meeting: ${meeting.title}`);
     doc.text(`Date: ${meeting.date?.toLocaleDateString() || "N/A"}`);
     doc.text(
-      `Duration: ${Math.floor(transcript.duration / 60)}:${Math.floor(transcript.duration % 60).toString().padStart(2, "0")}`
+      `Duration: ${Math.floor(transcript.duration / 60)}:${Math.floor(
+        transcript.duration % 60,
+      )
+        .toString()
+        .padStart(2, "0")}`,
     );
     doc.moveDown();
 
@@ -161,7 +167,7 @@ export const exportTranscriptAsPDF = async (req, res) => {
     doc.end();
   } catch (error) {
     console.error("Error exporting transcript as PDF:", error);
-    res.status(500).json({ message: "Failed to export transcript as PDF" });
+    sendError(res, 500, "Failed to export transcript as PDF");
   }
 };
 
@@ -175,7 +181,7 @@ export const finalizeTranscript = async (req, res) => {
     const transcript = await Transcript.findOne({ meeting: meetingId });
 
     if (!transcript) {
-      return res.status(404).json({ message: "Transcript not found" });
+      return sendError(res, 404, "Transcript not found");
     }
 
     // Update transcript status
@@ -195,10 +201,10 @@ export const finalizeTranscript = async (req, res) => {
       await indexTranscriptChunks(transcript, meeting);
     }
 
-    res.json({ message: "Transcript finalized and indexed successfully" });
+    sendSuccess(res, null, "Transcript finalized and indexed successfully");
   } catch (error) {
     console.error("Error finalizing transcript:", error);
-    res.status(500).json({ message: "Failed to finalize transcript" });
+    sendError(res, 500, "Failed to finalize transcript");
   }
 };
 

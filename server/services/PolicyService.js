@@ -411,6 +411,12 @@ export const deletePolicy = async (policy) => {
 
   await policy.deleteOne();
 
+  try {
+    eventBus.emit("policy.deleted", policy);
+  } catch (evtErr) {
+    console.error("⚠️ Failed to emit policy.deleted event:", evtErr.message);
+  }
+
   // Cleanup Pinecone vectors and compliance records (fire-and-forget)
   removePolicyFromIndex(policy._id).catch((err) =>
     console.error("⚠️ Failed to remove policy vector:", err.message),

@@ -102,6 +102,13 @@ const Footer = () => {
                 Cookies
               </Link>
               <Link
+                to="/help-center"
+                className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
+              >
+                {t("footer.helpCenter", "Help Center")}
+              </Link>
+              <span className="text-gray-300 dark:text-gray-700">|</span>
+              <Link
                 to="/contact"
                 className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
               >
@@ -275,6 +282,14 @@ const Footer = () => {
             <ul className="flex flex-col gap-3">
               <li>
                 <Link
+                  to="/help-center"
+                  className="text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 inline-block font-medium"
+                >
+                  {t("footer.helpCenter", "Help Center")}
+                </Link>
+              </li>
+              <li>
+                <Link
                   to="/contact"
                   className="text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 inline-block font-medium"
                 >
@@ -393,6 +408,13 @@ const Footer = () => {
                 className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
               >
                 Cookies
+              </Link>
+              <span>•</span>
+              <Link
+                to="/help-center"
+                className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              >
+                {t("footer.helpCenter", "Help Center")}
               </Link>
               <span>•</span>
               <Link

@@ -9,7 +9,8 @@
   "scripts": {
     "start": "node server.js",
     "server": "nodemon server.js",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --forceExit"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --forceExit",
+    "test:unit": "vitest run tests/OrganizationService.test.js tests/InvitationService.test.js tests/organizationController.test.js"
   },
   "dependencies": {
     "@chroma-core/default-embed": "^0.1.8",
@@ -43,9 +44,9 @@
     "onnxruntime-web": "^1.23.0",
     "openai": "^6.8.1",
     "pdf-parse": "^2.4.5",
-    "rate-limit-redis": "^4.2.0",
     "pdfkit": "^0.19.1",
     "pptx2json": "^0.0.10",
+    "rate-limit-redis": "^4.2.0",
     "redis": "^6.1.0",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.3",
@@ -56,6 +57,7 @@
     "jest": "^30.4.2",
     "mongodb-memory-server": "^11.2.0",
     "nodemon": "^3.1.10",
-    "supertest": "^7.2.2"
+    "supertest": "^7.2.2",
+    "vitest": "^4.1.10"
   }
 }

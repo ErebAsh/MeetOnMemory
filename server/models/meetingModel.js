@@ -97,6 +97,11 @@ const meetingSchema = new mongoose.Schema(
     },
     tags: [String], // e.g., ["policy", "finance", "staff"]
 
+    archived: {
+      type: Boolean,
+      default: false,
+    },
+
     // Google Calendar integration
     googleEventId: {
       type: String,

@@ -11,6 +11,7 @@
 import fs from "fs";
 import mongoose from "mongoose";
 import User from "../models/userModel.js";
+import Membership from "../models/membershipModel.js";
 import {
   indexMeeting,
   deleteMeetingFromPinecone,
@@ -21,7 +22,6 @@ import {
 } from "./knowledgeGraphService.js";
 import { captureSnapshot } from "./graphSnapshotService.js";
 import { checkMeetingDecisionsAgainstPolicies } from "./policyComplianceService.js";
-import { createAndPushNotification } from "./notificationService.js";
 import eventBus from "./eventBus.js";
 import * as calendarService from "./calendarService.js";
 import { aiQueue } from "./queueService.js";
@@ -94,7 +94,7 @@ const _runKnowledgeGraph = (meetingDoc, mom) => {
 // Public service methods
 // ═══════════════════════════════════════════════════════════════
 
-export const createMeeting = async (uploaderId, orgId, data, io) => {
+export const createMeeting = async (uploaderId, orgId, data) => {
   const meeting = await MeetingStorageService.createMeetingRecord({
     uploadedBy: uploaderId,
     organization: orgId || null,
@@ -120,20 +120,18 @@ export const createMeeting = async (uploaderId, orgId, data, io) => {
     console.error("⚠️ indexMeeting error (continuing):", err.message),
   );
 
-  if (orgId && io) {
-    User.find({ organization: orgId, _id: { $ne: uploaderId } })
-      .then(async (members) => {
-        for (const member of members) {
-          await createAndPushNotification(
-            io,
-            member._id,
-            "New Meeting Scheduled",
-            `A new meeting "${meeting.title}" has been scheduled.`,
-            "meetings",
-            `/meeting/${meeting._id}`,
-            "View Details",
-          );
-        }
+  if (orgId) {
+    Membership.find({
+      organization: orgId,
+      status: "active",
+      user: { $ne: uploaderId },
+    })
+      .populate("user")
+      .then(async (memberships) => {
+        eventBus.emit("meeting.created", {
+          meeting,
+          membersToNotify: memberships,
+        });
       })
       .catch((err) =>
         console.error("⚠️ Notification error (continuing):", err.message),
@@ -249,7 +247,6 @@ export const generateMeetingMoM = async (
   transcript,
   date,
   title,
-  io,
 ) => {
   const user = await User.findById(userId);
   if (!user) throw new ForbiddenError("User not found");
@@ -269,11 +266,15 @@ export const generateMeetingMoM = async (
     if (!meeting) throw new NotFoundError("Meeting not found");
 
     const hasAccess =
-      (meeting.organization && meeting.organization.toString() === user.organization.toString()) ||
-      (meeting.uploadedBy && meeting.uploadedBy.toString() === userId.toString());
+      (meeting.organization &&
+        meeting.organization.toString() === user.organization.toString()) ||
+      (meeting.uploadedBy &&
+        meeting.uploadedBy.toString() === userId.toString());
 
     if (!hasAccess) {
-      throw new ForbiddenError("Forbidden: You do not have access to this meeting");
+      throw new ForbiddenError(
+        "Forbidden: You do not have access to this meeting",
+      );
     }
 
     if (!textToSummarize) {
@@ -336,27 +337,17 @@ export const generateMeetingMoM = async (
   console.log("✅ MoM saved to database");
 
   try {
-    if (!meetingId) eventBus.emit("meeting.created", meetingToUpdate);
+    if (!meetingId)
+      eventBus.emit("meeting.created", {
+        meeting: meetingToUpdate,
+        membersToNotify: [],
+      }); // Or we could pass actual members, but here it's an ad-hoc meeting
     eventBus.emit("mom.generated", meetingToUpdate);
   } catch (evtErr) {
     console.error("⚠️ Failed to emit webhook events:", evtErr.message);
   }
 
   _runKnowledgeGraph(meetingToUpdate, mom);
-
-  if (io && meetingToUpdate?.uploadedBy) {
-    createAndPushNotification(
-      io,
-      meetingToUpdate.uploadedBy,
-      "Minutes of Meeting Generated",
-      `MoM for "${meetingToUpdate.title}" is ready.`,
-      "ai_processing",
-      `/meeting/${meetingToUpdate._id}`,
-      "View MoM",
-    ).catch((err) =>
-      console.error("⚠️ Notification error (continuing):", err.message),
-    );
-  }
 
   return {
     queued: false,
@@ -367,7 +358,13 @@ export const generateMeetingMoM = async (
 };
 
 export const getAllMeetings = async (userId, orgId, queryParams = {}) => {
-  const { page = 1, limit = 10, startDate, endDate } = queryParams;
+  const {
+    page = 1,
+    limit = 10,
+    startDate,
+    endDate,
+    includeArchived,
+  } = queryParams;
 
   const queryOptions = [{ uploadedBy: userId }];
   if (orgId) {
@@ -375,6 +372,10 @@ export const getAllMeetings = async (userId, orgId, queryParams = {}) => {
   }
 
   const query = { $or: queryOptions };
+
+  if (!includeArchived) {
+    query.archived = { $ne: true };
+  }
 
   if (startDate || endDate) {
     query.date = {};
@@ -447,6 +448,12 @@ export const updateMeeting = async (userId, meetingId, data, doc = null) => {
 
   await meeting.save();
 
+  try {
+    eventBus.emit("meeting.updated", meeting);
+  } catch (evtErr) {
+    console.error("⚠️ Failed to emit meeting.updated event:", evtErr.message);
+  }
+
   indexMeeting(meeting).catch((err) =>
     console.error("⚠️ indexMeeting error (continuing):", err.message),
   );
@@ -475,6 +482,12 @@ export const deleteMeeting = async (doc, meetingId) => {
     const meetingIdToDelete = doc._id.toString();
     await doc.deleteOne();
 
+    try {
+      eventBus.emit("meeting.deleted", doc);
+    } catch (evtErr) {
+      console.error("⚠️ Failed to emit meeting.deleted event:", evtErr.message);
+    }
+
     // Delete from Pinecone (fire-and-forget)
     deleteMeetingFromPinecone(meetingIdToDelete).catch((err) =>
       console.error("⚠️ Pinecone deletion error (continuing):", err.message),
@@ -501,6 +514,12 @@ export const deleteMeeting = async (doc, meetingId) => {
   deleted = await MeetingStorageService.deleteMeetingById(meetingId);
   if (!deleted) throw new NotFoundError("Meeting not found");
 
+  try {
+    eventBus.emit("meeting.deleted", deleted);
+  } catch (evtErr) {
+    console.error("⚠️ Failed to emit meeting.deleted event:", evtErr.message);
+  }
+
   // Delete from Pinecone (fire-and-forget)
   deleteMeetingFromPinecone(meetingId).catch((err) =>
     console.error("⚠️ Pinecone deletion error (continuing):", err.message),
@@ -517,6 +536,34 @@ export const deleteMeeting = async (doc, meetingId) => {
         console.error("⚠️ Calendar delete sync error:", err.message),
       );
   }
+};
+
+export const archiveMeeting = async (meetingId) => {
+  if (!isValidObjectId(meetingId)) {
+    throw new ValidationError("Invalid meeting ID");
+  }
+
+  const meeting = await MeetingStorageService.findMeetingById(meetingId);
+  if (!meeting) throw new NotFoundError("Meeting not found");
+
+  meeting.archived = true;
+  await meeting.save();
+
+  return meeting;
+};
+
+export const restoreMeeting = async (meetingId) => {
+  if (!isValidObjectId(meetingId)) {
+    throw new ValidationError("Invalid meeting ID");
+  }
+
+  const meeting = await MeetingStorageService.findMeetingById(meetingId);
+  if (!meeting) throw new NotFoundError("Meeting not found");
+
+  meeting.archived = false;
+  await meeting.save();
+
+  return meeting;
 };
 
 export const searchMeetings = async (
@@ -548,14 +595,15 @@ export const searchMeetings = async (
     }
   }
 
-  const results =
-    await MeetingStorageService.searchMeetingsRecords(searchQuery, filter);
+  const results = await MeetingStorageService.searchMeetingsRecords(
+    searchQuery,
+    filter,
+  );
 
   return { query: searchQuery, count: results.length, results };
 };
 
 export const notifyLiveMeetingParticipants = async (
-  io,
   uploaderId,
   roomId,
   participants,
@@ -572,17 +620,12 @@ export const notifyLiveMeetingParticipants = async (
     _id: { $ne: uploaderId },
   });
 
-  for (const user of dbUsers) {
-    await createAndPushNotification(
-      io,
-      user._id,
-      "Live Meeting Started",
-      "You have been invited to join a live meeting.",
-      "meetings",
-      `/meeting-room/${roomId}`,
-      "Join Now",
-    );
-  }
+  eventBus.emit("live_meeting.notified", {
+    uploaderId,
+    roomId,
+    participants: dbUsers,
+    orgId,
+  });
 
   return { count: dbUsers.length };
 };

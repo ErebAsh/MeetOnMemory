@@ -27,17 +27,25 @@ import webhookRoutes from "./routes/webhookRoutes.js";
 import slackRoutes from "./routes/slackRoutes.js";
 import transcriptRoutes from "./routes/transcriptRoutes.js";
 
-// Import slackService to register its eventBus 'mom.generated' listener.
-// The import itself is enough — the listener is set up at module load time.
+// Import slackService, cacheInvalidationService, and conflictScanTrigger to register eventBus listeners.
 import "./services/slackService.js";
+import "./services/cacheInvalidationService.js";
+// Import conflictScanTrigger to register its eventBus 'mom.generated'
+// listener, which enqueues a background contradiction scan per
+// organization whenever new decisions/action items are extracted.
+import "./services/conflictScanTrigger.js";
 
-import { initVectorStore } from "./utils/embeddingUtils.js";
 import meetingSocket from "./socket/meetingSocket.js";
 import documentSync from "./socket/documentSync.js";
-import { initRedis, getRedisClient } from "./services/redisService.js";
+import { initRedis } from "./services/redisService.js";
 import { createAdapter } from "@socket.io/redis-adapter";
 import { createClient } from "redis";
-import { initAIWorker, initDataExportWorker } from "./services/queueService.js";
+import { initListeners } from "./events/listeners.js";
+import {
+  initAIWorker,
+  initDataExportWorker,
+  initConflictScanWorker,
+} from "./services/queueService.js";
 import { initWebhookWorker } from "./services/webhookDispatcherService.js";
 import { globalLimiter } from "./middleware/rateLimiter.js";
 import errorHandler from "./middleware/errorHandler.js";
@@ -56,11 +64,19 @@ const app = express();
 app.set("trust proxy", 1); // Trust first proxy hop (Render, Vercel)
 const PORT = process.env.PORT || 4000;
 
+if (!process.env.JWT_SECRET) {
+  console.error("FATAL ERROR: JWT_SECRET environment variable is missing.");
+  process.exit(1);
+}
+
 // DATABASE & CACHE
 await connectDB();
 
 import { corsOptions, allowedOrigins } from "./config/corsOptions.js";
-import { csrfMiddleware, csrfTokenProvider } from "./middleware/csrfProtection.js";
+import {
+  csrfMiddleware,
+  csrfTokenProvider,
+} from "./middleware/csrfProtection.js";
 
 // MIDDLEWARES
 app.use(cors(corsOptions));
@@ -83,7 +99,7 @@ app.get("/api/csrf-token", csrfTokenProvider, (req, res) => {
 // ROUTES
 app.use("/api/auth", authRoutes);
 app.use(["/api/organization", "/api/organizations"], organizationRoutes);
-app.use("/api/membership", membershipRoutes);
+app.use(["/api/membership", "/api/memberships"], membershipRoutes);
 app.use("/api/membership-request", membershipRequestRoutes);
 app.use("/api/invitation", invitationRoutes);
 app.use("/api/meetings", meetingRoutes);
@@ -123,20 +139,23 @@ if (process.env.NODE_ENV !== "test") {
   server.listen(PORT, () => {
     console.log(`🚀 MeetOnMemory Server running on port ${PORT}`);
 
-    setImmediate(() => {
+    (globalThis.setImmediate || setTimeout)(() => {
       const safeInit = async (name, initFn) => {
         try {
           await initFn();
         } catch (err) {
-          console.error(`⚠️ Failed to initialize background service "${name}":`, err.message || err);
+          console.error(
+            `⚠️ Failed to initialize background service "${name}":`,
+            err.message || err,
+          );
         }
       };
 
       safeInit("Redis", () => initRedis());
       safeInit("AI Worker", () => initAIWorker(app));
       safeInit("Data Export Worker", () => initDataExportWorker(app));
+      safeInit("Conflict Scan Worker", () => initConflictScanWorker(app));
       safeInit("Webhook Worker", () => initWebhookWorker());
-      safeInit("Vector Store", () => initVectorStore());
     });
   });
 }
@@ -151,6 +170,9 @@ const io = new Server(server, {
 });
 
 app.set("io", io);
+
+// Initialize event listeners for WebSocket and Notifications
+initListeners(io);
 
 // REDIS PUB/SUB ADAPTER (Horizontal Scaling)
 // Enables collaborative editing to work across multiple server instances.

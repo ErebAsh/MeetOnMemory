@@ -6,7 +6,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import jwt from "jsonwebtoken";
 import transporter from "../config/nodeMailer.js";
-import { createAndPushNotification } from "../services/notificationService.js";
+import eventBus from "../services/eventBus.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -81,18 +81,26 @@ export default async function exportDataJob(job, app) {
       });
 
       archive.pipe(output);
-      archive.append(JSON.stringify(user, null, 2), { name: "user_profile.json" });
-      archive.append(JSON.stringify(meetings, null, 2), { name: "meetings.json" });
-      archive.append(JSON.stringify(memberships, null, 2), { name: "memberships.json" });
+      archive.append(JSON.stringify(user, null, 2), {
+        name: "user_profile.json",
+      });
+      archive.append(JSON.stringify(meetings, null, 2), {
+        name: "meetings.json",
+      });
+      archive.append(JSON.stringify(memberships, null, 2), {
+        name: "memberships.json",
+      });
       archive.finalize();
     });
 
     console.log(`✅ Data export for user ${userId} saved to ${filePath}`);
 
     // Generate Secure Download Link
-    const jwtSecret = process.env.JWT_SECRET || "fallback_secret";
-    const downloadToken = jwt.sign({ userId, fileName }, jwtSecret, { expiresIn: "24h" });
-    
+    const jwtSecret = process.env.JWT_SECRET;
+    const downloadToken = jwt.sign({ userId, fileName }, jwtSecret, {
+      expiresIn: "24h",
+    });
+
     // In production, BASE_URL should be configured correctly in .env
     const baseUrl = process.env.BASE_URL || "http://localhost:3000";
     const downloadUrl = `${baseUrl}/api/user/download-export/${downloadToken}`;
@@ -113,18 +121,7 @@ export default async function exportDataJob(job, app) {
     await transporter.sendMail(mailOptions);
     console.log(`📧 Notification email sent to ${email}`);
 
-    const io = app ? app.get("io") : null;
-    if (io) {
-      await createAndPushNotification(
-        io,
-        userId,
-        "Data Export Ready",
-        "Your data export has been completed and emailed to you.",
-        "system",
-        downloadUrl,
-        "Download"
-      );
-    }
+    eventBus.emit("export.ready", { userId, downloadUrl });
 
     return { success: true, fileName };
   } catch (error) {

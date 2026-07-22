@@ -7,7 +7,8 @@ import {
   detectResolutions,
 } from "../services/knowledgeGraphService.js";
 import User from "../models/userModel.js";
-import { createAndPushNotification } from "../services/notificationService.js";
+
+import { indexMeeting } from "../utils/embeddingUtils.js";
 
 export default async function processAudioJob(job, app) {
   const { meetingId, transcript, date, title, userId } = job.data;
@@ -171,9 +172,7 @@ ${textToSummarize}
 
     if (mom.agenda.length) {
       humanReadable += "📋 Agenda:\n";
-      mom.agenda.forEach(
-        (item, i) => (humanReadable += `${i + 1}. ${item}\n`),
-      );
+      mom.agenda.forEach((item, i) => (humanReadable += `${i + 1}. ${item}\n`));
       humanReadable += "\n";
     }
 
@@ -187,9 +186,7 @@ ${textToSummarize}
 
     if (mom.decisions.length) {
       humanReadable += "✅ Decisions:\n";
-      mom.decisions.forEach(
-        (d, i) => (humanReadable += `${i + 1}. ${d}\n`),
-      );
+      mom.decisions.forEach((d, i) => (humanReadable += `${i + 1}. ${d}\n`));
       humanReadable += "\n";
     }
 
@@ -258,7 +255,10 @@ ${textToSummarize}
     // Trigger internal events for webhooks
     try {
       if (!meetingId) {
-        eventBus.emit("meeting.created", meetingToUpdate);
+        eventBus.emit("meeting.created", {
+          meeting: meetingToUpdate,
+          membersToNotify: [],
+        });
       }
       eventBus.emit("mom.generated", meetingToUpdate);
     } catch (evtErr) {
@@ -277,33 +277,6 @@ ${textToSummarize}
           "⚠️ Knowledge graph processing failed (non-fatal):",
           kgError,
         );
-      }
-
-      const io = app ? app.get("io") : null;
-      if (io && userId) {
-        try {
-          await createAndPushNotification(
-            io,
-            userId,
-            "Minutes of Meeting Generated",
-            `MoM for "${meetingToUpdate.title}" is ready.`,
-            "ai_processing",
-            `/meeting/${meetingToUpdate._id}`,
-            "View MoM",
-          );
-          // Send Socket.IO direct notification
-          io.to(userId.toString()).emit("mom-generation-complete", {
-            meetingId: meetingToUpdate._id,
-            title: meetingToUpdate.title,
-            summary: meetingToUpdate.summary,
-            mom: meetingToUpdate.structuredMoM,
-          });
-        } catch (notifErr) {
-          console.error(
-            "⚠️ Notification error (continuing):",
-            notifErr.message,
-          );
-        }
       }
     }
 
