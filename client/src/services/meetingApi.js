@@ -1,7 +1,7 @@
 import apiClient from "./apiClient";
 
 export const meetingApi = {
-  scheduleMeeting: (data) => apiClient.post("/api/meetings/schedule", data),
+  scheduleMeeting: (data) => apiClient.post("/api/meetings/create", data),
   notifyLive: (data) => apiClient.post("/api/meetings/notify-live", data),
   generateSession: (formData, config) =>
     apiClient.post("/api/sessions/generate", formData, config),
@@ -11,7 +11,8 @@ export const meetingApi = {
 
   summarizeMeeting: (data) => apiClient.post("/api/meetings/summarize", data),
 
-  getAllMeetings: () => apiClient.get("/api/meetings/all"),
+  getAllMeetings: (params = {}) =>
+    apiClient.get("/api/meetings/all", { params }),
 
   getMeetingById: (id) => apiClient.get(`/api/meetings/${id}`),
 

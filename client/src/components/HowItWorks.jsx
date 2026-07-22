@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Building,
   Video,
@@ -21,6 +22,7 @@ import {
 } from "lucide-react";
 
 const HowItWorks = () => {
+  const { t, i18n } = useTranslation();
   const [activeStep, setActiveStep] = useState(0);
   const [resetNonce, setResetNonce] = useState(0);
   const [simulationState, setSimulationState] = useState({
@@ -48,9 +50,8 @@ const HowItWorks = () => {
     {
       id: 0,
       number: "01",
-      title: "Create Organization",
-      description:
-        "Allow users to create or join an organization to centralize meetings, documents, and team collaboration.",
+      title: t("howItWorks.step1Title"),
+      description: t("howItWorks.step1Desc"),
       icon: Building,
       color: "from-blue-500 to-cyan-500",
       accent: "text-blue-600",
@@ -60,9 +61,8 @@ const HowItWorks = () => {
     {
       id: 1,
       number: "02",
-      title: "Upload Meeting",
-      description:
-        "Upload meeting recordings, transcripts, or notes for AI-powered processing and storage.",
+      title: t("howItWorks.step2Title"),
+      description: t("howItWorks.step2Desc"),
       icon: Video,
       color: "from-indigo-500 to-purple-500",
       accent: "text-indigo-600",
@@ -72,9 +72,8 @@ const HowItWorks = () => {
     {
       id: 2,
       number: "03",
-      title: "AI Processing",
-      description:
-        "AI automatically transcribes, summarizes, extracts key insights, and organizes meeting content into structured knowledge.",
+      title: t("howItWorks.step3Title"),
+      description: t("howItWorks.step3Desc"),
       icon: Cpu,
       color: "from-violet-500 to-fuchsia-500",
       accent: "text-violet-600",
@@ -84,9 +83,8 @@ const HowItWorks = () => {
     {
       id: 3,
       number: "04",
-      title: "Search Knowledge",
-      description:
-        "Use semantic search to instantly find meeting discussions, policies, action items, or organizational decisions.",
+      title: t("howItWorks.step4Title"),
+      description: t("howItWorks.step4Desc"),
       icon: Search,
       color: "from-fuchsia-500 to-pink-500",
       accent: "text-fuchsia-600",
@@ -96,9 +94,8 @@ const HowItWorks = () => {
     {
       id: 4,
       number: "05",
-      title: "Generate Reports",
-      description:
-        "Generate AI-powered reports, summaries, analytics, and insights for better decision-making and long-term knowledge management.",
+      title: t("howItWorks.step5Title"),
+      description: t("howItWorks.step5Desc"),
       icon: BarChart3,
       color: "from-pink-500 to-rose-500",
       accent: "text-pink-600",
@@ -151,12 +148,23 @@ const HowItWorks = () => {
         aiSummary: null,
       }));
 
-      const fullTrans = [
+      const isHindi = i18n.language === "hi";
+
+      const enTrans = [
         "[00:04] Emma: Welcome everyone to our Q3 Strategic Review. Let's discuss the product roadmap.",
         "[00:15] Alex: We should prioritize the integration of semantic search. Users want instant Q&A.",
         "[00:27] Emma: Agreed. Let's set the launch target for late August. John will take the lead on backend integrations.",
         "[00:40] Alex: Excellent. I will sync with marketing to announce it.",
       ];
+
+      const hiTrans = [
+        "[00:04] एम्मा: हमारी Q3 रणनीतिक समीक्षा में आप सभी का स्वागत है। आइए उत्पाद रोडमैप पर चर्चा करें।",
+        "[00:15] एलेक्स: हमें सिमेंटिक खोज के एकीकरण को प्राथमिकता देनी चाहिए। उपयोगकर्ता तत्काल प्रश्नोत्तर चाहते हैं।",
+        "[00:27] एम्मा: सहमत हूँ। आइए अगस्त के अंत के लिए लॉन्च लक्ष्य निर्धारित करें। जॉन बैकएंड एकीकरण का नेतृत्व करेंगे।",
+        "[00:40] एलेक्स: उत्कृष्ट। मैं घोषणा करने के लिए विपणन के साथ समन्वय करूँगा।",
+      ];
+
+      const fullTrans = isHindi ? hiTrans : enTrans;
 
       let currentIndex = 0;
       const interval = setInterval(() => {
@@ -175,17 +183,28 @@ const HowItWorks = () => {
             ...prev,
             transcribing: false,
             aiSummary: {
-              title: "Product Strategy & Roadmap Sync",
-              summary:
-                "The team aligned on prioritizing semantic search functionality with a target release date in late August.",
-              decisions: [
-                "Prioritize semantic search feature for late August release.",
-                "John leads backend integration.",
-              ],
-              actionItems: [
-                { task: "Draft semantic search API schema", owner: "John" },
-                { task: "Prepare announcement campaign", owner: "Alex" },
-              ],
+              title: isHindi ? "उत्पाद रणनीति और रोडमैप सिंक" : "Product Strategy & Roadmap Sync",
+              summary: isHindi
+                ? "टीम ने अगस्त के अंत में लक्षित रिलीज तिथि के साथ सिमेंटिक खोज कार्यक्षमता को प्राथमिकता देने पर सहमति व्यक्त की।"
+                : "The team aligned on prioritizing semantic search functionality with a target release date in late August.",
+              decisions: isHindi
+                ? [
+                    "अगस्त के अंत में रिलीज के लिए सिमेंटिक खोज सुविधा को प्राथमिकता दें।",
+                    "जॉन बैकएंड एकीकरण का नेतृत्व करेंगे।",
+                  ]
+                : [
+                    "Prioritize semantic search feature for late August release.",
+                    "John leads backend integration.",
+                  ],
+              actionItems: isHindi
+                ? [
+                    { task: "सिमेंटिक खोज एपीआई स्कीमा का मसौदा तैयार करें", owner: "जॉन" },
+                    { task: "घोषणा अभियान तैयार करें", owner: "एलेक्स" },
+                  ]
+                : [
+                    { task: "Draft semantic search API schema", owner: "John" },
+                    { task: "Prepare announcement campaign", owner: "Alex" },
+                  ],
             },
           }));
         }
@@ -200,7 +219,8 @@ const HowItWorks = () => {
         searchResults: [],
       }));
 
-      const queryStr = "When is semantic search launching?";
+      const isHindi = i18n.language === "hi";
+      const queryStr = isHindi ? "सिमेंटिक खोज कब लॉन्च हो रही है?" : "When is semantic search launching?";
       let charIdx = 0;
       let resultTimeout;
       const typingInterval = setInterval(() => {
@@ -217,22 +237,39 @@ const HowItWorks = () => {
             setSimulationState((prev) => ({
               ...prev,
               searchFinished: true,
-              searchResults: [
-                {
-                  title: "Q3 Strategic Review",
-                  date: "July 2, 2026",
-                  snippet:
-                    "Emma: Agreed. Let's set the launch target for late August.",
-                  matchScore: 98,
-                },
-                {
-                  title: "Weekly Sync",
-                  date: "June 25, 2026",
-                  snippet:
-                    "We discussed starting the planning phase for semantic search integration next month.",
-                  matchScore: 84,
-                },
-              ],
+              searchResults: isHindi
+                ? [
+                    {
+                      title: "Q3 रणनीतिक समीक्षा",
+                      date: "जुलाई 2, 2026",
+                      snippet:
+                        "एम्मा: सहमत हूँ। आइए अगस्त के अंत के लिए लॉन्च लक्ष्य निर्धारित करें।",
+                      matchScore: 98,
+                    },
+                    {
+                      title: "साप्ताहिक सिंक",
+                      date: "जून 25, 2026",
+                      snippet:
+                        "हमने अगले महीने सिमेंटिक खोज एकीकरण के लिए नियोजन चरण शुरू करने पर चर्चा की।",
+                      matchScore: 84,
+                    },
+                  ]
+                : [
+                    {
+                      title: "Q3 Strategic Review",
+                      date: "July 2, 2026",
+                      snippet:
+                        "Emma: Agreed. Let's set the launch target for late August.",
+                      matchScore: 98,
+                    },
+                    {
+                      title: "Weekly Sync",
+                      date: "June 25, 2026",
+                      snippet:
+                        "We discussed starting the planning phase for semantic search integration next month.",
+                      matchScore: 84,
+                    },
+                  ],
             }));
           }, 400);
         }
@@ -249,7 +286,7 @@ const HowItWorks = () => {
         generatingReport: false,
       }));
     }
-  }, [activeStep, resetNonce]);
+  }, [activeStep, resetNonce, i18n.language]);
 
   // Restart simulation helper
   const restartSimulation = () => {
@@ -259,25 +296,23 @@ const HowItWorks = () => {
   return (
     <section
       id="how-it-works"
-      className="py-24 bg-linear-to-b from-slate-50 to-white overflow-hidden"
+      className="py-24 bg-linear-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900 overflow-hidden"
     >
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 sm:mb-20">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wider text-blue-700 bg-blue-50 border border-blue-200/50 uppercase">
-            <Sparkles className="w-3.5 h-3.5" /> Core Workflow
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wider text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 border border-blue-200/50 dark:border-blue-800 uppercase">
+            <Sparkles className="w-3.5 h-3.5" /> {t("howItWorks.coreWorkflow")}
           </span>
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 mt-4 mb-6 leading-tight">
-            How{" "}
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-white mt-4 mb-6 leading-tight">
+            {t("howItWorks.howWorksPrefix")}
             <span className="bg-linear-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">
               MeetOnMemory
-            </span>{" "}
-            Works
+            </span>
+            {t("howItWorks.howWorksSuffix")}
           </h2>
-          <p className="text-lg text-gray-600 leading-relaxed font-medium">
-            Transform meeting voice and transcripts into searchable structured
-            knowledge. Learn how we capture and preserve your organization's
-            memory in 5 steps.
+          <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
+            {t("howItWorks.howWorksDesc")}
           </p>
         </div>
 
@@ -289,7 +324,7 @@ const HowItWorks = () => {
             ref={scrollContainerRef}
           >
             {/* Visual connector line in background (desktop only) */}
-            <div className="absolute left-[34px] top-6 bottom-6 w-0.5 border-l-2 border-dashed border-gray-200 hidden lg:block -z-10" />
+            <div className="absolute left-[34px] top-6 bottom-6 w-0.5 border-l-2 border-dashed border-gray-200 dark:border-slate-800 hidden lg:block -z-10" />
 
             {steps.map((step, idx) => {
               const Icon = step.icon;
@@ -301,8 +336,8 @@ const HowItWorks = () => {
                   onClick={() => setActiveStep(idx)}
                   className={`group relative flex gap-6 items-start p-5 rounded-2xl cursor-pointer border transition-all duration-300 ${
                     isActive
-                      ? "bg-white border-blue-200 shadow-xl shadow-blue-100/30 scale-[1.02]"
-                      : "bg-white/50 border-gray-100 hover:bg-white hover:border-gray-200 hover:shadow-lg"
+                      ? "bg-white dark:bg-slate-800 border-blue-200 dark:border-blue-900 shadow-xl shadow-blue-100/30 dark:shadow-none scale-[1.02]"
+                      : "bg-white/50 dark:bg-slate-900/40 border-gray-100 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-800 hover:border-gray-200 dark:hover:border-slate-700 hover:shadow-lg"
                   }`}
                 >
                   {/* Icon & Number Badge */}
@@ -313,7 +348,7 @@ const HowItWorks = () => {
                       <Icon className="w-6 h-6" />
                     </div>
                     {/* Floating Step Number */}
-                    <span className="absolute -top-2.5 -right-2.5 w-6 h-6 rounded-full bg-white border border-gray-100 shadow-sm flex items-center justify-center text-[10px] font-bold text-gray-500">
+                    <span className="absolute -top-2.5 -right-2.5 w-6 h-6 rounded-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-[10px] font-bold text-gray-500 dark:text-gray-400">
                       {step.number}
                     </span>
                   </div>
@@ -322,18 +357,18 @@ const HowItWorks = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
                       <h3
-                        className={`text-lg font-bold transition-colors ${isActive ? "text-gray-900" : "text-gray-800 group-hover:text-blue-600"}`}
+                        className={`text-lg font-bold transition-colors ${isActive ? "text-gray-900 dark:text-white" : "text-gray-800 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400"}`}
                       >
                         {step.title}
                       </h3>
                       {isActive && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-100 animate-pulse">
-                          Live Demo
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-800 animate-pulse">
+                          {t("howItWorks.liveDemo")}
                         </span>
                       )}
                     </div>
                     <p
-                      className={`text-sm leading-relaxed transition-colors ${isActive ? "text-gray-600" : "text-gray-500"}`}
+                      className={`text-sm leading-relaxed transition-colors ${isActive ? "text-gray-600 dark:text-gray-300" : "text-gray-500 dark:text-gray-400"}`}
                     >
                       {step.description}
                     </p>
@@ -350,9 +385,9 @@ const HowItWorks = () => {
 
           {/* Right Column: Interactive Sandbox Display (Sticky) */}
           <div className="lg:col-span-7 lg:sticky lg:top-24">
-            <div className="bg-white/85 backdrop-blur-xl border border-gray-200/60 rounded-3xl p-6 sm:p-8 shadow-xl shadow-blue-50/50 min-h-[460px] flex flex-col justify-between">
+            <div className="bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border border-gray-200/60 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl shadow-blue-50/50 dark:shadow-none min-h-[460px] flex flex-col justify-between">
               {/* Header inside Showcase Card */}
-              <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-6">
+              <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-800 mb-6">
                 <div className="flex items-center gap-2.5">
                   <div
                     className={`p-2 rounded-lg bg-gradient-to-br ${steps[activeStep].color} text-white`}
@@ -362,22 +397,22 @@ const HowItWorks = () => {
                     })}
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                      Interactive Sandbox
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-slate-500">
+                      {t("howItWorks.interactiveSandbox")}
                     </p>
-                    <h4 className="text-base font-bold text-gray-800">
-                      {steps[activeStep].title} Simulation
+                    <h4 className="text-base font-bold text-gray-800 dark:text-gray-200">
+                      {steps[activeStep].title} {t("howItWorks.simulation")}
                     </h4>
                   </div>
                 </div>
 
                 <button
                   onClick={restartSimulation}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-500 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors border border-gray-100 bg-white"
-                  title="Restart Simulation"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-lg transition-colors border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900"
+                  title={t("howItWorks.reset")}
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Reset</span>
+                  <span className="hidden sm:inline">{t("howItWorks.reset")}</span>
                 </button>
               </div>
 
@@ -385,17 +420,16 @@ const HowItWorks = () => {
               <div className="flex-1 flex flex-col justify-center">
                 {/* -------------------- STEP 1: CREATE ORGANIZATION -------------------- */}
                 {activeStep === 0 && (
-                  <div className="max-w-md mx-auto w-full bg-slate-50 border border-gray-100 rounded-2xl p-5 shadow-inner">
-                    <h5 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-1.5">
-                      <Users className="w-4 h-4 text-blue-600" /> Create
-                      Workspace
+                  <div className="max-w-md mx-auto w-full bg-slate-50 dark:bg-slate-950/40 border border-gray-100 dark:border-slate-800/60 rounded-2xl p-5 shadow-inner">
+                    <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-1.5">
+                      <Users className="w-4 h-4 text-blue-600" /> {t("howItWorks.createWorkspace")}
                     </h5>
 
                     {!simulationState.orgCreated ? (
                       <div className="space-y-4">
                         <div>
-                          <label className="block text-xs font-semibold text-gray-500 mb-1">
-                            Organization Name
+                          <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                            {t("howItWorks.orgName")}
                           </label>
                           <input
                             type="text"
@@ -406,13 +440,13 @@ const HowItWorks = () => {
                                 orgName: e.target.value,
                               }))
                             }
-                            className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-blue-500 transition-colors"
-                            placeholder="Enter org name..."
+                            className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 transition-colors"
+                            placeholder={t("howItWorks.enterOrgName")}
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-gray-500 mb-1">
-                            Add Members
+                          <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                            {t("howItWorks.addMembers")}
                           </label>
                           <div className="flex gap-2">
                             <input
@@ -424,8 +458,8 @@ const HowItWorks = () => {
                                   newMember: e.target.value,
                                 }))
                               }
-                              className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-blue-500"
-                              placeholder="e.g. John Doe"
+                              className="flex-1 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:border-blue-500 dark:focus:border-blue-500"
+                              placeholder={t("howItWorks.egMember")}
                               onKeyDown={(e) => {
                                 if (
                                   e.key === "Enter" &&
@@ -467,7 +501,7 @@ const HowItWorks = () => {
                           {simulationState.orgMembers.map((member, i) => (
                             <span
                               key={i}
-                              className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-200/60 text-gray-700 font-medium"
+                              className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-200/60 dark:bg-slate-800 text-gray-700 dark:text-gray-300 font-medium"
                             >
                               {member}
                             </span>
@@ -484,7 +518,7 @@ const HowItWorks = () => {
                           disabled={!simulationState.orgName.trim()}
                           className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white py-2 rounded-lg text-sm font-semibold transition-colors shadow-md shadow-blue-500/15"
                         >
-                          Create Organization
+                          {t("howItWorks.createOrgBtn")}
                         </button>
                       </div>
                     ) : (
@@ -493,18 +527,18 @@ const HowItWorks = () => {
                           <CheckCircle2 className="w-6 h-6" />
                         </div>
                         <div>
-                          <h6 className="font-bold text-gray-800 text-base">
-                            Organization Created!
+                          <h6 className="font-bold text-gray-800 dark:text-gray-200 text-base">
+                            {t("howItWorks.orgCreated")}
                           </h6>
-                          <p className="text-xs text-gray-500 mt-1">
-                            Welcome to your organization dashboard for{" "}
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            {t("howItWorks.welcomeOrg")}{" "}
                             <strong className="text-blue-600">
                               {simulationState.orgName}
                             </strong>
                             .
                           </p>
                         </div>
-                        <div className="bg-white border border-gray-100 rounded-lg p-2 text-xs font-semibold text-gray-600 max-w-xs mx-auto truncate select-all cursor-pointer">
+                        <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-lg p-2 text-xs font-semibold text-gray-600 dark:text-gray-300 max-w-xs mx-auto truncate select-all cursor-pointer">
                           https://meetonmemory.com/join/invite-
                           {Math.random().toString(36).substring(2, 7)}
                         </div>
@@ -517,7 +551,7 @@ const HowItWorks = () => {
                           }
                           className="text-xs text-blue-600 font-bold hover:underline"
                         >
-                          Reset & Try Again
+                          {t("howItWorks.resetTry")}
                         </button>
                       </div>
                     )}
@@ -527,7 +561,7 @@ const HowItWorks = () => {
                 {/* -------------------- STEP 2: UPLOAD MEETING -------------------- */}
                 {activeStep === 1 && (
                   <div className="max-w-md mx-auto w-full">
-                    <div className="border-2 border-dashed border-gray-200/80 rounded-2xl p-6 bg-slate-50 text-center flex flex-col items-center justify-center min-h-[220px] transition-all hover:bg-slate-50/50">
+                    <div className="border-2 border-dashed border-gray-200/80 dark:border-slate-800 rounded-2xl p-6 bg-slate-50 dark:bg-slate-950/40 text-center flex flex-col items-center justify-center min-h-[220px] transition-all hover:bg-slate-50/50 dark:hover:bg-slate-950/20">
                       {!simulationState.uploadDone ? (
                         <>
                           <div
@@ -538,10 +572,10 @@ const HowItWorks = () => {
 
                           {simulationState.uploading ? (
                             <div className="w-full space-y-2">
-                              <p className="text-sm font-semibold text-gray-700">
-                                Uploading Product_Review.mp4...
+                              <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                {t("howItWorks.uploadingFile")}
                               </p>
-                              <div className="w-full bg-gray-200 rounded-full h-2 max-w-xs mx-auto overflow-hidden">
+                              <div className="w-full bg-gray-200 dark:bg-slate-800 rounded-full h-2 max-w-xs mx-auto overflow-hidden">
                                 <div
                                   className="bg-blue-600 h-2 rounded-full transition-all duration-200"
                                   style={{
@@ -555,18 +589,17 @@ const HowItWorks = () => {
                             </div>
                           ) : (
                             <div>
-                              <p className="text-sm font-bold text-gray-700 mb-1">
-                                Upload meeting file
+                              <p className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                {t("howItWorks.uploadMeetingFile")}
                               </p>
-                              <p className="text-xs text-gray-500 mb-4 max-w-xs">
-                                Drag and drop audio/video file here, or click to
-                                browse
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mb-4 max-w-xs">
+                                {t("howItWorks.uploadDesc")}
                               </p>
                               <button
                                 onClick={restartSimulation}
-                                className="bg-white border border-gray-200 text-gray-700 px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-50 shadow-sm"
+                                className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 text-gray-700 dark:text-gray-300 px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-50 dark:hover:bg-slate-800 shadow-sm"
                               >
-                                Select File
+                                {t("howItWorks.selectFile")}
                               </button>
                             </div>
                           )}
@@ -577,16 +610,16 @@ const HowItWorks = () => {
                             <CheckCircle2 className="w-6 h-6" />
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-gray-800">
+                            <p className="text-sm font-bold text-gray-800 dark:text-gray-200">
                               Q3_Strategic_Review.mp4
                             </p>
                             <p className="text-xs text-emerald-600 font-semibold mt-0.5">
-                              Upload complete • 45.2 MB
+                              {t("howItWorks.uploadCompleted")}
                             </p>
                           </div>
                           <div className="flex gap-2 max-w-xs mx-auto justify-center">
-                            <span className="px-2 py-1 rounded bg-indigo-50 border border-indigo-100 text-[10px] font-semibold text-indigo-700">
-                              Ready for AI processing
+                            <span className="px-2 py-1 rounded bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900 text-[10px] font-semibold text-indigo-700 dark:text-indigo-300">
+                              {t("howItWorks.readyProcessing")}
                             </span>
                           </div>
                         </div>
@@ -605,18 +638,18 @@ const HowItWorks = () => {
                         <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
                         <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
                         <span className="text-[10px] font-bold text-slate-500 ml-1.5">
-                          AI Engine Stream
+                          {t("howItWorks.aiEngineStream")}
                         </span>
                       </div>
 
                       {simulationState.transcribing ? (
                         <span className="flex items-center gap-1 text-[10px] font-bold text-violet-400">
                           <Loader2 className="w-3 h-3 animate-spin" />{" "}
-                          Processing Audio...
+                          {t("howItWorks.processingAudio")}
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400">
-                          <Sparkles className="w-3 h-3" /> Synthesis Done
+                          <Sparkles className="w-3 h-3" /> {t("howItWorks.synthesisDone")}
                         </span>
                       )}
                     </div>
@@ -634,7 +667,7 @@ const HowItWorks = () => {
 
                       {simulationState.transcribing && (
                         <div className="flex gap-1 items-center text-slate-500 animate-pulse text-[11px] pl-2 border-l-2 border-slate-700">
-                          <span>Scanning voice waveforms</span>
+                          <span>{t("howItWorks.scanningWaveforms")}</span>
                           <span className="flex gap-0.5">
                             <span className="h-1.5 w-1 bg-slate-500 rounded animate-bounce" />
                             <span className="h-1.5 w-1 bg-slate-500 rounded animate-bounce [animation-delay:0.2s]" />
@@ -650,7 +683,7 @@ const HowItWorks = () => {
                         <div className="flex items-center gap-1.5 text-violet-400 font-bold">
                           <Sparkles className="w-3.5 h-3.5" />
                           <span>
-                            Generated Insights:{" "}
+                            {t("howItWorks.generatedInsights")}:{" "}
                             {simulationState.aiSummary.title}
                           </span>
                         </div>
@@ -662,7 +695,7 @@ const HowItWorks = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-slate-700/50">
                           <div>
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
-                              Decisions
+                              {t("howItWorks.decisions")}
                             </span>
                             <ul className="list-disc list-inside mt-1 space-y-1 text-slate-300">
                               {simulationState.aiSummary.decisions.map(
@@ -676,7 +709,7 @@ const HowItWorks = () => {
                           </div>
                           <div>
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
-                              Action Items
+                              {t("howItWorks.actionItems")}
                             </span>
                             <ul className="mt-1 space-y-1 text-slate-300">
                               {simulationState.aiSummary.actionItems.map(
@@ -708,7 +741,7 @@ const HowItWorks = () => {
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                         <SearchIcon className="w-4 h-4" />
                       </div>
-                      <div className="w-full bg-slate-50 border border-gray-200 rounded-xl pl-9 pr-20 py-2.5 text-sm text-gray-800 flex items-center min-h-[42px] relative">
+                      <div className="w-full bg-slate-50 dark:bg-slate-950/40 border border-gray-200 dark:border-slate-800 rounded-xl pl-9 pr-20 py-2.5 text-sm text-gray-800 dark:text-gray-200 flex items-center min-h-[42px] relative">
                         {simulationState.searchQuery}
                         {/* Cursor blinking */}
                         <span className="inline-block w-0.5 h-4 bg-blue-600 animate-pulse ml-0.5" />
@@ -725,33 +758,33 @@ const HowItWorks = () => {
                     <div className="min-h-[160px] space-y-3">
                       {!simulationState.searchFinished ? (
                         <div className="text-center py-8 text-gray-400 text-xs italic">
-                          Type query above to scan workspace meetings...
+                          {t("howItWorks.typeQuery")}
                         </div>
                       ) : (
                         <div className="space-y-2.5">
                           <p className="text-[11px] font-bold text-gray-500">
-                            2 matching results found:
+                            {simulationState.searchResults.length} {t("howItWorks.matchingResults")}:
                           </p>
                           {simulationState.searchResults.map((result, idx) => (
                             <div
                               key={idx}
-                              className="bg-slate-50 border border-gray-100 p-3.5 rounded-xl flex justify-between items-start gap-4 hover:border-gray-200 transition-colors"
+                              className="bg-slate-50 dark:bg-slate-950/40 border border-gray-100 dark:border-slate-800/60 p-3.5 rounded-xl flex justify-between items-start gap-4 hover:border-gray-200 dark:hover:border-slate-800 transition-colors"
                             >
                               <div className="space-y-1">
                                 <div className="flex items-center gap-2">
-                                  <h6 className="text-xs font-bold text-gray-800">
+                                  <h6 className="text-xs font-bold text-gray-800 dark:text-gray-200">
                                     {result.title}
                                   </h6>
                                   <span className="text-[9px] text-gray-400 font-medium">
                                     {result.date}
                                   </span>
                                 </div>
-                                <p className="text-xs text-gray-600 italic">
+                                <p className="text-xs text-gray-600 dark:text-gray-400 italic">
                                   "{result.snippet}"
                                 </p>
                               </div>
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 flex-shrink-0">
-                                {result.matchScore}% match
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-900 flex-shrink-0">
+                                {result.matchScore}% {t("howItWorks.matchScore")}
                               </span>
                             </div>
                           ))}
@@ -763,48 +796,48 @@ const HowItWorks = () => {
 
                 {/* -------------------- STEP 5: GENERATE REPORTS -------------------- */}
                 {activeStep === 4 && (
-                  <div className="max-w-md mx-auto w-full space-y-5 bg-slate-50 border border-gray-100 rounded-2xl p-5 shadow-inner">
-                    <div className="flex justify-between items-center pb-2 border-b border-gray-200/60">
-                      <span className="text-xs font-bold text-gray-700">
-                        Analytics Briefing
+                  <div className="max-w-md mx-auto w-full space-y-5 bg-slate-50 dark:bg-slate-950/40 border border-gray-100 dark:border-slate-800/60 rounded-2xl p-5 shadow-inner">
+                    <div className="flex justify-between items-center pb-2 border-b border-gray-200/60 dark:border-slate-800">
+                      <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                        {t("howItWorks.analyticsBriefing")}
                       </span>
                       <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
-                        Current Month
+                        {t("howItWorks.currentMonth")}
                       </span>
                     </div>
 
                     <div className="grid grid-cols-3 gap-3">
-                      <div className="bg-white border border-gray-200 p-2.5 rounded-xl text-center">
+                      <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 p-2.5 rounded-xl text-center">
                         <span className="text-[10px] text-gray-400 font-bold uppercase block">
-                          Meetings
+                          {t("howItWorks.meetings")}
                         </span>
-                        <span className="text-lg font-bold text-gray-800">
+                        <span className="text-lg font-bold text-gray-800 dark:text-gray-200">
                           42
                         </span>
                       </div>
-                      <div className="bg-white border border-gray-200 p-2.5 rounded-xl text-center">
+                      <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 p-2.5 rounded-xl text-center">
                         <span className="text-[10px] text-gray-400 font-bold uppercase block">
-                          Hours
+                          {t("howItWorks.hours")}
                         </span>
-                        <span className="text-lg font-bold text-gray-800">
+                        <span className="text-lg font-bold text-gray-800 dark:text-gray-200">
                           84h
                         </span>
                       </div>
-                      <div className="bg-white border border-gray-200 p-2.5 rounded-xl text-center">
+                      <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 p-2.5 rounded-xl text-center">
                         <span className="text-[10px] text-gray-400 font-bold uppercase block">
-                          Decisions
+                          {t("howItWorks.decisions")}
                         </span>
-                        <span className="text-lg font-bold text-gray-800">
+                        <span className="text-lg font-bold text-gray-800 dark:text-gray-200">
                           12
                         </span>
                       </div>
                     </div>
 
-                    <div className="bg-white border border-gray-200 rounded-xl p-3.5 space-y-2">
+                    <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-3.5 space-y-2">
                       <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide block">
-                        Recent AI Briefings
+                        {t("howItWorks.recentAiBriefings")}
                       </span>
-                      <div className="flex items-center justify-between text-xs text-gray-600 hover:text-blue-600 cursor-pointer">
+                      <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-350 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer">
                         <span className="flex items-center gap-1.5 font-medium">
                           <FileText className="w-3.5 h-3.5 text-rose-500" />
                           Executive_Product_Report_Q3.pdf
@@ -836,22 +869,22 @@ const HowItWorks = () => {
                         {simulationState.generatingReport ? (
                           <>
                             <Loader2 className="w-4 h-4 animate-spin" />
-                            Compiling Dashboard Data...
+                            {t("howItWorks.compilingData")}
                           </>
                         ) : (
                           <>
                             <Sparkles className="w-4 h-4" />
-                            Generate AI Summary Report
+                            {t("howItWorks.generateReportBtn")}
                           </>
                         )}
                       </button>
                     ) : (
-                      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-emerald-800 text-xs font-semibold">
+                      <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 rounded-xl p-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-350 text-xs font-semibold">
                           <div className="p-1 rounded-full bg-emerald-100 text-emerald-600">
                             <FileCheck className="w-4 h-4" />
                           </div>
-                          <span>Report compiled & downloaded!</span>
+                          <span>{t("howItWorks.reportCompiled")}</span>
                         </div>
                         <button
                           onClick={() =>
@@ -862,7 +895,7 @@ const HowItWorks = () => {
                           }
                           className="text-[10px] text-emerald-700 hover:underline font-bold"
                         >
-                          Generate another
+                          {t("howItWorks.generateAnother")}
                         </button>
                       </div>
                     )}
@@ -871,8 +904,8 @@ const HowItWorks = () => {
               </div>
 
               {/* Progress Stepper indicator under showcase */}
-              <div className="pt-6 border-t border-gray-100 flex justify-between items-center text-xs text-gray-500 mt-6 flex-wrap gap-2">
-                <span>Step {steps[activeStep].number} of 5</span>
+              <div className="pt-6 border-t border-gray-100 dark:border-slate-800 flex justify-between items-center text-xs text-gray-500 mt-6 flex-wrap gap-2">
+                <span>{t("howItWorks.stepCount", { step: steps[activeStep].number })}</span>
 
                 <div className="flex gap-1">
                   {steps.map((_, i) => (
@@ -882,7 +915,7 @@ const HowItWorks = () => {
                       className={`h-1.5 rounded-full transition-all duration-300 ${
                         activeStep === i
                           ? `w-6 bg-gradient-to-r ${steps[i].color}`
-                          : "w-2 bg-gray-200 hover:bg-gray-300"
+                          : "w-2 bg-gray-200 dark:bg-slate-800 hover:bg-gray-300 dark:hover:bg-slate-700"
                       }`}
                       aria-label={`Go to step ${i + 1}`}
                     />
@@ -893,7 +926,7 @@ const HowItWorks = () => {
                   onClick={() => setActiveStep((activeStep + 1) % 5)}
                   className="font-bold text-blue-600 hover:text-blue-700 inline-flex items-center gap-0.5 group/btn"
                 >
-                  Next Step
+                  {t("howItWorks.nextStep")}
                   <ChevronRight className="w-4 h-4 group-hover/btn:translate-x-0.5 transition-transform" />
                 </button>
               </div>

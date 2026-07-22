@@ -102,9 +102,49 @@ const meetingSchema = new mongoose.Schema(
         eventId: { type: String, required: true },
       },
     ],
+
+    // Calendar integration - store external event IDs for both providers
+    calendarEvents: {
+      google: {
+        eventId: { type: String, default: null },
+        syncedAt: { type: Date, default: null },
+      },
+      microsoft: {
+        eventId: { type: String, default: null },
+        syncedAt: { type: Date, default: null },
+      },
+    },
+
+    // Legacy field for backward compatibility
+    archived: {
+      type: Boolean,
+      default: false,
+    },
+
+    // Google Calendar integration
+    googleEventId: {
+      type: String,
+      default: null,
+    },
+
+    // CRDT Collaborative Editing (Yjs)
+    crdtState: {
+      type: Buffer, // Serialized Yjs document binary state (Y.encodeStateAsUpdate)
+      default: null,
+    },
+    collaborativeNotes: {
+      type: String, // Plain-text snapshot for read-only views and semantic search
+      default: "",
+    },
   },
   { timestamps: true },
 );
+
+// Indexes for query performance
+meetingSchema.index({ organization: 1, createdAt: -1 });
+meetingSchema.index({ uploadedBy: 1, createdAt: -1 });
+meetingSchema.index({ status: 1 });
+meetingSchema.index({ title: "text", summary: "text" });
 
 const Meeting = mongoose.model("Meeting", meetingSchema);
 export default Meeting;
