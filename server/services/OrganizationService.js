@@ -654,6 +654,7 @@ export const getOrganizationById = async (idOrSlug) => {
     : { slug: String(idOrSlug) };
 
   const organization = await Organization.findOne(query)
+    .select("name slug description logo visibility owner createdAt")
     .populate("owner", "name email")
     .lean();
 
