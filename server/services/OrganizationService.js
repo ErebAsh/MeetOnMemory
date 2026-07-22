@@ -73,8 +73,9 @@ const generateSlug = (name) => {
  */
 export const createOrJoinOrganization = async (userId, orgName) => {
   // Check if organization already exists (case-insensitive match)
+  const escapedOrgName = escapeRegex(orgName);
   let organization = await Organization.findOne({
-    name: { $regex: `^${orgName}$`, $options: "i" },
+    name: { $regex: `^${escapedOrgName}$`, $options: "i" },
   });
 
   let message = "";
@@ -552,8 +553,9 @@ export const createOrganization = async (
   const orgName = name.trim();
 
   // Check if organization with same name exists (case-insensitive)
+  const escapedOrgName = escapeRegex(orgName);
   const existingOrg = await Organization.findOne({
-    name: { $regex: `^${orgName}$`, $options: "i" },
+    name: { $regex: `^${escapedOrgName}$`, $options: "i" },
   });
 
   if (existingOrg) {
