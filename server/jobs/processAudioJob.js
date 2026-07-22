@@ -110,7 +110,7 @@ ${textToSummarize}
 
     try {
       const hfUrl =
-        "https://api-inference.huggingface.co/models/facebook/bart-large-cnn";
+        "https://router.huggingface.co/hf-inference/models/facebook/bart-large-cnn";
 
       const hfResp = await axios.post(
         hfUrl,

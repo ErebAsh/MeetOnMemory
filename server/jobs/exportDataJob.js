@@ -81,9 +81,15 @@ export default async function exportDataJob(job, app) {
       });
 
       archive.pipe(output);
-      archive.append(JSON.stringify(user, null, 2), { name: "user_profile.json" });
-      archive.append(JSON.stringify(meetings, null, 2), { name: "meetings.json" });
-      archive.append(JSON.stringify(memberships, null, 2), { name: "memberships.json" });
+      archive.append(JSON.stringify(user, null, 2), {
+        name: "user_profile.json",
+      });
+      archive.append(JSON.stringify(meetings, null, 2), {
+        name: "meetings.json",
+      });
+      archive.append(JSON.stringify(memberships, null, 2), {
+        name: "memberships.json",
+      });
       archive.finalize();
     });
 
@@ -91,8 +97,10 @@ export default async function exportDataJob(job, app) {
 
     // Generate Secure Download Link
     const jwtSecret = process.env.JWT_SECRET;
-    const downloadToken = jwt.sign({ userId, fileName }, jwtSecret, { expiresIn: "24h" });
-    
+    const downloadToken = jwt.sign({ userId, fileName }, jwtSecret, {
+      expiresIn: "24h",
+    });
+
     // In production, BASE_URL should be configured correctly in .env
     const baseUrl = process.env.BASE_URL || "http://localhost:3000";
     const downloadUrl = `${baseUrl}/api/user/download-export/${downloadToken}`;

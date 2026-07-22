@@ -99,12 +99,15 @@ export const createOrJoinOrganization = async (userId, orgName) => {
     message = "Joined existing organization successfully.";
 
     // Notify the organization admin
-    if (organization.createdBy && organization.createdBy.toString() !== userId.toString()) {
+    if (
+      organization.createdBy &&
+      organization.createdBy.toString() !== userId.toString()
+    ) {
       eventBus.emit("organization.joined", {
         userId,
         organizationId: organization._id,
         organizationName: organization.name,
-        adminId: organization.createdBy
+        adminId: organization.createdBy,
       });
     }
   } else {
@@ -230,7 +233,7 @@ export const joinOrganizationById = async (userId, organizationId) => {
       userId,
       organizationId: organization._id,
       organizationName: organization.name,
-      adminId: organization.createdBy
+      adminId: organization.createdBy,
     });
   }
 

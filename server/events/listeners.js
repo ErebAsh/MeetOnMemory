@@ -19,10 +19,13 @@ export const initListeners = (io) => {
         `A new meeting "${meeting.title}" has been scheduled.`,
         "meetings",
         `/meeting/${meeting._id}`,
-        "View Details"
+        "View Details",
       );
       if (formattedNotification) {
-        io.to(membership.user._id.toString()).emit("notification:new", formattedNotification);
+        io.to(membership.user._id.toString()).emit(
+          "notification:new",
+          formattedNotification,
+        );
       }
     }
   });
@@ -41,10 +44,13 @@ export const initListeners = (io) => {
         `MoM for "${meeting.title}" is ready.`,
         "ai_processing",
         `/meeting/${meeting._id}`,
-        "View MoM"
+        "View MoM",
       );
       if (formattedNotification) {
-        io.to(userId.toString()).emit("notification:new", formattedNotification);
+        io.to(userId.toString()).emit(
+          "notification:new",
+          formattedNotification,
+        );
       }
 
       // We also emit a specific socket event for the UI to catch
@@ -68,7 +74,7 @@ export const initListeners = (io) => {
       "Your data export has been completed and emailed to you.",
       "system",
       downloadUrl,
-      "Download"
+      "Download",
     );
     if (formattedNotification) {
       io.to(userId.toString()).emit("notification:new", formattedNotification);
@@ -79,37 +85,49 @@ export const initListeners = (io) => {
   // ORGANIZATIONS
   // ─────────────────────────────────────────────────────────────
 
-  eventBus.on("organization.joined", async ({ userId, organizationId, organizationName, adminId }) => {
-    if (adminId && adminId.toString() !== userId.toString()) {
-      const formattedNotification = await createNotification(
-        adminId,
-        "New Member Joined",
-        `A new user has joined your organization: ${organizationName}.`,
-        "organizations",
-        "/team-members",
-        "View Team"
-      );
-      if (formattedNotification) {
-        io.to(adminId.toString()).emit("notification:new", formattedNotification);
+  eventBus.on(
+    "organization.joined",
+    async ({ userId, organizationId, organizationName, adminId }) => {
+      if (adminId && adminId.toString() !== userId.toString()) {
+        const formattedNotification = await createNotification(
+          adminId,
+          "New Member Joined",
+          `A new user has joined your organization: ${organizationName}.`,
+          "organizations",
+          "/team-members",
+          "View Team",
+        );
+        if (formattedNotification) {
+          io.to(adminId.toString()).emit(
+            "notification:new",
+            formattedNotification,
+          );
+        }
       }
-    }
-  });
-  
-  eventBus.on("live_meeting.notified", async ({ uploaderId, roomId, participants, orgId }) => {
-    for (const user of participants) {
-      const formattedNotification = await createNotification(
-        user._id,
-        "Live Meeting Started",
-        "You have been invited to join a live meeting.",
-        "meetings",
-        `/meeting-room/${roomId}`,
-        "Join Now"
-      );
-      if (formattedNotification) {
-        io.to(user._id.toString()).emit("notification:new", formattedNotification);
+    },
+  );
+
+  eventBus.on(
+    "live_meeting.notified",
+    async ({ uploaderId, roomId, participants, orgId }) => {
+      for (const user of participants) {
+        const formattedNotification = await createNotification(
+          user._id,
+          "Live Meeting Started",
+          "You have been invited to join a live meeting.",
+          "meetings",
+          `/meeting-room/${roomId}`,
+          "Join Now",
+        );
+        if (formattedNotification) {
+          io.to(user._id.toString()).emit(
+            "notification:new",
+            formattedNotification,
+          );
+        }
       }
-    }
-  });
+    },
+  );
 
   console.log("✅ Event listeners initialized");
 };

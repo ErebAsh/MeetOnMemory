@@ -290,13 +290,23 @@ export const generateMeetingMoM = async (
     console.log(
       `🚀 Queueing MoM generation job for ${meetingId || "transcript-only"}...`,
     );
-    await aiQueue.add("generate-mom", {
-      meetingId,
-      transcript: textToSummarize,
-      date,
-      title,
-      userId,
-    });
+    await aiQueue.add(
+      "generate-mom",
+      {
+        meetingId,
+        transcript: textToSummarize,
+        date,
+        title,
+        userId,
+      },
+      {
+        attempts: 3,
+        backoff: {
+          type: "exponential",
+          delay: 5000, // Wait 5s, then 10s on retries
+        },
+      },
+    );
     return { queued: true };
   }
 

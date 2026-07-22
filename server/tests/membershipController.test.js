@@ -2,6 +2,7 @@ import request from "supertest";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import { app } from "../server.js";
+import { createCsrfAgent } from "./helpers/csrfHelper.js";
 import User from "../models/userModel.js";
 import Organization from "../models/organizationModel.js";
 import Membership from "../models/membershipModel.js";
@@ -68,9 +69,11 @@ describe("MembershipController - removeMembership", () => {
   });
 
   it("should clear organization and role on the removed user when admin removes a member", async () => {
-    const res = await request(app)
-      .delete(`/api/memberships/${memberMembership._id}`)
-      .set("Authorization", `Bearer ${adminToken}`);
+    const { agent, csrfToken } = await createCsrfAgent();
+    const res = await agent
+      .delete(`/api/membership/${memberMembership._id}`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .set("X-CSRF-Token", csrfToken);
 
     expect(res.statusCode).toEqual(200);
     expect(res.body.success).toBe(true);
@@ -81,9 +84,11 @@ describe("MembershipController - removeMembership", () => {
   });
 
   it("should not alter admin user's own organization/role when admin removes a member", async () => {
-    await request(app)
-      .delete(`/api/memberships/${memberMembership._id}`)
-      .set("Authorization", `Bearer ${adminToken}`);
+    const { agent, csrfToken } = await createCsrfAgent();
+    await agent
+      .delete(`/api/membership/${memberMembership._id}`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .set("X-CSRF-Token", csrfToken);
 
     const updatedAdmin = await User.findById(adminUser._id);
     expect(updatedAdmin.organization.toString()).toBe(
@@ -103,9 +108,11 @@ describe("MembershipController - removeMembership", () => {
     memberUser.role = "member";
     await memberUser.save();
 
-    const res = await request(app)
-      .delete(`/api/memberships/${memberMembership._id}`)
-      .set("Authorization", `Bearer ${adminToken}`);
+    const { agent, csrfToken } = await createCsrfAgent();
+    const res = await agent
+      .delete(`/api/membership/${memberMembership._id}`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .set("X-CSRF-Token", csrfToken);
 
     expect(res.statusCode).toEqual(200);
 
@@ -135,9 +142,11 @@ describe("MembershipController - removeMembership", () => {
       status: "active",
     });
 
-    const res = await request(app)
-      .delete(`/api/memberships/${memberMembership._id}`)
-      .set("Authorization", `Bearer ${otherToken}`);
+    const { agent, csrfToken } = await createCsrfAgent();
+    const res = await agent
+      .delete(`/api/membership/${memberMembership._id}`)
+      .set("Authorization", `Bearer ${otherToken}`)
+      .set("X-CSRF-Token", csrfToken);
 
     expect(res.statusCode).toEqual(403);
   });

@@ -131,7 +131,14 @@ export const initAIWorker = (app) => {
   const worker = new Worker(
     "ai-mom-generation",
     async (job) => await processAudioJob(job, app),
-    { connection, concurrency: 5 }, // Handle up to 5 concurrent jobs
+    {
+      connection,
+      concurrency: 1, // Reduced to prevent concurrent API quota exhaustion
+      limiter: {
+        max: 5, // Process max 5 jobs
+        duration: 60000, // per 60 seconds to match Gemini free tier limits
+      },
+    },
   );
 
   worker.on("completed", (job) => {
