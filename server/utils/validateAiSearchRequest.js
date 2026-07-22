@@ -18,9 +18,7 @@ export const validateAiSearchRequest = (body) => {
 
   if (
     filters !== undefined &&
-    (typeof filters !== "object" ||
-      filters === null ||
-      Array.isArray(filters))
+    (typeof filters !== "object" || filters === null || Array.isArray(filters))
   ) {
     errors.push("Filters must be an object.");
   }

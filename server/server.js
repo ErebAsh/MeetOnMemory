@@ -27,9 +27,9 @@ import webhookRoutes from "./routes/webhookRoutes.js";
 import slackRoutes from "./routes/slackRoutes.js";
 import transcriptRoutes from "./routes/transcriptRoutes.js";
 
-// Import slackService to register its eventBus 'mom.generated' listener.
-// The import itself is enough — the listener is set up at module load time.
+// Import slackService, cacheInvalidationService, and conflictScanTrigger to register eventBus listeners.
 import "./services/slackService.js";
+import "./services/cacheInvalidationService.js";
 // Import conflictScanTrigger to register its eventBus 'mom.generated'
 // listener, which enqueues a background contradiction scan per
 // organization whenever new decisions/action items are extracted.
@@ -138,7 +138,7 @@ if (process.env.NODE_ENV !== "test") {
   server.listen(PORT, () => {
     console.log(`🚀 MeetOnMemory Server running on port ${PORT}`);
 
-    setTimeout(() => {
+    (globalThis.setImmediate || setTimeout)(() => {
       const safeInit = async (name, initFn) => {
         try {
           await initFn();

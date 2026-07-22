@@ -37,7 +37,10 @@ export const knowledgeApi = {
     ),
   getConflictDetail: (conflictId) =>
     apiClient.get(`/api/knowledge/conflicts/${conflictId}`),
-  resolveConflict: (conflictId, { resolutionType, keptMemoryId, customValue, note }) =>
+  resolveConflict: (
+    conflictId,
+    { resolutionType, keptMemoryId, customValue, note },
+  ) =>
     apiClient.post(`/api/knowledge/conflicts/${conflictId}/resolve`, {
       resolutionType,
       ...(keptMemoryId ? { keptMemoryId } : {}),

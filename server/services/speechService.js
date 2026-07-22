@@ -89,7 +89,9 @@ export const transcribeWithGemini = async (audioUrl) => {
                   data: audioBase64,
                 },
               },
-              { text: "Transcribe this audio into plain text. Return only the transcription." },
+              {
+                text: "Transcribe this audio into plain text. Return only the transcription.",
+              },
             ],
           },
         ],

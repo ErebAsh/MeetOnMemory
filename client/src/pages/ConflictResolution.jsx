@@ -63,7 +63,8 @@ const ConflictResolution = () => {
         models: [selectedModel],
       });
       if (res.data?.success) {
-        const found = res.data.report?.results?.[selectedModel]?.conflictsFound ?? 0;
+        const found =
+          res.data.report?.results?.[selectedModel]?.conflictsFound ?? 0;
         toast.success(
           found > 0
             ? `Scan complete — ${found} conflict${found === 1 ? "" : "s"} found.`
@@ -75,7 +76,9 @@ const ConflictResolution = () => {
       }
     } catch (err) {
       console.error("Conflict scan error", err);
-      toast.error(err.response?.data?.message || "Failed to run conflict scan.");
+      toast.error(
+        err.response?.data?.message || "Failed to run conflict scan.",
+      );
     } finally {
       setScanning(false);
     }
@@ -114,8 +117,8 @@ const ConflictResolution = () => {
               Conflict Resolution
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Find memories that contradict each other and resolve them
-              without losing either version.
+              Find memories that contradict each other and resolve them without
+              losing either version.
             </p>
           </div>
 
@@ -156,13 +159,15 @@ const ConflictResolution = () => {
 
         <div>
           {loading && (
-            <p className="text-sm text-slate-500 dark:text-slate-400">Loading...</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Loading...
+            </p>
           )}
 
           {!loading && conflicts.length === 0 && (
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              No open conflicts — the knowledge graph is consistent. Try
-              running a scan if new memories were just added.
+              No open conflicts — the knowledge graph is consistent. Try running
+              a scan if new memories were just added.
             </p>
           )}
 
@@ -228,7 +233,8 @@ const ConflictResolution = () => {
                       })
                     }
                     disabled={
-                      resolvingId === conflict._id || !customValues[conflict._id]
+                      resolvingId === conflict._id ||
+                      !customValues[conflict._id]
                     }
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
                   >

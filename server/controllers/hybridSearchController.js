@@ -6,7 +6,7 @@
 // ================================
 
 import { hybridRetrieve } from "../services/hybridRetrievalService.js";
-import { getRedisClient } from "../services/redisService.js";
+import { getRedisClient, setSearchCache } from "../services/redisService.js";
 import { sendSuccess, sendError } from "../utils/responseHandler.js";
 
 /**
@@ -72,14 +72,7 @@ export const hybridSearch = async (req, res) => {
     };
 
     if (req.cacheKey) {
-      const redisClient = getRedisClient();
-      if (redisClient && redisClient.isReady) {
-        await redisClient.setEx(
-          req.cacheKey,
-          3600,
-          JSON.stringify(responsePayload),
-        );
-      }
+      await setSearchCache(req.cacheKey, req.organizationId, responsePayload);
     }
 
     return sendSuccess(res, { results, meta }, message);
