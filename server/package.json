@@ -14,7 +14,6 @@
   },
   "dependencies": {
     "@azure/msal-node": "^5.4.2",
-    "@azure/msal-node": "^2.16.3",
     "@chroma-core/default-embed": "^0.1.8",
     "@google/generative-ai": "^0.24.1",
     "@huggingface/inference": "^4.13.0",

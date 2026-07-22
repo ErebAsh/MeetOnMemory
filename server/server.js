@@ -26,7 +26,6 @@ import policyComplianceRoutes from "./routes/policyComplianceRoutes.js";
 import sessionRoutes from "./routes/sessionRoutes.js";
 import webhookRoutes from "./routes/webhookRoutes.js";
 import slackRoutes from "./routes/slackRoutes.js";
-import calendarRoutes from "./routes/calendarRoutes.js";
 import transcriptRoutes from "./routes/transcriptRoutes.js";
 import { configureExpress, configureErrorHandling } from "./config/express.js";
 import { configureSocket } from "./config/socket.js";
@@ -45,7 +44,6 @@ import meetingSocket from "./socket/meetingSocket.js";
 import documentSync from "./socket/documentSync.js";
 import transcriptSocket from "./socket/transcriptSocket.js";
 import { initRedis, getRedisClient } from "./services/redisService.js";
-import { initRedis } from "./services/redisService.js";
 import { createAdapter } from "@socket.io/redis-adapter";
 import { startCalendarSyncJob } from "./jobs/calendarSyncJob.js";
 import { createClient } from "redis";
@@ -57,8 +55,6 @@ import {
 import { initWebhookWorker } from "./services/webhookDispatcherService.js";
 import { globalLimiter } from "./middleware/rateLimiter.js";
 import errorHandler from "./middleware/errorHandler.js";
-import path from "path";
-import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -104,8 +100,6 @@ import { slackWebhookParser } from "./middleware/slackWebhookParser.js";
 app.use("/api/sessions", sessionRoutes);
 app.use("/api/webhooks", webhookRoutes);
 app.use("/api/slack", slackWebhookParser, slackRoutes);
-app.use("/api/calendar", calendarRoutes);
-app.use("/api", transcriptRoutes);
 app.use("/api/transcripts", transcriptRoutes);
 
 // Health check endpoint — registered BEFORE the global rate limiter so
