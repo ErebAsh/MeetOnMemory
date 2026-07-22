@@ -25,4 +25,19 @@ export const knowledgeApi = {
     apiClient.get(
       `/api/knowledge/consolidation/history?model=${model}&limit=${limit}`,
     ),
+  // Memory Graph Snapshot & Time-Travel
+  getGraphSnapshots: ({ limit = 50, before } = {}) =>
+    apiClient.get(
+      `/api/knowledge/graph/snapshots?limit=${limit}${before ? `&before=${before}` : ""}`,
+    ),
+  getGraphSnapshot: (id) =>
+    apiClient.get(`/api/knowledge/graph/snapshots/${id}`),
+  exportGraphSnapshot: (id) =>
+    apiClient.get(`/api/knowledge/graph/snapshots/${id}/export`),
+  diffGraphSnapshots: (fromId, toId) =>
+    apiClient.get(
+      `/api/knowledge/graph/snapshots/diff?from=${fromId}&to=${toId}`,
+    ),
+  createGraphSnapshot: (force = false) =>
+    apiClient.post(`/api/knowledge/graph/snapshots`, { force }),
 };

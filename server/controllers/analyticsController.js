@@ -1,11 +1,12 @@
 import Meeting from "../models/meetingModel.js";
 import Policy from "../models/policyModel.js";
+import { sendSuccess, sendError } from "../utils/responseHandler.js";
 
 export const getAnalytics = async (req, res) => {
   try {
     const userId = req.user?.id || req.user?._id;
     if (!userId) {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
+      return sendError(res, 401, "Unauthorized");
     }
 
     const queryOptions = [{ uploadedBy: userId }];
@@ -50,8 +51,7 @@ export const getAnalytics = async (req, res) => {
       { $sort: { _id: 1 } },
     ]);
 
-    res.status(200).json({
-      success: true,
+    sendSuccess(res, {
       summary: {
         totalMeetings,
         completedMeetings,
@@ -62,8 +62,6 @@ export const getAnalytics = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Analytics Error:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to load analytics" });
+    sendError(res, 500, "Failed to load analytics");
   }
 };

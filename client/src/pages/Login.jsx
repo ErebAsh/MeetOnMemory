@@ -10,7 +10,8 @@ import { authApi } from "../services";
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { setIsLoggedin, getUserData, setUserData } = useContext(AppContent);
+  const { initializeAuth, isLoggedin, userData, loading } =
+    useContext(AppContent);
   const { t } = useTranslation();
 
   const [state, setState] = useState("Login");
@@ -28,6 +29,34 @@ const Login = () => {
     }
   }, [location.search]);
 
+  // Already signed in — leave the login page
+  useEffect(() => {
+    if (!loading && isLoggedin && userData) {
+      navigate(
+        userData.hasCompletedOnboarding ? "/dashboard" : "/organizations",
+        { replace: true },
+      );
+    }
+  }, [loading, isLoggedin, userData, navigate]);
+
+  const finishAuth = async (welcomeName) => {
+    const user = await initializeAuth();
+    if (!user) {
+      toast.error("Could not restore your session. Please try again.");
+      return;
+    }
+
+    toast.success(`Welcome, ${welcomeName || user.name}!`);
+
+    const from = location.state?.from?.pathname;
+    if (from) {
+      navigate(from, { replace: true });
+      return;
+    }
+
+    navigate(user.hasCompletedOnboarding ? "/dashboard" : "/organizations");
+  };
+
   const onSubmitHandler = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -40,9 +69,15 @@ const Login = () => {
           password,
         });
 
-        if (!data.success)
-          return toast.error(data.message || "Register failed");
+        if (!data.success) {
+          toast.error(data.message || "Register failed");
+          return;
+        }
+
         toast.success("Account created successfully!");
+        // Register already sets the session cookie
+        await finishAuth(name);
+        return;
       }
 
       const { data: loginData } = await authApi.login({
@@ -51,16 +86,7 @@ const Login = () => {
       });
 
       if (loginData.success) {
-        const user = await getUserData();
-
-        if (user) {
-          setUserData(user);
-          setIsLoggedin(true);
-          localStorage.setItem("userData", JSON.stringify(user));
-          toast.success(`Welcome, ${user.name}!`);
-        }
-
-        navigate("/organizations");
+        await finishAuth();
       } else {
         toast.error(loginData.message || "Login failed");
       }
@@ -97,7 +123,9 @@ const Login = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight mb-2">
-            {state === "Sign Up" ? t("login.createAccount") : t("login.welcomeBack")}
+            {state === "Sign Up"
+              ? t("login.createAccount")
+              : t("login.welcomeBack")}
           </h1>
           <p className="text-slate-400 text-sm sm:text-base leading-relaxed">
             {state === "Sign Up"
@@ -198,7 +226,11 @@ const Login = () => {
                 autocomple
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute inset-y-0 right-0 pr-3.5 flex cursor-pointer items-center text-slate-500 hover:text-indigo-400 transition-colors duration-200 outline-none focus:text-indigo-400"
-                aria-label={showPassword ? t("login.hidePassword") : t("login.showPassword")}
+                aria-label={
+                  showPassword
+                    ? t("login.hidePassword")
+                    : t("login.showPassword")
+                }
               >
                 {showPassword ? (
                   <EyeOff className="w-5 h-5" />
@@ -235,8 +267,10 @@ const Login = () => {
                     : t("login.signingIn")}
                 </span>
               </>
+            ) : state === "Sign Up" ? (
+              t("login.signUp")
             ) : (
-              state === "Sign Up" ? t("login.signUp") : t("login.loginBtn")
+              t("login.loginBtn")
             )}
           </button>
         </form>

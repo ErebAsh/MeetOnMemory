@@ -11,14 +11,46 @@ import { createAndPushNotification } from "../services/notificationService.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+export const SENSITIVE_USER_FIELDS = [
+  "password",
+  "verifyOtp",
+  "verifyOtpExpireAt",
+  "resetOtp",
+  "resetOtpExpireAt",
+  "resetPasswordToken",
+  "resetPasswordExpires",
+  "otp",
+  "otpExpires",
+  "googleAccessToken",
+  "googleRefreshToken",
+  "googleId",
+  "__v",
+];
+
+export const sanitizeUserForExport = (user) => {
+  if (!user) return null;
+  const sanitized = { ...user };
+  for (const field of SENSITIVE_USER_FIELDS) {
+    delete sanitized[field];
+  }
+  return sanitized;
+};
+
 export default async function exportDataJob(job, app) {
   const { userId, email } = job.data;
   console.log(`📦 Starting data export for user ${userId}...`);
 
   try {
     // Fetch User Data
-    const user = await userModel.findById(userId).lean();
-    if (!user) throw new Error("User not found");
+    const userRaw = await userModel
+      .findById(userId)
+      .select(
+        "-password -verifyOtp -verifyOtpExpireAt -resetOtp -resetOtpExpireAt -googleAccessToken -googleRefreshToken",
+      )
+      .lean();
+    if (!userRaw) throw new Error("User not found");
+
+    const user = sanitizeUserForExport(userRaw);
 
     // Fetch Meetings
     const meetings = await Meeting.find({ uploadedBy: userId }).lean();
@@ -58,7 +90,7 @@ export default async function exportDataJob(job, app) {
     console.log(`✅ Data export for user ${userId} saved to ${filePath}`);
 
     // Generate Secure Download Link
-    const jwtSecret = process.env.JWT_SECRET || "fallback_secret";
+    const jwtSecret = process.env.JWT_SECRET;
     const downloadToken = jwt.sign({ userId, fileName }, jwtSecret, { expiresIn: "24h" });
     
     // In production, BASE_URL should be configured correctly in .env

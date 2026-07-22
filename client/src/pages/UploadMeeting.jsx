@@ -1,4 +1,4 @@
-import React, { useState, useContext, useRef, useEffect } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
@@ -22,6 +22,8 @@ import Navbar from "../components/Navbar.jsx";
 import AppContent from "../context/AppContent";
 import useExport from "../hooks/useExport.js";
 import { meetingApi } from "../services";
+import useMeetingUpload from "../hooks/useMeetingUpload";
+import Dropzone from "../components/meetings/Dropzone.jsx";
 
 const UploadMeeting = () => {
   const { userData } = useContext(AppContent);
@@ -37,19 +39,28 @@ const UploadMeeting = () => {
     }
   }, [isAdmin, navigate]);
 
-  const [file, setFile] = useState(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [isUploading, setIsUploading] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
+  const {
+    file,
+    setFile,
+    uploadProgress,
+    isUploading,
+    isDragging,
+    transcript,
+    meetingId,
+    fileInputRef,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+    handleFileChange,
+    resetUpload,
+    handleUpload,
+    formatFileSize,
+  } = useMeetingUpload();
 
-  const [transcript, setTranscript] = useState("");
-  const [meetingId, setMeetingId] = useState(null);
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [summary, setSummary] = useState("");
   const [showExportMenu, setShowExportMenu] = useState(false);
   const { exportMeeting, isExporting } = useExport();
-
-  const fileInputRef = useRef(null);
 
   // Real-time listener for MoM completion
   const { backendUrl } = useContext(AppContent);
@@ -83,122 +94,6 @@ const UploadMeeting = () => {
   });
   const [title, setTitle] = useState("");
 
-  const allowedTypes = [
-    "audio/wav",
-    "audio/x-wav",
-    "audio/mpeg",
-    "audio/mp3",
-    "audio/x-m4a",
-    "audio/mp4",
-    "audio/m4a",
-  ];
-
-  const formatFileSize = (bytes) => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-  };
-
-  const validateAndSetFile = (f) => {
-    if (!f) return;
-    const fileExt = f.name.split(".").pop().toLowerCase();
-    const allowedExtensions = ["wav", "mp3", "m4a", "mp4"];
-
-    if (
-      !allowedTypes.includes(f.type) &&
-      !allowedExtensions.includes(fileExt)
-    ) {
-      toast.error("Unsupported file type. Please use WAV, MP3, or M4A files.");
-      return;
-    }
-    setFile(f);
-  };
-
-  const handleFileChange = (e) => {
-    const f = e.target.files[0];
-    if (f) validateAndSetFile(f);
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const f = e.dataTransfer.files[0];
-    if (f) validateAndSetFile(f);
-  };
-
-  const handleReset = () => {
-    setFile(null);
-    setTranscript("");
-    setSummary("");
-    setMeetingId(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-    toast.info("Upload settings reset.");
-  };
-
-  const handleUpload = async () => {
-    if (!file) {
-      toast.error("Please select an audio file first.");
-      return;
-    }
-
-    try {
-      setIsUploading(true);
-      setUploadProgress(0);
-      setTranscript("");
-      setSummary("");
-      setMeetingId(null);
-
-      const formData = new FormData();
-      formData.append("file", file);
-      // don't force title here; user may leave it blank -> backend will auto-generate later
-      if (title) formData.append("title", title);
-
-      const res = await meetingApi.uploadMeeting(formData, {
-        onUploadProgress: (progressEvent) => {
-          const percent = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total,
-          );
-          setUploadProgress(percent);
-        },
-      });
-
-      if (res.data?.success) {
-        toast.success("Transcription complete!");
-        setTranscript(res.data.transcript || "");
-        setMeetingId(res.data.meetingId || null);
-        // if backend returns an auto title, populate it (optional)
-        if (res.data.autoTitle) setTitle(res.data.autoTitle);
-      } else {
-        toast.error(res.data?.message || "Upload failed");
-      }
-    } catch (err) {
-      console.error("Upload error:", err);
-      toast.error(
-        err.response?.data?.message ||
-          err.message ||
-          "Server error during upload",
-      );
-    } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
-    }
-  };
-
-  // Generate structured MoM (minutes of meeting) using backend (Gemini or HF fallback)
   const handleGenerateSummary = async () => {
     if (!transcript && !meetingId) {
       toast.error("No transcript available. Upload a meeting first.");
@@ -360,70 +255,17 @@ const UploadMeeting = () => {
                   Choose Meeting Audio
                 </label>
 
-                <div
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`relative border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 text-center select-none min-h-[190px] ${
-                    isDragging
-                      ? "border-blue-500 bg-blue-50/60 shadow-inner scale-[0.99]"
-                      : file
-                        ? "border-emerald-200 bg-emerald-50/10 hover:bg-emerald-50/20"
-                        : "border-gray-200 dark:border-gray-600 bg-gray-50/30 dark:bg-gray-700/30 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50/10 dark:hover:bg-blue-900/20"
-                  }`}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="audio/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-
-                  {file ? (
-                    <div className="flex flex-col items-center animate-fade-in">
-                      <div className="w-14 h-14 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center mb-3 shadow-sm">
-                        <FileAudio className="w-7 h-7" />
-                      </div>
-                      <p className="text-sm font-bold text-gray-800 dark:text-gray-200 max-w-[240px] truncate mb-1">
-                        {file.name}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-3">
-                        {formatFileSize(file.size)} •{" "}
-                        {file.type || "Audio File"}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setFile(null);
-                          if (fileInputRef.current)
-                            fileInputRef.current.value = "";
-                        }}
-                        className="flex items-center gap-1 text-xs text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-semibold bg-red-50 dark:bg-red-900/30 hover:bg-red-100/85 dark:hover:bg-red-900/50 px-3 py-1.5 rounded-lg transition-colors duration-150"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                        Remove File
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center">
-                      <div className="w-14 h-14 bg-blue-50 dark:bg-blue-900/30 text-blue-500 dark:text-blue-400 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
-                        <UploadCloud className="w-7 h-7" />
-                      </div>
-                      <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-1">
-                        Drag and drop your audio file here
-                      </p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 font-medium mb-3">
-                        or click to browse local files
-                      </p>
-                      <span className="text-[11px] text-gray-400 dark:text-gray-500 bg-gray-100/80 dark:bg-gray-700/50 border border-gray-200/50 dark:border-gray-600 rounded-full px-3 py-1 font-semibold">
-                        WAV, MP3, M4A
-                      </span>
-                    </div>
-                  )}
-                </div>
+                <Dropzone
+                  file={file}
+                  setFile={setFile}
+                  isDragging={isDragging}
+                  handleDragOver={handleDragOver}
+                  handleDragLeave={handleDragLeave}
+                  handleDrop={handleDrop}
+                  handleFileChange={handleFileChange}
+                  fileInputRef={fileInputRef}
+                  formatFileSize={formatFileSize}
+                />
               </div>
             </div>
 
@@ -431,7 +273,7 @@ const UploadMeeting = () => {
             <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-3 w-full sm:w-auto justify-start order-2 sm:order-1">
                 <button
-                  onClick={handleUpload}
+                  onClick={() => handleUpload(title, setTitle)}
                   disabled={isUploading || !file}
                   className={`w-full sm:w-auto px-6 py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer ${
                     isUploading || !file
@@ -453,7 +295,7 @@ const UploadMeeting = () => {
                 </button>
 
                 <button
-                  onClick={handleReset}
+                  onClick={() => resetUpload(setSummary, setTitle)}
                   className="w-full sm:w-auto px-5 py-3 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 font-bold hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 transition-colors duration-150 flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Trash2 className="w-4 h-4" />

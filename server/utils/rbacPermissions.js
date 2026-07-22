@@ -88,6 +88,10 @@ export const PERMISSIONS = {
     // Merging/consolidating memories mutates the graph in bulk, so it's
     // restricted like other structural knowledge-base changes.
     consolidate: ["owner", "admin", "moderator"],
+    // Running a contradiction scan or resolving a conflict mutates graph
+    // metadata (status/supersededByMemory) for other users' memories, so
+    // it's restricted the same way as consolidate.
+    resolve_conflicts: ["owner", "admin", "moderator"],
   },
   // Notifications permissions
   notifications: {

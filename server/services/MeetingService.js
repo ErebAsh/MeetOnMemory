@@ -11,11 +11,16 @@
 import fs from "fs";
 import mongoose from "mongoose";
 import User from "../models/userModel.js";
-import { indexMeeting, deleteMeetingFromPinecone } from "../utils/embeddingUtils.js";
+import Membership from "../models/membershipModel.js";
+import {
+  indexMeeting,
+  deleteMeetingFromPinecone,
+} from "../utils/embeddingUtils.js";
 import {
   processStructuredMoM,
   detectResolutions,
 } from "./knowledgeGraphService.js";
+import { captureSnapshot } from "./graphSnapshotService.js";
 import { checkMeetingDecisionsAgainstPolicies } from "./policyComplianceService.js";
 import { createAndPushNotification } from "./notificationService.js";
 import eventBus from "./eventBus.js";
@@ -30,7 +35,11 @@ import {
 // Imported specific services and utils
 import { validatePath } from "../utils/fileUtils.js";
 import { transcribeFile, transcribeAudioUrl } from "./TranscriptionService.js";
-import { generateMoMWithAI, normalizeMoM, buildHumanReadableMoM } from "./GenerativeAIService.js";
+import {
+  generateMoMWithAI,
+  normalizeMoM,
+  buildHumanReadableMoM,
+} from "./GenerativeAIService.js";
 import * as MeetingStorageService from "./MeetingStorageService.js";
 
 export const isValidObjectId = (id) =>
@@ -55,6 +64,22 @@ const _runKnowledgeGraph = (meetingDoc, mom) => {
         console.error(
           "⚠️ Policy compliance check failed (non-fatal):",
           complianceErr.message,
+        );
+      }
+
+      // Automatic graph snapshot: capture the post-processing graph state
+      // so this meeting's contribution to the knowledge graph is visible
+      // in the history/time-travel view. No-ops (storage-wise) if nothing
+      // actually changed the graph.
+      try {
+        await captureSnapshot(meetingDoc.organization || null, {
+          trigger: "meeting_processed",
+          sourceMeetingId: meetingDoc._id,
+        });
+      } catch (snapshotErr) {
+        console.error(
+          "⚠️ Graph snapshot capture failed (non-fatal):",
+          snapshotErr.message,
         );
       }
     } catch (kgErr) {
@@ -97,12 +122,17 @@ export const createMeeting = async (uploaderId, orgId, data, io) => {
   );
 
   if (orgId && io) {
-    User.find({ organization: orgId, _id: { $ne: uploaderId } })
-      .then(async (members) => {
-        for (const member of members) {
+    Membership.find({
+      organization: orgId,
+      status: "active",
+      user: { $ne: uploaderId },
+    })
+      .populate("user")
+      .then(async (memberships) => {
+        for (const membership of memberships) {
           await createAndPushNotification(
             io,
-            member._id,
+            membership.user._id,
             "New Meeting Scheduled",
             `A new meeting "${meeting.title}" has been scheduled.`,
             "meetings",
@@ -250,6 +280,12 @@ export const generateMeetingMoM = async (
   title,
   io,
 ) => {
+  const user = await User.findById(userId);
+  if (!user) throw new ForbiddenError("User not found");
+  if (!user.organization) {
+    throw new ForbiddenError("Forbidden: Organization membership required");
+  }
+
   if (meetingId && !isValidObjectId(meetingId)) {
     throw new ValidationError("Invalid meeting ID");
   }
@@ -257,17 +293,32 @@ export const generateMeetingMoM = async (
   let textToSummarize = (transcript || "").trim();
   let meeting = null;
 
-  if (meetingId && !textToSummarize) {
+  if (meetingId) {
     meeting = await MeetingStorageService.findMeetingById(meetingId);
     if (!meeting) throw new NotFoundError("Meeting not found");
-    textToSummarize = (meeting.transcript || "").trim();
+
+    const hasAccess =
+      (meeting.organization &&
+        meeting.organization.toString() === user.organization.toString()) ||
+      (meeting.uploadedBy &&
+        meeting.uploadedBy.toString() === userId.toString());
+
+    if (!hasAccess) {
+      throw new ForbiddenError(
+        "Forbidden: You do not have access to this meeting",
+      );
+    }
+
+    if (!textToSummarize) {
+      textToSummarize = (meeting.transcript || "").trim();
+    }
   }
 
   if (!textToSummarize) {
     throw new ValidationError("No transcript provided.");
   }
 
-  if (aiQueue) {
+  if (aiQueue && aiQueue.isActive) {
     console.log(
       `🚀 Queueing MoM generation job for ${meetingId || "transcript-only"}...`,
     );
@@ -298,6 +349,7 @@ export const generateMeetingMoM = async (
   if (!meetingToUpdate && !meetingId) {
     meetingToUpdate = await MeetingStorageService.createMeetingRecord({
       uploadedBy: userId,
+      organization: user.organization,
       title: mom.title,
       date: new Date(date),
       transcript: textToSummarize,
@@ -348,7 +400,13 @@ export const generateMeetingMoM = async (
 };
 
 export const getAllMeetings = async (userId, orgId, queryParams = {}) => {
-  const { page = 1, limit = 10, startDate, endDate } = queryParams;
+  const {
+    page = 1,
+    limit = 10,
+    startDate,
+    endDate,
+    includeArchived,
+  } = queryParams;
 
   const queryOptions = [{ uploadedBy: userId }];
   if (orgId) {
@@ -356,6 +414,10 @@ export const getAllMeetings = async (userId, orgId, queryParams = {}) => {
   }
 
   const query = { $or: queryOptions };
+
+  if (!includeArchived) {
+    query.archived = { $ne: true };
+  }
 
   if (startDate || endDate) {
     query.date = {};
@@ -397,7 +459,11 @@ export const updateMeeting = async (userId, meetingId, data, doc = null) => {
   }
 
   const meeting =
-    doc || (await MeetingStorageService.findMeetingByQuery({ _id: meetingId, uploadedBy: userId }));
+    doc ||
+    (await MeetingStorageService.findMeetingByQuery({
+      _id: meetingId,
+      uploadedBy: userId,
+    }));
   if (!meeting) throw new NotFoundError("Meeting not found");
 
   const {
@@ -423,6 +489,12 @@ export const updateMeeting = async (userId, meetingId, data, doc = null) => {
   if (tags) meeting.tags = tags;
 
   await meeting.save();
+
+  try {
+    eventBus.emit("meeting.updated", meeting);
+  } catch (evtErr) {
+    console.error("⚠️ Failed to emit meeting.updated event:", evtErr.message);
+  }
 
   indexMeeting(meeting).catch((err) =>
     console.error("⚠️ indexMeeting error (continuing):", err.message),
@@ -465,6 +537,12 @@ export const deleteMeeting = async (doc, meetingId) => {
     const meetingIdToDelete = doc._id.toString();
     await doc.deleteOne();
 
+    try {
+      eventBus.emit("meeting.deleted", doc);
+    } catch (evtErr) {
+      console.error("⚠️ Failed to emit meeting.deleted event:", evtErr.message);
+    }
+
     // Delete from Pinecone (fire-and-forget)
     deleteMeetingFromPinecone(meetingIdToDelete).catch((err) =>
       console.error("⚠️ Pinecone deletion error (continuing):", err.message),
@@ -493,6 +571,12 @@ export const deleteMeeting = async (doc, meetingId) => {
   deleted = await MeetingStorageService.deleteMeetingById(meetingId);
   if (!deleted) throw new NotFoundError("Meeting not found");
 
+  try {
+    eventBus.emit("meeting.deleted", deleted);
+  } catch (evtErr) {
+    console.error("⚠️ Failed to emit meeting.deleted event:", evtErr.message);
+  }
+
   // Delete from Pinecone (fire-and-forget)
   deleteMeetingFromPinecone(meetingId).catch((err) =>
     console.error("⚠️ Pinecone deletion error (continuing):", err.message),
@@ -515,7 +599,39 @@ export const deleteMeeting = async (doc, meetingId) => {
   })();
 };
 
-export const searchMeetings = async ({ query, audioUrl }) => {
+export const archiveMeeting = async (meetingId) => {
+  if (!isValidObjectId(meetingId)) {
+    throw new ValidationError("Invalid meeting ID");
+  }
+
+  const meeting = await MeetingStorageService.findMeetingById(meetingId);
+  if (!meeting) throw new NotFoundError("Meeting not found");
+
+  meeting.archived = true;
+  await meeting.save();
+
+  return meeting;
+};
+
+export const restoreMeeting = async (meetingId) => {
+  if (!isValidObjectId(meetingId)) {
+    throw new ValidationError("Invalid meeting ID");
+  }
+
+  const meeting = await MeetingStorageService.findMeetingById(meetingId);
+  if (!meeting) throw new NotFoundError("Meeting not found");
+
+  meeting.archived = false;
+  await meeting.save();
+
+  return meeting;
+};
+
+export const searchMeetings = async (
+  { query, audioUrl },
+  orgId = null,
+  userId = null,
+) => {
   let searchQuery = (query || "").trim();
 
   if (audioUrl && !searchQuery) {
@@ -529,7 +645,21 @@ export const searchMeetings = async ({ query, audioUrl }) => {
   }
 
   console.log(`🔍 Searching meetings for: "${searchQuery}"`);
-  const results = await MeetingStorageService.searchMeetingsRecords(searchQuery);
+
+  const filter = {};
+  if (orgId || userId) {
+    const queryOptions = [];
+    if (orgId) queryOptions.push({ organization: orgId });
+    if (userId) queryOptions.push({ uploadedBy: userId });
+    if (queryOptions.length > 0) {
+      filter.$or = queryOptions;
+    }
+  }
+
+  const results = await MeetingStorageService.searchMeetingsRecords(
+    searchQuery,
+    filter,
+  );
 
   return { query: searchQuery, count: results.length, results };
 };

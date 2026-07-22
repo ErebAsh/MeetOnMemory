@@ -4,6 +4,8 @@ import Navbar from "../components/Navbar.jsx";
 import SearchBar from "../components/ai-search/SearchBar.jsx";
 import SearchFilters from "../components/ai-search/SearchFilters.jsx";
 import SearchResultCard from "../components/ai-search/SearchResultCard.jsx";
+import HybridResultCard from "../components/ai-search/HybridResultCard.jsx";
+import HybridSearchToggle from "../components/ai-search/HybridSearchToggle.jsx";
 import SearchSkeleton from "../components/ai-search/SearchSkeleton.jsx";
 import SearchEmptyState from "../components/ai-search/SearchEmptyState.jsx";
 import { apiClient } from "../services";
@@ -114,6 +116,11 @@ const AiSearch = () => {
     dateTo: "",
     sortBy: "relevance",
   });
+  const [searchMode, setSearchMode] = useState("standard"); // "standard" | "hybrid"
+  const [hybridWeights, setHybridWeights] = useState({
+    semanticWeight: 0.7,
+    graphWeight: 0.3,
+  });
 
   const handleSearch = async () => {
     if (!query.trim()) {
@@ -127,22 +134,30 @@ const AiSearch = () => {
     setHasSearched(true);
 
     try {
-      const res = await apiClient.post("/api/ai", { query, filters });
-      const data = res.data;
+      if (searchMode === "hybrid") {
+        const res = await apiClient.post("/api/search/hybrid", {
+          query,
+          ...hybridWeights,
+        });
+        setResults(res.data.results || []);
+      } else {
+        const res = await apiClient.post("/api/ai-search", { query, filters });
+        const data = res.data;
 
-      let sortedResults = data.results || [];
+        let sortedResults = data.results || [];
 
-      if (filters.sortBy === "date-desc") {
-        sortedResults.sort(
-          (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
-        );
-      } else if (filters.sortBy === "date-asc") {
-        sortedResults.sort(
-          (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
-        );
+        if (filters.sortBy === "date-desc") {
+          sortedResults.sort(
+            (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+          );
+        } else if (filters.sortBy === "date-asc") {
+          sortedResults.sort(
+            (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+          );
+        }
+
+        setResults(sortedResults);
       }
-
-      setResults(sortedResults);
     } catch (err) {
       console.error("❌ Search error:", err);
 
@@ -173,6 +188,10 @@ const AiSearch = () => {
 
   const handleOpenMeeting = (result) => {
     window.open(`/meetings/${result.meetingId}`, "_blank");
+  };
+
+  const handleOpenMeetingById = (meetingId) => {
+    if (meetingId) window.open(`/meetings/${meetingId}`, "_blank");
   };
 
   const handleCopySummary = async (result) => {
@@ -210,6 +229,13 @@ const AiSearch = () => {
           onClear={handleClear}
         />
 
+        <HybridSearchToggle
+          mode={searchMode}
+          setMode={setSearchMode}
+          weights={hybridWeights}
+          setWeights={setHybridWeights}
+        />
+
         {/* Error Message */}
         {error && (
           <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-400 text-sm text-left w-full">
@@ -230,21 +256,31 @@ const AiSearch = () => {
 
           {!loading && results.length > 0 && (
             <>
-              <SearchFilters
-                filters={filters}
-                setFilters={setFilters}
-                resultCount={results.length}
-              />
+              {searchMode === "standard" && (
+                <SearchFilters
+                  filters={filters}
+                  setFilters={setFilters}
+                  resultCount={results.length}
+                />
+              )}
               <div className="space-y-5">
-                {results.map((result, index) => (
-                  <SearchResultCard
-                    key={result.meetingId || index}
-                    result={result}
-                    onViewDetails={handleViewDetails}
-                    onOpenMeeting={handleOpenMeeting}
-                    onCopySummary={handleCopySummary}
-                  />
-                ))}
+                {searchMode === "hybrid"
+                  ? results.map((result, index) => (
+                      <HybridResultCard
+                        key={result.key || index}
+                        result={result}
+                        onOpenMeeting={handleOpenMeetingById}
+                      />
+                    ))
+                  : results.map((result, index) => (
+                      <SearchResultCard
+                        key={result.meetingId || index}
+                        result={result}
+                        onViewDetails={handleViewDetails}
+                        onOpenMeeting={handleOpenMeeting}
+                        onCopySummary={handleCopySummary}
+                      />
+                    ))}
               </div>
             </>
           )}

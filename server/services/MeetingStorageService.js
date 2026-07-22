@@ -31,8 +31,11 @@ export const deleteMeetingById = async (id) => {
   return await Meeting.findByIdAndDelete(id);
 };
 
-export const searchMeetingsRecords = async (searchQuery) => {
-  return await Meeting.find({ $text: { $search: searchQuery } })
+export const searchMeetingsRecords = async (searchQuery, filter = {}) => {
+  return await Meeting.find({
+    $text: { $search: searchQuery },
+    ...filter,
+  })
     .sort({ createdAt: -1 })
-    .select("title summary createdAt date meetingType");
+    .select("title summary createdAt date meetingType organization uploadedBy");
 };

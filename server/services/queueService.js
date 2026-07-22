@@ -2,6 +2,7 @@ import { Queue, Worker } from "bullmq";
 import Redis from "ioredis";
 import processAudioJob from "../jobs/processAudioJob.js";
 import exportDataJob from "../jobs/exportDataJob.js";
+import conflictScanJob from "./conflictDetection/conflictScanJob.js";
 
 const redisUri = process.env.REDIS_URI;
 
@@ -10,6 +11,7 @@ let _producerConnection = null;
 let _workerConnection = null;
 let _aiQueueInstance = null;
 let _dataExportQueueInstance = null;
+let _conflictScanQueueInstance = null;
 
 function getProducerConnection() {
   if (!redisUri) return null;
@@ -55,10 +57,25 @@ function getDataExportQueue() {
   if (!_dataExportQueueInstance) {
     const conn = getProducerConnection();
     if (conn) {
-      _dataExportQueueInstance = new Queue("data-export-queue", { connection: conn });
+      _dataExportQueueInstance = new Queue("data-export-queue", {
+        connection: conn,
+      });
     }
   }
   return _dataExportQueueInstance;
+}
+
+function getConflictScanQueue() {
+  if (!redisUri) return null;
+  if (!_conflictScanQueueInstance) {
+    const conn = getProducerConnection();
+    if (conn) {
+      _conflictScanQueueInstance = new Queue("conflict-scan-queue", {
+        connection: conn,
+      });
+    }
+  }
+  return _conflictScanQueueInstance;
 }
 
 // Wrapper to preserve syntax compatibility
@@ -73,7 +90,7 @@ export const aiQueue = {
   },
   get isActive() {
     return getAiQueue() !== null;
-  }
+  },
 };
 
 export const dataExportQueue = {
@@ -87,7 +104,21 @@ export const dataExportQueue = {
   },
   get isActive() {
     return getDataExportQueue() !== null;
-  }
+  },
+};
+
+export const conflictScanQueue = {
+  add: async (...args) => {
+    const q = getConflictScanQueue();
+    if (!q) {
+      console.warn("⚠️ Queue operation ignored: Redis is not configured.");
+      return null;
+    }
+    return await q.add(...args);
+  },
+  get isActive() {
+    return getConflictScanQueue() !== null;
+  },
 };
 
 export const initAIWorker = (app) => {
@@ -130,7 +161,7 @@ export const initDataExportWorker = (app) => {
   const worker = new Worker(
     "data-export-queue",
     async (job) => await exportDataJob(job, app),
-    { connection, concurrency: 2 }
+    { connection, concurrency: 2 },
   );
 
   worker.on("completed", (job) => {
@@ -138,12 +169,52 @@ export const initDataExportWorker = (app) => {
   });
 
   worker.on("failed", (job, err) => {
-    console.error(`❌ Data Export Job ${job.id} failed with error:`, err.message);
+    console.error(
+      `❌ Data Export Job ${job.id} failed with error:`,
+      err.message,
+    );
   });
 
   worker.on("error", (err) => {
     console.error("❌ Data Export Worker error:", err.message);
   });
 
-  console.log("✅ Data Export Worker initialized and listening to data-export-queue");
+  console.log(
+    "✅ Data Export Worker initialized and listening to data-export-queue",
+  );
+};
+
+export const initConflictScanWorker = (app) => {
+  const connection = getWorkerConnection();
+  if (!connection) {
+    console.warn(
+      "⚠️ Redis not configured. Conflict Scan Worker will not start.",
+    );
+    return;
+  }
+
+  const worker = new Worker(
+    "conflict-scan-queue",
+    async (job) => await conflictScanJob(job, app),
+    { connection, concurrency: 2 },
+  );
+
+  worker.on("completed", (job) => {
+    console.log(`✅ Conflict Scan Job ${job.id} completed successfully`);
+  });
+
+  worker.on("failed", (job, err) => {
+    console.error(
+      `❌ Conflict Scan Job ${job.id} failed with error:`,
+      err.message,
+    );
+  });
+
+  worker.on("error", (err) => {
+    console.error("❌ Conflict Scan Worker error:", err.message);
+  });
+
+  console.log(
+    "✅ Conflict Scan Worker initialized and listening to conflict-scan-queue",
+  );
 };

@@ -157,6 +157,7 @@ export const indexMeeting = async (meeting) => {
           summary,
           transcript: meeting.transcript,
           createdAt: meeting.createdAt || new Date(),
+          organization: meeting.organization?.toString() || null,
         },
       });
     }
@@ -164,7 +165,9 @@ export const indexMeeting = async (meeting) => {
     // ✅ FIXED FORMAT — direct array (Pinecone v3.x+)
     await indexInstance.upsert(vectors);
 
-    console.log(`✅ Indexed meeting: ${title} (${transcriptChunks.length} chunks)`);
+    console.log(
+      `✅ Indexed meeting: ${title} (${transcriptChunks.length} chunks)`,
+    );
   } catch (error) {
     console.error("❌ Failed to index meeting:", error);
   }

@@ -14,17 +14,17 @@ import {
   runConsolidation,
   getConsolidationHistory,
 } from "../controllers/consolidationController.js";
+import {
+  scanForConflicts,
+  getConflicts,
+  getConflictDetail,
+  resolveConflict,
+} from "../controllers/conflictController.js";
 
 const router = express.Router();
 router.use(apiLimiter);
 router.use(userAuth);
 
-router.get("/decisions/:id/lineage", getDecisionLineageController);
-router.get("/action-items", getOpenActionItems);
-router.patch("/action-items/:id", writeLimiter, requireAdmin, updateActionItemStatus);
-router.get("/decisions/:id/lineage", requireOrgMembership, requirePermission("knowledge", "view"), getDecisionLineageController);
-router.get("/action-items", requireOrgMembership, requirePermission("knowledge", "view"), getOpenActionItems);
-router.patch("/action-items/:id", writeLimiter, requireOrgMembership, requirePermission("tasks", "edit"), updateActionItemStatus);
 router.get(
   "/decisions",
   requireOrgMembership,
@@ -65,7 +65,6 @@ router.post(
   requirePermission("knowledge", "edit"),
   recalculateImportance,
 );
-=======
 
 // --- Memory Consolidation Engine ---
 router.post(
@@ -82,5 +81,32 @@ router.get(
   getConsolidationHistory,
 );
 
+// --- AI-Powered Contradiction Detection & Conflict Resolution (#375) ---
+router.post(
+  "/conflicts/scan",
+  writeLimiter,
+  requireOrgMembership,
+  requirePermission("knowledge", "resolve_conflicts"),
+  scanForConflicts,
+);
+router.get(
+  "/conflicts",
+  requireOrgMembership,
+  requirePermission("knowledge", "view"),
+  getConflicts,
+);
+router.get(
+  "/conflicts/:id",
+  requireOrgMembership,
+  requirePermission("knowledge", "view"),
+  getConflictDetail,
+);
+router.post(
+  "/conflicts/:id/resolve",
+  writeLimiter,
+  requireOrgMembership,
+  requirePermission("knowledge", "resolve_conflicts"),
+  resolveConflict,
+);
 
 export default router;

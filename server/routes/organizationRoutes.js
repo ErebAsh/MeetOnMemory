@@ -10,6 +10,12 @@ import {
   browsePublicOrganizations,
   searchOrganizations,
   getUserOrganizations,
+  createOrganization,
+  getOrganizations,
+  getOrganizationById,
+  updateOrganization,
+  deleteOrganization,
+  getOrganizationMembersById,
 } from "../controllers/organizationController.js";
 import userAuth from "../middleware/userAuth.js";
 import { apiLimiter, writeLimiter } from "../middleware/rateLimiter.js";
@@ -89,5 +95,13 @@ router.get(
   requirePermission("audit_logs", "view"),
   getOrganizationAuditLogs,
 );
+
+// New CRUD routes (consolidated from organizationRoutesNew.js)
+router.post("/", userAuth, createOrganization);
+router.get("/paginated", userAuth, getOrganizations);
+router.get("/:idOrSlug", userAuth, getOrganizationById);
+router.put("/:id", userAuth, updateOrganization);
+router.delete("/:id", userAuth, deleteOrganization);
+router.get("/:id/members", userAuth, getOrganizationMembersById);
 
 export default router;

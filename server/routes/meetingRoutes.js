@@ -25,6 +25,8 @@ import {
   updateMeeting, // NEW: Update meeting (rename)
   deleteMeeting, // EXISTING: Delete meeting
   searchMeetingsByText, // 🆕 NEW: Voice/Text Search
+  archiveMeeting,
+  restoreMeeting,
   notifyLiveMeeting, // NEW: Notify participants of a live meeting
 } from "../controllers/meetingController.js";
 import { exportMeeting } from "../controllers/exportController.js";
@@ -54,6 +56,7 @@ router.post(
   "/summarize",
   userAuth,
   writeLimiter,
+  requireOrgMembership,
   requirePermission("meetings", "transcribe"),
   summarizeMeeting,
 );
@@ -94,6 +97,26 @@ router.get(
   exportMeeting,
 );
 
+// ✅ Archive Meeting
+router.patch(
+  "/:id/archive",
+  userAuth,
+  writeLimiter,
+  requireOwnerOrAdmin(Meeting),
+  requirePermission("meetings", "edit"),
+  archiveMeeting,
+);
+
+// ✅ Restore Meeting
+router.patch(
+  "/:id/restore",
+  userAuth,
+  writeLimiter,
+  requireOwnerOrAdmin(Meeting),
+  requirePermission("meetings", "edit"),
+  restoreMeeting,
+);
+
 // ✅ Delete Meeting
 router.delete(
   "/delete/:id",
@@ -105,7 +128,6 @@ router.delete(
 );
 
 // ========== NEW ROUTES (for CreateMeeting.jsx) ==========
-
 
 // ✅ Create/Schedule Meeting (from CreateMeeting Schedule section)
 router.post(
@@ -133,6 +155,7 @@ router.post(
 router.post(
   "/search",
   userAuth,
+  requireOrgMembership,
   requirePermission("meetings", "view"),
   searchMeetingsByText,
 );

@@ -110,6 +110,12 @@ const meetingSchema = new mongoose.Schema(
     },
 
     // Legacy field for backward compatibility
+    archived: {
+      type: Boolean,
+      default: false,
+    },
+
+    // Google Calendar integration
     googleEventId: {
       type: String,
       default: null,
