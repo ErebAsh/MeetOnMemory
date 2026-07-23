@@ -132,13 +132,13 @@ if (process.env.NODE_ENV !== "test") {
       startWorkers(app);
     }, 0);
   });
+
+  // Init Calendar Sync Cron
+  initCalendarSyncCron();
+
+  // Start calendar sync job
+  startCalendarSyncJob();
 }
-
-// Init Calendar Sync Cron
-initCalendarSyncCron();
-
-// Start calendar sync job
-startCalendarSyncJob();
 
 // (AI, Data Export, and Webhook workers are initialized inside server.listen callback)
 
