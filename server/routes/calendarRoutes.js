@@ -4,6 +4,7 @@ import {
   getGoogleOAuthClient,
   encrypt,
   decrypt,
+  suggestFreeSlot,
 } from "../services/calendarSyncService.js";
 import CalendarIntegration from "../models/calendarIntegrationModel.js";
 import axios from "axios";
@@ -33,14 +34,38 @@ router.get("/status", userAuth, async (req, res) => {
   }
 });
 
-router.post("/disconnect/:provider", userAuth, writeLimiter, async (req, res) => {
+router.post(
+  "/disconnect/:provider",
+  userAuth,
+  writeLimiter,
+  async (req, res) => {
+    try {
+      const { provider } = req.params;
+      await CalendarIntegration.findOneAndDelete({
+        userId: req.user.id || req.user._id,
+        provider,
+      });
+      res.json({ success: true, message: "Disconnected successfully" });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  },
+);
+
+router.post("/suggest-slot", userAuth, async (req, res) => {
   try {
-    const { provider } = req.params;
-    await CalendarIntegration.findOneAndDelete({
-      userId: req.user.id || req.user._id,
-      provider,
-    });
-    res.json({ success: true, message: "Disconnected successfully" });
+    const { targetDateIso, durationMinutes } = req.body;
+    if (!targetDateIso) {
+      return res
+        .status(400)
+        .json({ success: false, message: "targetDateIso is required" });
+    }
+    const suggestedSlot = await suggestFreeSlot(
+      req.user.id || req.user._id,
+      targetDateIso,
+      durationMinutes,
+    );
+    res.json({ success: true, suggestedSlot });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -63,7 +88,7 @@ router.get("/google/callback", async (req, res) => {
   try {
     let { code, state: userId } = req.query;
     if (!code || !userId) throw new Error("Missing code or state");
-    
+
     userId = String(userId);
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       throw new Error("Invalid state/userId");
@@ -116,7 +141,7 @@ router.get("/outlook/callback", async (req, res) => {
   try {
     let { code, state: userId } = req.query;
     if (!code || !userId) throw new Error("Missing code or state");
-    
+
     userId = String(userId);
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       throw new Error("Invalid state/userId");

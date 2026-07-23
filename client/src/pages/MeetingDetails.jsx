@@ -10,6 +10,7 @@ import MeetingParticipants from "../components/meeting-details/MeetingParticipan
 import MeetingMetadata from "../components/meeting-details/MeetingMetadata";
 import MeetingActions from "../components/meeting-details/MeetingActions";
 import ShareModal from "../components/shared-links/ShareModal";
+import MeetingFollowUpBanner from "../components/meeting-details/MeetingFollowUpBanner";
 
 const MeetingDetails = () => {
   const { id } = useParams();
@@ -154,6 +155,7 @@ const MeetingDetails = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-6xl mx-auto">
+        <MeetingFollowUpBanner meeting={meeting} />
         <MeetingHeader
           meeting={meeting}
           onShare={() => setShareModalOpen(true)}

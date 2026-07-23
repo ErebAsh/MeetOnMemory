@@ -5,8 +5,6 @@ import exportDataJob from "../jobs/exportDataJob.js";
 import conflictScanJob from "./conflictDetection/conflictScanJob.js";
 import sentimentAnalysisJob from "../jobs/sentimentAnalysisJob.js";
 
-const redisUri = process.env.REDIS_URI;
-
 // BullMQ requires maxRetriesPerRequest to be null
 let _producerConnection = null;
 let _workerConnection = null;
@@ -16,9 +14,9 @@ let _conflictScanQueueInstance = null;
 let _sentimentAnalysisQueueInstance = null;
 
 function getProducerConnection() {
-  if (!redisUri) return null;
+  if (!process.env.REDIS_URI) return null;
   if (!_producerConnection) {
-    _producerConnection = new Redis(redisUri, {
+    _producerConnection = new Redis(process.env.REDIS_URI, {
       maxRetriesPerRequest: 3, // Fail fast for requests adding tasks to queue
       family: 0,
     });
@@ -30,9 +28,9 @@ function getProducerConnection() {
 }
 
 function getWorkerConnection() {
-  if (!redisUri) return null;
+  if (!process.env.REDIS_URI) return null;
   if (!_workerConnection) {
-    _workerConnection = new Redis(redisUri, {
+    _workerConnection = new Redis(process.env.REDIS_URI, {
       maxRetriesPerRequest: null, // Unlimited retries for background workers
       family: 0, // Helps with DNS resolution for some cloud providers
     });
@@ -44,7 +42,7 @@ function getWorkerConnection() {
 }
 
 function getAiQueue() {
-  if (!redisUri) return null;
+  if (!process.env.REDIS_URI) return null;
   if (!_aiQueueInstance) {
     const conn = getProducerConnection();
     if (conn) {
@@ -55,7 +53,7 @@ function getAiQueue() {
 }
 
 function getDataExportQueue() {
-  if (!redisUri) return null;
+  if (!process.env.REDIS_URI) return null;
   if (!_dataExportQueueInstance) {
     const conn = getProducerConnection();
     if (conn) {
@@ -68,7 +66,7 @@ function getDataExportQueue() {
 }
 
 function getConflictScanQueue() {
-  if (!redisUri) return null;
+  if (!process.env.REDIS_URI) return null;
   if (!_conflictScanQueueInstance) {
     const conn = getProducerConnection();
     if (conn) {
@@ -81,7 +79,7 @@ function getConflictScanQueue() {
 }
 
 function getSentimentAnalysisQueue() {
-  if (!redisUri) return null;
+  if (!process.env.REDIS_URI) return null;
   if (!_sentimentAnalysisQueueInstance) {
     const conn = getProducerConnection();
     if (conn) {
@@ -287,4 +285,3 @@ export const initSentimentWorker = (app) => {
     "✅ Sentiment Analysis Worker initialized and listening to sentiment-analysis-queue",
   );
 };
-

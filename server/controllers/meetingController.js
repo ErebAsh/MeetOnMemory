@@ -15,12 +15,12 @@
 import fs from "fs";
 import path from "path";
 import { z } from "zod";
-import Meeting from "../models/meetingModel.js";
+import Meeting from "../models/meetingModel.js"; // eslint-disable-line no-unused-vars
 import * as MeetingService from "../services/MeetingService.js";
 import { ValidationError, UnauthorizedError } from "../utils/errors.js";
 import AuditService from "../services/AuditService.js";
 import { sendSuccess } from "../utils/responseHandler.js";
-import { pushMeetingToIntegrations, deleteMeetingFromIntegrations } from "../services/calendarSyncService.js";
+import { pushMeetingToIntegrations } from "../services/calendarSyncService.js";
 
 // ═══════════════════════════════════════════════════════════════
 // Zod validation schemas

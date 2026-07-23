@@ -4,7 +4,7 @@ import cookieParser from "cookie-parser";
 import { corsOptions } from "./corsOptions.js";
 import {
   csrfProtectionMiddleware,
-  csrfTokenProvider,
+  csrfTokenProvider, // eslint-disable-line no-unused-vars
   csrfErrorHandler,
 } from "../middleware/csrfProtection.js";
 import { globalLimiter } from "../middleware/rateLimiter.js";

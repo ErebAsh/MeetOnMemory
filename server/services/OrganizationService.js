@@ -51,7 +51,7 @@ const isValidJoinPolicy = (joinPolicy) =>
 /**
  * Whitelist allowed role values
  */
-const allowedRoles = ["admin", "member"];
+const allowedRoles = ["admin", "member"]; // eslint-disable-line no-unused-vars
 
 /**
  * Generate a unique slug from organization name
