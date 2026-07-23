@@ -40,7 +40,14 @@ Avoid repetition, filler words, and unnecessary phrases. Capture key insights, o
     "Extract 5-10 relevant keywords and topics discussed during the meeting."
   ],
   "attendees": ["List attendees if mentioned or infer from transcript"],
-  "notes": "Include any follow-up requirements, risks, or additional remarks worth noting."
+  "notes": "Include any follow-up requirements, risks, or additional remarks worth noting.",
+  "scheduling_intents": [
+    {
+      "topic": "Reason for follow up meeting",
+      "timeframe": "Suggested time (e.g., 'next week', 'tomorrow at 2 PM')",
+      "suggested_date_iso": "ISO 8601 date string for the suggested timeframe, relative to today's date."
+    }
+  ]
 }
 
 Transcript:
@@ -107,6 +114,7 @@ ${textToSummarize}
       keywords: [],
       attendees: [],
       notes: "Generated using local fallback summarization model",
+      scheduling_intents: [],
     };
   } catch (hfErr) {
     console.error("❌ Local fallback also failed:", hfErr.message);
@@ -196,6 +204,7 @@ export const normalizeMoM = (structured, title, date) => ({
   keywords: structured.keywords || [],
   attendees: structured.attendees || [],
   notes: structured.notes || "",
+  scheduling_intents: structured.scheduling_intents || [],
 });
 
 export const buildHumanReadableMoM = (mom) => {
@@ -245,7 +254,14 @@ export const buildHumanReadableMoM = (mom) => {
     text += "🏷 Keywords: " + mom.keywords.join(", ") + "\n\n";
   }
   if (mom.notes) {
-    text += "🗒 Notes:\n" + mom.notes + "\n";
+    text += "🗒 Notes:\n" + mom.notes + "\n\n";
+  }
+  if (mom.scheduling_intents && mom.scheduling_intents.length) {
+    text += "📅 Follow-up Suggestions:\n";
+    mom.scheduling_intents.forEach((intent, i) => {
+      text += `${i + 1}. ${intent.topic} (Suggested: ${intent.timeframe})\n`;
+    });
+    text += "\n";
   }
   return text;
 };
