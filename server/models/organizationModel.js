@@ -31,8 +31,13 @@ const organizationSchema = new mongoose.Schema(
     },
     visibility: {
       type: String,
-      enum: ["public", "private"],
+      enum: ["public", "private", "invite-only"],
       default: "private",
+    },
+    joinPolicy: {
+      type: String,
+      enum: ["open", "approval_required", "invite_only"],
+      default: "open",
     },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
