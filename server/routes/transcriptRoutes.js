@@ -22,6 +22,7 @@ import {
   exportTranscriptAsText,
   exportTranscriptAsPDF,
   finalizeTranscript,
+  updateSpeakers,
 } from "../controllers/transcriptController.js";
 
 const router = express.Router();
@@ -142,5 +143,8 @@ router.post(
   requirePermission("meetings", "edit"),
   finalizeTranscript,
 );
+
+// Update speaker names in transcript
+router.put("/:id/speakers", userAuth, updateSpeakers);
 
 export default router;
