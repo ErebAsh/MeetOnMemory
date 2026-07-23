@@ -734,9 +734,14 @@ export const updateSpeakers = async (req, res) => {
 
     if (segmentIndex !== undefined && segmentIndex !== null) {
       // Update specific segment
-      if (segmentIndex >= 0 && segmentIndex < transcript.segments.length) {
-        if (transcript.segments[segmentIndex].speaker === oldSpeaker) {
-          transcript.segments[segmentIndex].speaker = newSpeaker;
+      const parsedIndex = Number(segmentIndex);
+      if (
+        Number.isInteger(parsedIndex) &&
+        parsedIndex >= 0 &&
+        parsedIndex < transcript.segments.length
+      ) {
+        if (transcript.segments[parsedIndex].speaker === oldSpeaker) {
+          transcript.segments[parsedIndex].speaker = newSpeaker;
           updatedCount = 1;
         }
       }
