@@ -24,6 +24,7 @@ import { initCalendarSyncCron } from "./services/calendarSyncService.js";
 import knowledgeRoutes from "./routes/knowledgeRoutes.js";
 import policyComplianceRoutes from "./routes/policyComplianceRoutes.js";
 import sessionRoutes from "./routes/sessionRoutes.js";
+import assistantRoutes from "./routes/assistantRoutes.js";
 import webhookRoutes from "./routes/webhookRoutes.js";
 import slackRoutes from "./routes/slackRoutes.js";
 import transcriptRoutes from "./routes/transcriptRoutes.js";
@@ -98,6 +99,7 @@ app.use("/api/compliance", policyComplianceRoutes);
 import { slackWebhookParser } from "./middleware/slackWebhookParser.js";
 
 app.use("/api/sessions", sessionRoutes);
+app.use("/api/assistant", assistantRoutes);
 app.use("/api/webhooks", webhookRoutes);
 app.use("/api/slack", slackWebhookParser, slackRoutes);
 app.use("/api/transcripts", transcriptRoutes);

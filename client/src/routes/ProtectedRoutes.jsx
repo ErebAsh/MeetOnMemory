@@ -19,6 +19,7 @@ import Policies from "../pages/Policies.jsx";
 import Summaries from "../pages/Summaries.jsx";
 import Reports from "../pages/Reports.jsx";
 import AiSearch from "../pages/AiSearch.jsx";
+import AiAssistant from "../pages/AiAssistant.jsx";
 import MeetingDetails from "../pages/MeetingDetails.jsx";
 import TranscriptViewer from "../pages/TranscriptViewer.jsx";
 import TeamMembers from "../pages/TeamMembers.jsx";
@@ -155,6 +156,14 @@ const ProtectedRoutes = (
       element={
         <ProtectedRoute resource="ai_search" action="search">
           <AiSearch />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/assistant"
+      element={
+        <ProtectedRoute>
+          <AiAssistant />
         </ProtectedRoute>
       }
     />
