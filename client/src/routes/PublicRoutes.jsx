@@ -16,6 +16,7 @@ import MeetingRoom from "../pages/MeetingRoom.jsx";
 import Status from "../pages/Status.jsx";
 import HelpCenter from "../pages/HelpCenter.jsx";
 import Careers from "../pages/Careers.jsx";
+import PublicSharedView from "../pages/PublicSharedView.jsx";
 
 const PublicRoutes = (
   <React.Fragment>
@@ -36,6 +37,7 @@ const PublicRoutes = (
       element={<PublicOrganizationProfile />}
     />
     <Route path="/meeting-room/:roomId" element={<MeetingRoom />} />
+    <Route path="/shared/:hash" element={<PublicSharedView />} />
   </React.Fragment>
 );
 
