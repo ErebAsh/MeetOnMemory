@@ -80,8 +80,16 @@ jobs:
       - name: Install server dependencies
         run: npm ci --prefix server
 
-      - name: Create .env from example
-        run: cp server/.env.example server/.env
+      - name: Create minimal .env for tests
+        run: |
+          cat <<EOF > server/.env
+          NODE_ENV=test
+          JWT_SECRET=ci_test_secret
+          GEMINI_API_KEY=test_key
+          GEMINI_MODEL=gemini-2.5-flash
+          PINECONE_API_KEY=test_key
+          INDEX_NAME=meeton
+          EOF
 
       - name: Lint
         run: npm run lint --prefix server
@@ -177,8 +185,16 @@ jobs:
       - name: Install server dependencies
         run: npm ci --prefix server
 
-      - name: Create .env from example
-        run: cp server/.env.example server/.env
+      - name: Create minimal .env for tests
+        run: |
+          cat <<EOF > server/.env
+          NODE_ENV=test
+          JWT_SECRET=ci_test_secret
+          GEMINI_API_KEY=test_key
+          GEMINI_MODEL=gemini-2.5-flash
+          PINECONE_API_KEY=test_key
+          INDEX_NAME=meeton
+          EOF
 
       - name: Run integration tests
         run: |
