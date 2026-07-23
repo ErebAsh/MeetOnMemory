@@ -13,6 +13,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { toast } from "react-toastify";
+import MeetingSentimentChart from "../components/MeetingSentimentChart";
 
 const TranscriptViewer = () => {
   const { meetingId } = useParams();
@@ -304,6 +305,9 @@ const TranscriptViewer = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Transcript Content */}
           <div className="lg:col-span-2 space-y-4">
+            {/* Sentiment Chart */}
+            <MeetingSentimentChart transcript={transcript} />
+
             {transcript.segments?.length === 0 ? (
               <div className="bg-white dark:bg-slate-800 rounded-lg p-8 text-center">
                 <FileText size={48} className="mx-auto text-gray-400 mb-4" />

@@ -3,6 +3,7 @@ import Redis from "ioredis";
 import processAudioJob from "../jobs/processAudioJob.js";
 import exportDataJob from "../jobs/exportDataJob.js";
 import conflictScanJob from "./conflictDetection/conflictScanJob.js";
+import sentimentAnalysisJob from "../jobs/sentimentAnalysisJob.js";
 
 const redisUri = process.env.REDIS_URI;
 
@@ -12,6 +13,7 @@ let _workerConnection = null;
 let _aiQueueInstance = null;
 let _dataExportQueueInstance = null;
 let _conflictScanQueueInstance = null;
+let _sentimentAnalysisQueueInstance = null;
 
 function getProducerConnection() {
   if (!redisUri) return null;
@@ -78,6 +80,19 @@ function getConflictScanQueue() {
   return _conflictScanQueueInstance;
 }
 
+function getSentimentAnalysisQueue() {
+  if (!redisUri) return null;
+  if (!_sentimentAnalysisQueueInstance) {
+    const conn = getProducerConnection();
+    if (conn) {
+      _sentimentAnalysisQueueInstance = new Queue("sentiment-analysis-queue", {
+        connection: conn,
+      });
+    }
+  }
+  return _sentimentAnalysisQueueInstance;
+}
+
 // Wrapper to preserve syntax compatibility
 export const aiQueue = {
   add: async (...args) => {
@@ -118,6 +133,20 @@ export const conflictScanQueue = {
   },
   get isActive() {
     return getConflictScanQueue() !== null;
+  },
+};
+
+export const sentimentAnalysisQueue = {
+  add: async (...args) => {
+    const q = getSentimentAnalysisQueue();
+    if (!q) {
+      console.warn("⚠️ Queue operation ignored: Redis is not configured.");
+      return null;
+    }
+    return await q.add(...args);
+  },
+  get isActive() {
+    return getSentimentAnalysisQueue() !== null;
   },
 };
 
@@ -225,3 +254,37 @@ export const initConflictScanWorker = (app) => {
     "✅ Conflict Scan Worker initialized and listening to conflict-scan-queue",
   );
 };
+
+export const initSentimentWorker = (app) => {
+  const connection = getWorkerConnection();
+  if (!connection) {
+    console.warn("⚠️ Redis not configured. Sentiment Worker will not start.");
+    return;
+  }
+
+  const worker = new Worker(
+    "sentiment-analysis-queue",
+    async (job) => await sentimentAnalysisJob(job, app),
+    { connection, concurrency: 1 },
+  );
+
+  worker.on("completed", (job) => {
+    console.log(`✅ Sentiment Analysis Job ${job.id} completed successfully`);
+  });
+
+  worker.on("failed", (job, err) => {
+    console.error(
+      `❌ Sentiment Analysis Job ${job.id} failed with error:`,
+      err.message,
+    );
+  });
+
+  worker.on("error", (err) => {
+    console.error("❌ Sentiment Analysis Worker error:", err.message);
+  });
+
+  console.log(
+    "✅ Sentiment Analysis Worker initialized and listening to sentiment-analysis-queue",
+  );
+};
+

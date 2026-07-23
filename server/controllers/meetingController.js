@@ -1,16 +1,3 @@
-import fs from "fs";
-import axios from "axios";
-import FormData from "form-data";
-import Meeting from "../models/meetingModel.js";
-import User from "../models/userModel.js";
-import { indexMeeting } from "../utils/embeddingUtils.js";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import {
-  processStructuredMoM,
-  detectResolutions,
-} from "../services/knowledgeGraphService.js";
-import { createAndPushNotification } from "../services/notificationService.js";
-import { pushMeetingToIntegrations, deleteMeetingFromIntegrations } from "../services/calendarSyncService.js";
 /**
  * Meeting Controller — HTTP layer only.
  *
@@ -28,10 +15,13 @@ import { pushMeetingToIntegrations, deleteMeetingFromIntegrations } from "../ser
 import fs from "fs";
 import path from "path";
 import { z } from "zod";
+import Meeting from "../models/meetingModel.js";
 import * as MeetingService from "../services/MeetingService.js";
 import { ValidationError, UnauthorizedError } from "../utils/errors.js";
 import AuditService from "../services/AuditService.js";
 import { sendSuccess } from "../utils/responseHandler.js";
+import { pushMeetingToIntegrations, deleteMeetingFromIntegrations } from "../services/calendarSyncService.js";
+
 // ═══════════════════════════════════════════════════════════════
 // Zod validation schemas
 // ═══════════════════════════════════════════════════════════════
@@ -168,14 +158,6 @@ export const createMeeting = async (req, res, next) => {
       pushMeetingToIntegrations(uploaderId, meeting).catch(console.error);
     }
 
-    return res.status(200).json({
-      success: true,
-      message: "Meeting scheduled successfully",
-      meeting: {
-        _id: meeting._id,
-        title: meeting.title,
-        meetingType: meeting.meetingType,
-        date: meeting.date,
     return sendSuccess(
       res,
       {
@@ -359,21 +341,6 @@ export const getAllMeetings = async (req, res, next) => {
    ───────────────────────────────────────────────────────────── */
 export const deleteMeeting = async (req, res, next) => {
   try {
-    const meeting = req.doc; // from requireOwnerOrAdmin middleware
-    if (!meeting) {
-      // Fallback if middleware isn't used
-      const meetingToDelete = await Meeting.findById(req.params.id);
-      if (!meetingToDelete) {
-        return res
-          .status(404)
-          .json({ success: false, message: "Meeting not found" });
-      }
-      
-      deleteMeetingFromIntegrations(meetingToDelete.uploadedBy, meetingToDelete.externalCalendarRefs).catch(console.error);
-      await meetingToDelete.deleteOne();
-    } else {
-      deleteMeetingFromIntegrations(meeting.uploadedBy, meeting.externalCalendarRefs).catch(console.error);
-      await meeting.deleteOne();
     await MeetingService.deleteMeeting(
       req.doc || null, // from requireOwnerOrAdmin middleware (may be undefined)
       req.params.id,
@@ -465,8 +432,6 @@ export const searchMeetingsByText = async (req, res, next) => {
     } catch (zodErr) {
       return next(zodErr);
     }
-
-    pushMeetingToIntegrations(userId, meeting).catch(console.error);
 
     const result = await MeetingService.searchMeetings(
       validated,

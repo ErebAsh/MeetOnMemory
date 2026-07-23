@@ -1,5 +1,9 @@
 import axios from "axios";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { pipeline, env } from "@xenova/transformers";
+
+env.useBrowserCache = false;
+let localSummarizer = null;
 
 const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -75,26 +79,19 @@ ${textToSummarize}
   }
 
   try {
-    const hfUrl =
-      "https://api-inference.huggingface.co/models/facebook/bart-large-cnn";
-    const hfResp = await axios.post(
-      hfUrl,
-      { inputs: textToSummarize.substring(0, 1024) },
-      {
-        headers: {
-          Authorization: `Bearer ${HUGGINGFACE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        timeout: 120000,
-      },
-    );
+    if (!localSummarizer) {
+      console.log("⏳ Loading local summarization model fallback...");
+      localSummarizer = await pipeline("summarization", "Xenova/distilbart-cnn-6-6");
+      console.log("✅ Local model loaded");
+    }
 
-    const hfText =
-      Array.isArray(hfResp.data) && hfResp.data[0]?.summary_text
-        ? hfResp.data[0].summary_text
-        : hfResp.data?.generated_text || JSON.stringify(hfResp.data);
+    const result = await localSummarizer(textToSummarize.substring(0, 1024), {
+      max_new_tokens: 150,
+    });
+    
+    const hfText = result[0].summary_text;
 
-    console.log("✅ HuggingFace fallback completed");
+    console.log("✅ Local fallback summarization completed");
     return {
       title: title || `Meeting on ${date}`,
       date,
@@ -106,11 +103,11 @@ ${textToSummarize}
       questions_raised: [],
       keywords: [],
       attendees: [],
-      notes: "Generated using fallback summarization model",
+      notes: "Generated using local fallback summarization model",
     };
   } catch (hfErr) {
-    console.error("❌ HuggingFace also failed:", hfErr.message);
-    throw new Error("Both Gemini and HuggingFace summarization failed");
+    console.error("❌ Local fallback also failed:", hfErr.message);
+    throw new Error("Both Gemini and Local fallback summarization failed");
   }
 };
 

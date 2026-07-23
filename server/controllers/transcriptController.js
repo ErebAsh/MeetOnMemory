@@ -1,10 +1,12 @@
-import Transcript from "../models/Transcript.js";
+import Transcript from "../models/transcriptModel.js";
 import Meeting from "../models/meetingModel.js";
 import { transcribeFileWithSegments } from "../services/TranscriptionService.js";
-import { indexTranscript } from "../utils/embeddingUtils.js";
+import { indexTranscript, searchVectorStore, indexMeeting } from "../utils/embeddingUtils.js";
+import { indexTranscriptChunks } from "../utils/transcriptEmbeddingUtils.js";
+import { sendSuccess, sendError } from "../utils/responseHandler.js";
 import fs from "fs";
-import path from "path";
-import { searchVectorStore } from "../utils/embeddingUtils.js";
+
+import { sentimentAnalysisQueue } from "../services/queueService.js";
 
 /**
  * @desc  Start a recording session for a meeting
@@ -453,6 +455,12 @@ async function processTranscription(transcriptId) {
     });
 
     console.log(`✅ Transcript indexed and meeting updated`);
+
+    // Queue sentiment analysis job
+    if (sentimentAnalysisQueue.isActive) {
+      await sentimentAnalysisQueue.add("analyze-sentiment", { transcriptId });
+      console.log(`✅ Sentiment analysis queued for transcript ${transcriptId}`);
+    }
   } catch (error) {
     console.error("❌ Transcription processing failed:", error);
 
@@ -464,17 +472,7 @@ async function processTranscription(transcriptId) {
       await transcript.save();
     }
   }
-/**
- * transcriptController.js
- * Handles transcript CRUD operations and export functionality
- */
-
-import Transcript from "../models/transcriptModel.js";
-import Meeting from "../models/meetingModel.js";
-import { indexMeeting } from "../utils/embeddingUtils.js";
-import { indexTranscriptChunks } from "../utils/transcriptEmbeddingUtils.js";
-import { sendSuccess, sendError } from "../utils/responseHandler.js";
-
+}
 /**
  * Get transcript by meeting ID
  */
@@ -665,6 +663,11 @@ export const finalizeTranscript = async (req, res) => {
 
       // Index transcript chunks for granular search
       await indexTranscriptChunks(transcript, meeting);
+    }
+
+    // Queue sentiment analysis job
+    if (sentimentAnalysisQueue.isActive) {
+      await sentimentAnalysisQueue.add("analyze-sentiment", { transcriptId: transcript._id });
     }
 
     sendSuccess(res, null, "Transcript finalized and indexed successfully");

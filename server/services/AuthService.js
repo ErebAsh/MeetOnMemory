@@ -7,7 +7,7 @@ import {
   EMAIL_VERIFY_TEMPLATE,
   PASSWORD_RESET_TEMPLATE,
 } from "../config/emailTemplates.js";
-import { getTokens } from "./calendarService.js";
+import { getGoogleTokens } from "./calendarService.js";
 import { AppError, NotFoundError } from "../utils/errors.js";
 
 const normalizeEmail = (email) => String(email).trim().toLowerCase();
@@ -168,7 +168,7 @@ class AuthService {
   }
 
   static async googleCalendarCallback({ code, token }) {
-    const tokens = await getTokens(code);
+    const tokens = await getGoogleTokens(code);
 
     if (!token) {
       throw new AppError("Not authenticated", 401);

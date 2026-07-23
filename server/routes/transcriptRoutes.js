@@ -1,6 +1,6 @@
 import express from "express";
 import multer from "multer";
-import Transcript from "../models/Transcript.js";
+import Transcript from "../models/transcriptModel.js";
 import Meeting from "../models/meetingModel.js";
 import {
   requireOwnerOrAdmin,
@@ -17,6 +17,11 @@ import {
   getTranscript,
   retryTranscription,
   voiceSearch,
+  getTranscriptByMeeting,
+  searchTranscript,
+  exportTranscriptAsText,
+  exportTranscriptAsPDF,
+  finalizeTranscript,
 } from "../controllers/transcriptController.js";
 
 const router = express.Router();
@@ -24,25 +29,6 @@ const upload = multer({
   dest: "uploads/transcripts/",
   limits: { fileSize: 100 * 1024 * 1024 }, // 100MB limit
 });
-/**
- * transcriptRoutes.js
- * Routes for transcript management and export
- */
-
-import express from "express";
-import {
-  getTranscriptByMeeting,
-  searchTranscript,
-  exportTranscriptAsText,
-  exportTranscriptAsPDF,
-  finalizeTranscript,
-} from "../controllers/transcriptController.js";
-import userAuth from "../middleware/userAuth.js";
-import { apiLimiter } from "../middleware/rateLimiter.js";
-import { requireOrgAccess, requirePermission } from "../middleware/rbac.js";
-import Meeting from "../models/meetingModel.js";
-
-const router = express.Router();
 
 // Apply rate limiting to all routes
 router.use(apiLimiter);
@@ -110,6 +96,8 @@ router.get(
   requireOrgMembership,
   requirePermission("ai_search", "search"),
   voiceSearch
+);
+
 // Get transcript by meeting ID
 router.get(
   "/meeting/:meetingId",

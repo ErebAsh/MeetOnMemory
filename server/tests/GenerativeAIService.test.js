@@ -10,13 +10,14 @@ jest.unstable_mockModule("@google/generative-ai", () => ({
   })),
 }));
 
-jest.unstable_mockModule("axios", () => ({
-  default: {
-    post: jest.fn(),
-  },
+const mockLocalSummarizer = jest.fn();
+
+jest.unstable_mockModule("@xenova/transformers", () => ({
+  pipeline: jest.fn().mockResolvedValue(mockLocalSummarizer),
+  env: { useBrowserCache: false }
 }));
 
-const axios = (await import("axios")).default;
+const { pipeline } = await import("@xenova/transformers");
 const { GoogleGenerativeAI } = await import("@google/generative-ai");
 const { generateMoMWithAI, buildHumanReadableMoM, normalizeMoM } = await import("../services/GenerativeAIService.js");
 
@@ -51,21 +52,22 @@ describe("GenerativeAIService", () => {
 
       expect(result).toEqual(mockMoM);
       expect(mockGenerateContent).toHaveBeenCalledTimes(1);
-      // Ensure it did not fallback to HuggingFace
-      expect(axios.post).not.toHaveBeenCalled();
+      // Ensure it did not fallback to local summarization model
+      expect(pipeline).not.toHaveBeenCalled();
     });
 
-    it("should fallback to HuggingFace if Gemini throws an error", async () => {
+    it("should fallback to local summarization if Gemini throws an error", async () => {
       mockGenerateContent.mockRejectedValueOnce(new Error("Gemini API Error"));
 
-      axios.post.mockResolvedValueOnce({
-        data: [{ summary_text: "HuggingFace fallback summary" }]
-      });
+      mockLocalSummarizer.mockResolvedValueOnce([
+        { summary_text: "Local fallback summary" }
+      ]);
 
       const result = await generateMoMWithAI("Transcript text...", "2026-07-16", "Test Meeting");
 
-      expect(result.summary).toBe("HuggingFace fallback summary");
-      expect(axios.post).toHaveBeenCalledTimes(1);
+      expect(result.summary).toBe("Local fallback summary");
+      expect(pipeline).toHaveBeenCalledWith("summarization", "Xenova/distilbart-cnn-6-6");
+      expect(mockLocalSummarizer).toHaveBeenCalledTimes(1);
     });
   });
 

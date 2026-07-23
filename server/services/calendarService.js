@@ -10,14 +10,14 @@ const ENCRYPTION_KEY = process.env.CALENDAR_ENCRYPTION_KEY || "default-key-chang
 /**
  * Encrypt a token for storage
  */
-const encryptToken = (token) => {
+export const encryptToken = (token) => {
   return CryptoJS.AES.encrypt(token, ENCRYPTION_KEY).toString();
 };
 
 /**
  * Decrypt a token from storage
  */
-const decryptToken = (encryptedToken) => {
+export const decryptToken = (encryptedToken) => {
   if (!encryptedToken) return null;
   try {
     const bytes = CryptoJS.AES.decrypt(encryptedToken, ENCRYPTION_KEY);
@@ -72,7 +72,7 @@ const refreshGoogleToken = async (connection) => {
 /**
  * Get Google OAuth2 client with automatic token refresh
  */
-const getGoogleOAuth2Client = async (connection) => {
+export const getGoogleOAuth2Client = async (connection) => {
   const oAuth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
@@ -103,7 +103,7 @@ const getGoogleOAuth2Client = async (connection) => {
 /**
  * Get Microsoft Graph client with automatic token refresh
  */
-const getMicrosoftGraphClient = async (connection) => {
+export const getMicrosoftClient = async (connection) => {
   const accessToken = decryptToken(connection.accessToken);
 
   if (!accessToken) {
@@ -346,7 +346,7 @@ export const createMicrosoftEvent = async (userId, meetingDetails) => {
       return null;
     }
 
-    const client = await getMicrosoftGraphClient(connection);
+    const client = await getMicrosoftClient(connection);
 
     const startDateTime = parseMeetingDateTime(meetingDetails);
     const duration = meetingDetails.duration || 60;
@@ -422,7 +422,7 @@ export const updateMicrosoftEvent = async (userId, meetingDetails, eventId) => {
       return;
     }
 
-    const client = await getMicrosoftGraphClient(connection);
+    const client = await getMicrosoftClient(connection);
 
     const startDateTime = parseMeetingDateTime(meetingDetails);
     const duration = meetingDetails.duration || 60;
@@ -494,7 +494,7 @@ export const deleteMicrosoftEvent = async (userId, eventId) => {
       return;
     }
 
-    const client = await getMicrosoftGraphClient(connection);
+    const client = await getMicrosoftClient(connection);
 
     await client.api(`/me/events/${eventId}`).delete();
 
@@ -558,7 +558,7 @@ export const getGoogleTokens = async (code) => {
 /**
  * Get Microsoft OAuth authorization URL
  */
-export const getMicrosoftAuthUrl = () => {
+export const getMicrosoftAuthUrl = async () => {
   const msalConfig = {
     auth: {
       clientId: process.env.MICROSOFT_CLIENT_ID,
@@ -651,7 +651,7 @@ export const getFreeBusy = async (userId, attendeeEmails, timeMin, timeMax) => {
 
   if (microsoftConnection) {
     try {
-      const client = await getMicrosoftGraphClient(microsoftConnection);
+      const client = await getMicrosoftClient(microsoftConnection);
 
       const schedule = await client
         .api("/me/calendar/getSchedule")
@@ -721,7 +721,7 @@ export const fetchExternalEvents = async (userId, timeMin, timeMax) => {
 
   if (microsoftConnection) {
     try {
-      const client = await getMicrosoftGraphClient(microsoftConnection);
+      const client = await getMicrosoftClient(microsoftConnection);
 
       const response = await client
         .api("/me/calendarView")

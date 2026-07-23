@@ -13,6 +13,7 @@
     "test:unit": "vitest run tests/OrganizationService.test.js tests/InvitationService.test.js tests/organizationController.test.js"
   },
   "dependencies": {
+    "@azure/identity": "^4.13.1",
     "@azure/msal-node": "^5.4.2",
     "@chroma-core/default-embed": "^0.1.8",
     "@google/generative-ai": "^0.24.1",
