@@ -80,6 +80,9 @@ jobs:
       - name: Install server dependencies
         run: npm ci --prefix server
 
+      - name: Create .env from example
+        run: cp server/.env.example server/.env
+
       - name: Lint
         run: npm run lint --prefix server
 
@@ -173,6 +176,9 @@ jobs:
 
       - name: Install server dependencies
         run: npm ci --prefix server
+
+      - name: Create .env from example
+        run: cp server/.env.example server/.env
 
       - name: Run integration tests
         run: |
