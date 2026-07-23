@@ -15,6 +15,7 @@ import CookiePolicy from "../pages/CookiePolicy.jsx";
 import MeetingRoom from "../pages/MeetingRoom.jsx";
 import Status from "../pages/Status.jsx";
 import HelpCenter from "../pages/HelpCenter.jsx";
+import Careers from "../pages/Careers.jsx";
 
 const PublicRoutes = (
   <React.Fragment>
@@ -29,6 +30,7 @@ const PublicRoutes = (
     <Route path="/cookie-policy" element={<CookiePolicy />} />
     <Route path="/status" element={<Status />} />
     <Route path="/help-center" element={<HelpCenter />} />
+    <Route path="/careers" element={<Careers />} />
     <Route
       path="/organizations/:slug"
       element={<PublicOrganizationProfile />}
