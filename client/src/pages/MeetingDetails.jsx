@@ -9,6 +9,7 @@ import MeetingTranscript from "../components/meeting-details/MeetingTranscript";
 import MeetingParticipants from "../components/meeting-details/MeetingParticipants";
 import MeetingMetadata from "../components/meeting-details/MeetingMetadata";
 import MeetingActions from "../components/meeting-details/MeetingActions";
+import MeetingFollowUpBanner from "../components/meeting-details/MeetingFollowUpBanner";
 
 const MeetingDetails = () => {
   const { id } = useParams();
@@ -152,6 +153,7 @@ const MeetingDetails = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-6xl mx-auto">
+        <MeetingFollowUpBanner meeting={meeting} />
         <MeetingHeader meeting={meeting} />
         <MeetingSummary meeting={meeting} />
         <MeetingCollaborativeNotes meeting={meeting} />
