@@ -51,6 +51,19 @@ export const initVectorStore = async () => {
 };
 
 // ===================================================
+// ⚙️ 1.5️⃣ Pre-warm Pinecone (for workers)
+// ===================================================
+export const preWarmPinecone = async () => {
+  try {
+    await initVectorStore();
+    await getEmbedder();
+    console.log("🔥 Pinecone and Embedder pre-warmed.");
+  } catch (err) {
+    console.error("❌ Failed to pre-warm Pinecone:", err);
+  }
+};
+
+// ===================================================
 // 🧠 2️⃣ Load Local Hugging Face Embedding Model
 // ===================================================
 async function getEmbedder() {

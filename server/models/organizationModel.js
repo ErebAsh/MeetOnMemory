@@ -86,7 +86,7 @@ const organizationSchema = new mongoose.Schema(
 );
 
 // Indexes for performance
-organizationSchema.index({ slug: 1 });
+
 organizationSchema.index({ owner: 1 });
 organizationSchema.index({ visibility: 1 });
 organizationSchema.index({ createdAt: -1 });
