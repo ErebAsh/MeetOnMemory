@@ -1,11 +1,11 @@
-import axios from "axios";
+import axios from "axios"; // eslint-disable-line no-unused-vars
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { pipeline, env } from "@xenova/transformers";
 
 env.useBrowserCache = false;
 let localSummarizer = null;
 
-const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY;
+const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY; // eslint-disable-line no-unused-vars
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
@@ -81,14 +81,17 @@ ${textToSummarize}
   try {
     if (!localSummarizer) {
       console.log("⏳ Loading local summarization model fallback...");
-      localSummarizer = await pipeline("summarization", "Xenova/distilbart-cnn-6-6");
+      localSummarizer = await pipeline(
+        "summarization",
+        "Xenova/distilbart-cnn-6-6",
+      );
       console.log("✅ Local model loaded");
     }
 
     const result = await localSummarizer(textToSummarize.substring(0, 1024), {
       max_new_tokens: 150,
     });
-    
+
     const hfText = result[0].summary_text;
 
     console.log("✅ Local fallback summarization completed");

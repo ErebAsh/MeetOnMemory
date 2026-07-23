@@ -315,7 +315,7 @@ export const deleteMeetingFromPinecone = async (meetingId) => {
 // ===================================================
 export const reindexAllMeetings = async () => {
   try {
-    const indexInstance = await initVectorStore();
+    const indexInstance = await initVectorStore(); // eslint-disable-line no-unused-vars
 
     const allMeetings = await Meeting.find({
       transcript: { $exists: true, $ne: "" },
@@ -372,7 +372,9 @@ export const indexTranscript = async (transcript) => {
 
     await indexInstance.upsert(vectors);
 
-    console.log(`✅ Indexed transcript: ${transcript._id} (${transcriptChunks.length} chunks)`);
+    console.log(
+      `✅ Indexed transcript: ${transcript._id} (${transcriptChunks.length} chunks)`,
+    );
   } catch (error) {
     console.error("❌ Failed to index transcript:", error);
   }

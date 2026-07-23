@@ -1,5 +1,5 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import axios from "axios";
+import { GoogleGenerativeAI } from "@google/generative-ai"; // eslint-disable-line no-unused-vars
+import axios from "axios"; // eslint-disable-line no-unused-vars
 import eventBus from "../services/eventBus.js";
 import Meeting from "../models/meetingModel.js";
 import {
@@ -9,13 +9,17 @@ import {
 import User from "../models/userModel.js";
 
 import { indexMeeting } from "../utils/embeddingUtils.js";
-import { generateMoMWithAI, normalizeMoM, buildHumanReadableMoM } from "../services/GenerativeAIService.js";
+import {
+  generateMoMWithAI,
+  normalizeMoM,
+  buildHumanReadableMoM,
+} from "../services/GenerativeAIService.js";
 
-export default async function processAudioJob(job, app) {
+export default async function processAudioJob(job, _app) {
   const { meetingId, transcript, date, title, userId } = job.data;
-  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-  const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
-  const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY;
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY; // eslint-disable-line no-unused-vars
+  const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash"; // eslint-disable-line no-unused-vars
+  const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY; // eslint-disable-line no-unused-vars
 
   let textToSummarize = (transcript || "").trim();
 

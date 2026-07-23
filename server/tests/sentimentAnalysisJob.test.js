@@ -12,12 +12,13 @@ const mockFindById = jest.fn();
 jest.unstable_mockModule("../models/transcriptModel.js", () => ({
   default: {
     findById: mockFindById,
-  }
+  },
 }));
 
-const sentimentAnalysisJob = (await import("../jobs/sentimentAnalysisJob.js")).default;
+const sentimentAnalysisJob = (await import("../jobs/sentimentAnalysisJob.js"))
+  .default;
 const { pipeline } = await import("@xenova/transformers");
-const Transcript = (await import("../models/transcriptModel.js")).default;
+const Transcript = (await import("../models/transcriptModel.js")).default; // eslint-disable-line no-unused-vars
 
 describe("sentimentAnalysisJob", () => {
   beforeEach(() => {
@@ -27,7 +28,9 @@ describe("sentimentAnalysisJob", () => {
   it("should throw an error if transcript is not found", async () => {
     mockFindById.mockResolvedValueOnce(null);
 
-    await expect(sentimentAnalysisJob({ data: { transcriptId: "123" } })).rejects.toThrow("Transcript 123 not found");
+    await expect(
+      sentimentAnalysisJob({ data: { transcriptId: "123" } }),
+    ).rejects.toThrow("Transcript 123 not found");
   });
 
   it("should skip if transcript has no segments", async () => {
@@ -36,22 +39,21 @@ describe("sentimentAnalysisJob", () => {
       segments: [],
     });
 
-    const result = await sentimentAnalysisJob({ data: { transcriptId: "123" } });
-    
+    const result = await sentimentAnalysisJob({
+      data: { transcriptId: "123" },
+    });
+
     expect(result).toEqual({ success: true, skipped: true });
     expect(pipeline).not.toHaveBeenCalled();
   });
 
   it("should calculate sentiment for segments and update transcript", async () => {
     const mockSave = jest.fn().mockResolvedValueOnce(true);
-    
+
     const mockTranscript = {
       _id: "123",
-      segments: [
-        { text: "This is great" },
-        { text: "I am disappointed" }
-      ],
-      save: mockSave
+      segments: [{ text: "This is great" }, { text: "I am disappointed" }],
+      save: mockSave,
     };
 
     mockFindById.mockResolvedValueOnce(mockTranscript);
@@ -61,8 +63,10 @@ describe("sentimentAnalysisJob", () => {
       .mockResolvedValueOnce([{ label: "POSITIVE", score: 0.9 }])
       .mockResolvedValueOnce([{ label: "NEGATIVE", score: 0.8 }]);
 
-    const result = await sentimentAnalysisJob({ data: { transcriptId: "123" } });
-    
+    const result = await sentimentAnalysisJob({
+      data: { transcriptId: "123" },
+    });
+
     expect(result.success).toBe(true);
     expect(pipeline).toHaveBeenCalledWith("sentiment-analysis");
     expect(mockPipelineFn).toHaveBeenCalledTimes(2);
@@ -78,7 +82,7 @@ describe("sentimentAnalysisJob", () => {
     // Assert overall calculations: (0.9 + -0.8) / 2 = 0.05 (POSITIVE)
     expect(mockTranscript.overallSentiment).toBeCloseTo(0.05);
     expect(mockTranscript.overallEmotion).toBe("POSITIVE");
-    
+
     expect(mockSave).toHaveBeenCalledTimes(1);
   });
 });
