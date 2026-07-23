@@ -7,6 +7,7 @@ import { requirePermission } from "../middleware/rbac.js";
 import Membership from "../models/membershipModel.js";
 import Meeting from "../models/meetingModel.js";
 import { validateAiSearchRequest } from "../utils/validateAiSearchRequest.js";
+import logger from "../utils/logger.js";
 
 const router = express.Router();
 
@@ -33,7 +34,11 @@ router.post(
         });
       }
 
-      console.log("🔍 Received search query:", query, "with filters:", filters);
+      logger.info("Received AI search query", {
+        userId: req.user ? req.user._id : "anonymous",
+        queryLength: query ? query.length : 0,
+        hasFilters: !!filters
+      });
 
       // ✅ Call vector search with filters
       const results = await searchVectorStore(query, filters || {});
@@ -75,9 +80,10 @@ router.post(
       );
 
       // ✅ Debug log
-      console.log(
-        `📤 Returning ${authorizedResults.length} authorized results to frontend`,
-      );
+      logger.info("Returning authorized AI search results", {
+        resultCount: authorizedResults.length,
+        userId: req.user ? req.user._id : "anonymous"
+      });
 
       // ✅ Send response
       res.json({
@@ -86,7 +92,10 @@ router.post(
         count: authorizedResults.length,
       });
     } catch (error) {
-      console.error("❌ AI Search Error:", error);
+      logger.error("AI Search Error", error, {
+        userId: req.user ? req.user._id : "anonymous",
+        queryLength: req.body?.query ? req.body.query.length : 0
+      });
       res.status(500).json({
         error: error.message || "Search failed",
         results: [],
