@@ -22,10 +22,11 @@ import {
   exportTranscriptAsText,
   exportTranscriptAsPDF,
   finalizeTranscript,
+  updateSpeakers,
 } from "../controllers/transcriptController.js";
 
 const router = express.Router();
-const upload = multer({ 
+const upload = multer({
   dest: "uploads/transcripts/",
   limits: { fileSize: 100 * 1024 * 1024 }, // 100MB limit
 });
@@ -41,7 +42,7 @@ router.post(
   uploadLimiter,
   requireOrgMembership,
   requirePermission("meetings", "create"),
-  startRecording
+  startRecording,
 );
 
 // POST /api/meetings/:meetingId/recording/stop
@@ -52,7 +53,7 @@ router.post(
   uploadLimiter,
   requireOrgMembership,
   requirePermission("meetings", "create"),
-  stopRecording
+  stopRecording,
 );
 
 // POST /api/meetings/:meetingId/transcript/upload
@@ -64,7 +65,7 @@ router.post(
   requireOrgMembership,
   requirePermission("meetings", "create"),
   upload.single("audio"),
-  uploadTranscriptAudio
+  uploadTranscriptAudio,
 );
 
 // GET /api/meetings/:meetingId/transcript
@@ -74,7 +75,7 @@ router.get(
   userAuth,
   requireOrgMembership,
   requirePermission("meetings", "view"),
-  getTranscript
+  getTranscript,
 );
 
 // POST /api/meetings/:meetingId/transcript/retry
@@ -85,7 +86,7 @@ router.post(
   uploadLimiter,
   requireOrgMembership,
   requirePermission("meetings", "create"),
-  retryTranscription
+  retryTranscription,
 );
 
 // GET /api/search/voice?query=...
@@ -95,7 +96,7 @@ router.get(
   userAuth,
   requireOrgMembership,
   requirePermission("ai_search", "search"),
-  voiceSearch
+  voiceSearch,
 );
 
 // Get transcript by meeting ID
@@ -104,7 +105,7 @@ router.get(
   userAuth,
   requireOrgAccess(Meeting),
   requirePermission("meetings", "view"),
-  getTranscriptByMeeting
+  getTranscriptByMeeting,
 );
 
 // Search within transcript
@@ -113,7 +114,7 @@ router.post(
   userAuth,
   requireOrgAccess(Meeting),
   requirePermission("meetings", "view"),
-  searchTranscript
+  searchTranscript,
 );
 
 // Export transcript as text
@@ -122,7 +123,7 @@ router.get(
   userAuth,
   requireOrgAccess(Meeting),
   requirePermission("meetings", "export"),
-  exportTranscriptAsText
+  exportTranscriptAsText,
 );
 
 // Export transcript as PDF
@@ -131,7 +132,7 @@ router.get(
   userAuth,
   requireOrgAccess(Meeting),
   requirePermission("meetings", "export"),
-  exportTranscriptAsPDF
+  exportTranscriptAsPDF,
 );
 
 // Finalize transcript and index in Pinecone
@@ -140,7 +141,10 @@ router.post(
   userAuth,
   requireOrgAccess(Meeting),
   requirePermission("meetings", "edit"),
-  finalizeTranscript
+  finalizeTranscript,
 );
+
+// Update speaker names in transcript
+router.put("/:id/speakers", userAuth, updateSpeakers);
 
 export default router;
