@@ -17,7 +17,6 @@ let memberToken;
 let adminUser;
 let memberUser;
 let testMeeting;
-let testTranscript;
 const orgId = new mongoose.Types.ObjectId().toString();
 
 beforeEach(async () => {
@@ -73,7 +72,7 @@ beforeEach(async () => {
       "mockstripekeywithlengthovertwentyfour",
   });
 
-  testTranscript = await Transcript.create({
+  await Transcript.create({
     meeting: testMeeting._id,
     organizationId: orgId,
     fullText:

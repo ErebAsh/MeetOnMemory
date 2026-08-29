@@ -111,6 +111,7 @@ import meetingQuizRoutes from "./meetingQuizRoutes.js";
 import resourceBookingRoutes from "./resourceBookingRoutes.js";
 import recordingSessionRoutes from "./recordingSessionRoutes.js";
 import meetingPlaybookRoutes from "./meetingPlaybookRoutes.js";
+import meetingOwnershipTransferRoutes from "./meetingOwnershipTransferRoutes.js";
 
 const router = express.Router();
 
@@ -129,6 +130,7 @@ router.use("/api/meetings/timer", agendaTimerRoutes);
 router.use("/api/meetings/:meetingId/checklist", meetingChecklistRoutes);
 router.use("/api/meetings/:id/duplicates", meetingDuplicateRoutes);
 router.use("/api/delegations", meetingDelegationRoutes);
+router.use("/api/transfers", meetingOwnershipTransferRoutes);
 router.use("/api/meetings/:meetingId/quiz", meetingQuizRoutes);
 router.use("/api/playbooks", meetingPlaybookRoutes);
 router.use("/api/meetings", meetingRoutes);

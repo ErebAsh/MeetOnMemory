@@ -25,6 +25,7 @@ const DecisionVotingPanel = ({ meetingId }) => {
     if (meetingId) {
       loadDecisions();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meetingId]);
 
   const loadDecisions = async () => {

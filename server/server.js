@@ -36,6 +36,7 @@ import {
 import { createAdapter } from "@socket.io/redis-adapter"; // eslint-disable-line no-unused-vars
 import { startCalendarSyncJob } from "./jobs/calendarSyncJob.js";
 import startPollExpirationJob from "./jobs/pollExpirationJob.js";
+import { startExpireTransferRequestsJob } from "./jobs/expireTransferRequestsJob.js";
 import startFollowUpReminderJob from "./jobs/followUpReminderJob.js";
 import { initChecklistReminderJob } from "./jobs/checklistReminderJob.js";
 import {
@@ -174,6 +175,9 @@ if (process.env.NODE_ENV !== "test") {
 
   // Start poll expiration background job
   startPollExpirationJob(io);
+
+  // Start transfer request auto-expiration background job
+  startExpireTransferRequestsJob();
 
   // Start membership request auto-expiration background job (#2483)
   initMembershipRequestExpirationJob(io);

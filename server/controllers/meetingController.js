@@ -16,7 +16,7 @@ import fs from "fs";
 import path from "path";
 import { z } from "zod";
 import mongoose from "mongoose";
-import Meeting from "../models/meetingModel.js"; // eslint-disable-line no-unused-vars
+import Meeting from "../models/meetingModel.js";
 import * as MeetingService from "../services/MeetingService.js";
 import * as MeetingInviteService from "../services/MeetingInviteService.js";
 import { ValidationError, UnauthorizedError } from "../utils/errors.js";

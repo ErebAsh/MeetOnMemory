@@ -31,6 +31,7 @@ import {
   notificationId,
 } from "../utils/groupNotifications.js";
 import NudgeInbox from "../components/NudgeInbox";
+import TransferInbox from "../components/notifications/TransferInbox.jsx";
 import KeywordWatchlistPanel from "../components/notifications/KeywordWatchlistPanel.jsx";
 import { useDebounce } from "../hooks/useDebounce.js";
 
@@ -450,6 +451,7 @@ const Notifications = () => {
         ) : (
           <div id="notifications-panel" role="tabpanel" className="space-y-6">
             <NudgeInbox organizationId={userData?.currentOrganization} />
+            <TransferInbox />
 
             {/* Filters Section - Issue #1214: Tasks filter added; #2064 grouping + digest */}
             <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm">

@@ -8,6 +8,7 @@ import apiClient from "../../services/apiClient";
 import { meetingApi } from "../../services/meetingApi.js";
 import { notionIntegrationApi } from "../../services/notionIntegrationApi.js";
 import ConfirmModal from "../ConfirmModal.jsx";
+import TransferOwnershipModal from "../meetings/TransferOwnershipModal.jsx";
 import { usePolling } from "../../hooks/usePolling.js";
 import {
   generateICS,
@@ -33,6 +34,7 @@ const MeetingActions = ({ meeting, onDelete, onRename }) => {
   const [newTitle, setNewTitle] = useState("");
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showCalendarMenu, setShowCalendarMenu] = useState(false);
+  const [showTransferModal, setShowTransferModal] = useState(false);
   const { exportMeeting, isExporting } = useExport();
 
   // Email MoM modal state (#2254)
@@ -608,6 +610,26 @@ const MeetingActions = ({ meeting, onDelete, onRename }) => {
               </button>
 
               <button
+                onClick={() => setShowTransferModal(true)}
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg transition-colors text-sm font-medium"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                  />
+                </svg>
+                Transfer Ownership
+              </button>
+
+              <button
                 onClick={handleDelete}
                 className="flex items-center justify-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg transition-colors text-sm font-medium"
               >
@@ -787,6 +809,12 @@ const MeetingActions = ({ meeting, onDelete, onRename }) => {
         onConfirm={confirmDelete}
         title="Delete Meeting Notes"
         message="Are you sure you want to delete this meeting? All associated notes, transcripts, and summaries will be permanently deleted."
+      />
+
+      <TransferOwnershipModal
+        isOpen={showTransferModal}
+        onClose={() => setShowTransferModal(false)}
+        meetingId={meeting._id}
       />
 
       {/* Rename Modal */}
