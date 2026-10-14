@@ -70,8 +70,9 @@ const MeetingRoomPlaybookPanel = ({ socket, meetingId, isFacilitator }) => {
   }, [playbooks, selectedPlaybookId]);
 
   const handleStartPlaybook = () => {
-    if (!selectedPlaybookId) return;
-    startPlaybook(selectedPlaybookId);
+    const idToStart = selectedPlaybookId || playbooks[0]?._id;
+    if (!idToStart) return;
+    startPlaybook(idToStart);
   };
 
   if (loading) {

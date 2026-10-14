@@ -1,5 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import Summaries from "../Summaries.jsx";
 import AiSearch from "../AiSearch.jsx";
@@ -32,6 +33,7 @@ vi.mock("react-toastify", () => ({
 const getAllMeetings = vi.fn();
 const deleteMeeting = vi.fn();
 const apiPost = vi.fn();
+const mockSemanticSearch = vi.fn();
 
 vi.mock("../../services", () => ({
   meetingApi: {
@@ -40,6 +42,12 @@ vi.mock("../../services", () => ({
   },
   apiClient: {
     post: (...args) => apiPost(...args),
+  },
+  searchApi: {
+    semanticSearch: (...args) => mockSemanticSearch(...args),
+    hybridSearch: vi.fn(),
+    federatedSearch: vi.fn(),
+    voiceSearch: vi.fn(),
   },
   savedFilterApi: {
     getSavedFilters: vi.fn().mockResolvedValue({ data: [] }),
@@ -125,22 +133,24 @@ describe("Summary and AI Search Modal Accessibility (#1684)", () => {
 
   describe("AiSearch ResultModal", () => {
     it("renders dialog with accessible semantics, traps focus, and closes on Escape", async () => {
-      apiPost.mockResolvedValueOnce({
-        data: {
-          results: [
-            {
-              meetingId: "search-1",
-              title: "AI Strategy Deep Dive",
-              summary: "Detailed review of AI algorithms",
-              transcript: "Full transcript here",
-              createdAt: "2026-08-05T12:00:00.000Z",
-              resultType: "meeting",
-            },
-          ],
-        },
+      mockSemanticSearch.mockResolvedValueOnce({
+        results: [
+          {
+            meetingId: "search-1",
+            title: "AI Strategy Deep Dive",
+            summary: "Detailed review of AI algorithms",
+            transcript: "Full transcript here",
+            createdAt: "2026-08-05T12:00:00.000Z",
+            resultType: "meeting",
+          },
+        ],
       });
 
-      render(<AiSearch />);
+      render(
+        <MemoryRouter>
+          <AiSearch />
+        </MemoryRouter>,
+      );
 
       const searchInput = screen.getByPlaceholderText(
         /Ask e\.g\. 'What decisions were made in the finance meeting\?'/i,

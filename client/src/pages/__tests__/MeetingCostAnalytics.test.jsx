@@ -1,6 +1,7 @@
 import React from "react";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { MemoryRouter } from "react-router-dom";
 import MeetingCostAnalytics from "../MeetingCostAnalytics";
 
 vi.mock("react-toastify", () => ({
@@ -37,6 +38,13 @@ const sampleAnalytics = {
   costByType: [{ type: "standup", cost: 200 }],
 };
 
+const renderComponent = () =>
+  render(
+    <MemoryRouter>
+      <MeetingCostAnalytics />
+    </MemoryRouter>,
+  );
+
 describe("MeetingCostAnalytics", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -46,7 +54,7 @@ describe("MeetingCostAnalytics", () => {
     getOrgCostAnalytics.mockReturnValue(new Promise(() => {}));
     getMemberTimeStats.mockReturnValue(new Promise(() => {}));
 
-    render(<MeetingCostAnalytics />);
+    renderComponent();
 
     expect(screen.getByText("Loading analytics...")).toBeInTheDocument();
     expect(screen.getByRole("status")).toBeInTheDocument();
@@ -69,7 +77,7 @@ describe("MeetingCostAnalytics", () => {
       ],
     });
 
-    render(<MeetingCostAnalytics />);
+    renderComponent();
 
     await waitFor(() => {
       expect(
@@ -92,7 +100,7 @@ describe("MeetingCostAnalytics", () => {
     getOrgCostAnalytics.mockRejectedValue(new Error("network"));
     getMemberTimeStats.mockRejectedValue(new Error("network"));
 
-    render(<MeetingCostAnalytics />);
+    renderComponent();
 
     await waitFor(() => {
       expect(screen.getByText("Unable to load analytics")).toBeInTheDocument();
@@ -128,7 +136,7 @@ describe("MeetingCostAnalytics", () => {
       revokeObjectURL,
     });
 
-    render(<MeetingCostAnalytics />);
+    renderComponent();
 
     await waitFor(() => {
       expect(

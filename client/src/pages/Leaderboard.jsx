@@ -32,12 +32,13 @@ const Leaderboard = () => {
         if (period !== "all") params.append("period", period);
         if (team.trim()) params.append("team", team.trim());
 
-        const response = await apiClient.get(
-          `/api/gamification/leaderboard?${params.toString()}`,
-          {
-            signal: controller.signal,
-          },
-        );
+        const query = params.toString();
+        const endpoint = query
+          ? `/api/gamification/leaderboard?${query}`
+          : "/api/gamification/leaderboard";
+        const response = await apiClient.get(endpoint, {
+          signal: controller.signal,
+        });
         if (response.data.success) {
           setLeaderboard(response.data.data);
         }

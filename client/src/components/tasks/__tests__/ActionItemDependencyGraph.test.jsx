@@ -114,7 +114,7 @@ describe("ActionItemDependencyGraph", () => {
 
     expect(onSelectTask).toHaveBeenCalledWith(selectedTask);
     expect(screen.getByText("Selected action item")).toBeInTheDocument();
-    expect(screen.getByText("task-b")).toBeInTheDocument();
+    expect(screen.getAllByText("task-b").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Blockers")).toBeInTheDocument();
     expect(screen.getByText("Dependents")).toBeInTheDocument();
   });

@@ -279,48 +279,45 @@ describe("BrowseOrganizations infinite-scroll pagination", () => {
   });
 
   it("resets pagination to page one when search changes", async () => {
-    vi.useFakeTimers();
-    try {
-      organizationApi.browsePublicOrganizations.mockResolvedValue({
-        data: {
-          success: true,
-          organizations: mockOrganizations,
-          pagination: {
-            page: 1,
-            limit: 12,
-            total: 2,
-            totalPages: 1,
-            hasNextPage: false,
-            hasPrevPage: false,
-          },
+    organizationApi.browsePublicOrganizations.mockResolvedValue({
+      data: {
+        success: true,
+        organizations: mockOrganizations,
+        pagination: {
+          page: 1,
+          limit: 12,
+          total: 2,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPrevPage: false,
         },
-      });
+      },
+    });
 
-      render(
-        <MemoryRouter>
-          <BrowseOrganizations />
-        </MemoryRouter>,
-      );
+    render(
+      <MemoryRouter>
+        <BrowseOrganizations />
+      </MemoryRouter>,
+    );
 
-      await waitFor(() => {
-        expect(screen.getByText("Open Community")).toBeInTheDocument();
-      });
+    await waitFor(() => {
+      expect(screen.getByText("Open Community")).toBeInTheDocument();
+    });
 
-      const input = screen.getByPlaceholderText(
-        /Search by organization name, slug, description, or tags/i,
-      );
-      fireEvent.change(input, { target: { value: "engineering" } });
-      vi.advanceTimersByTime(300);
+    const input = screen.getByPlaceholderText(
+      /Search by organization name, slug, description, or tags/i,
+    );
+    fireEvent.change(input, { target: { value: "engineering" } });
 
-      await waitFor(() => {
+    await waitFor(
+      () => {
         expect(
           organizationApi.browsePublicOrganizations,
         ).toHaveBeenLastCalledWith(
           expect.objectContaining({ page: 1, search: "engineering" }),
         );
-      });
-    } finally {
-      vi.useRealTimers();
-    }
+      },
+      { timeout: 2000 },
+    );
   });
 });

@@ -236,7 +236,9 @@ const mockTemplates = [
 describe("MeetingDetails — Apply Action Item Template UI integration (#2473)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    meetingApi.getMeetingById.mockResolvedValue({ data: mockMeeting });
+    meetingApi.getMeetingById.mockResolvedValue({
+      data: { success: true, meeting: mockMeeting },
+    });
   });
 
   it("renders tasks panel and supports applying templates with preview and confirmation", async () => {

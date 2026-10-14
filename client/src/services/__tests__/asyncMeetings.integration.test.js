@@ -27,7 +27,7 @@ describe("Async Meetings Client Service Integration Tests (#2666)", () => {
 
       const res = await asyncMeetingApi.getAsyncMeetings({ status: "pending" });
 
-      expect(apiClient.get).toHaveBeenCalledWith("/async-meetings", {
+      expect(apiClient.get).toHaveBeenCalledWith("/api/async-meetings", {
         params: { status: "pending" },
       });
       expect(res).toEqual(mockResponse);
@@ -44,7 +44,9 @@ describe("Async Meetings Client Service Integration Tests (#2666)", () => {
 
       const res = await asyncMeetingApi.getAsyncMeetingById("async-100");
 
-      expect(apiClient.get).toHaveBeenCalledWith("/async-meetings/async-100");
+      expect(apiClient.get).toHaveBeenCalledWith(
+        "/api/async-meetings/async-100",
+      );
       expect(res).toEqual(mockResponse);
     });
 
@@ -63,7 +65,7 @@ describe("Async Meetings Client Service Integration Tests (#2666)", () => {
       const res = await asyncMeetingApi.submitAsyncUpdate("async-100", answers);
 
       expect(apiClient.post).toHaveBeenCalledWith(
-        "/async-meetings/async-100/submit",
+        "/api/async-meetings/async-100/submit",
         { answers },
       );
       expect(res).toEqual(mockResponse);
@@ -86,7 +88,10 @@ describe("Async Meetings Client Service Integration Tests (#2666)", () => {
       };
       const res = await asyncMeetingApi.createAsyncMeeting(payload);
 
-      expect(apiClient.post).toHaveBeenCalledWith("/async-meetings", payload);
+      expect(apiClient.post).toHaveBeenCalledWith(
+        "/api/async-meetings",
+        payload,
+      );
       expect(res).toEqual(mockResponse);
     });
   });

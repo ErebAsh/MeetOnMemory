@@ -15,6 +15,10 @@ vi.mock("../../services", () => ({
     updateProfile: vi.fn(),
     uploadAvatar: vi.fn(),
   },
+  apiClient: {
+    get: vi.fn().mockResolvedValue({ data: { success: true, data: {} } }),
+    post: vi.fn().mockResolvedValue({ data: { success: true, data: {} } }),
+  },
 }));
 
 vi.mock("react-toastify", () => ({

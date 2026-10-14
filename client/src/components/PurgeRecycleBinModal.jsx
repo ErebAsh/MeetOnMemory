@@ -9,13 +9,6 @@ const PurgeRecycleBinModal = ({ isOpen, onClose, onSuccess }) => {
   const [preview, setPreview] = useState(null);
   const [confirmInput, setConfirmInput] = useState("");
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchPreview();
-      setConfirmInput("");
-    }
-  }, [isOpen, fetchPreview]);
-
   const fetchPreview = useCallback(async () => {
     try {
       setLoading(true);
@@ -31,6 +24,13 @@ const PurgeRecycleBinModal = ({ isOpen, onClose, onSuccess }) => {
       setLoading(false);
     }
   }, [onClose]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchPreview();
+      setConfirmInput("");
+    }
+  }, [isOpen, fetchPreview]);
 
   const handlePurge = async () => {
     if (confirmInput !== "PURGE") return;

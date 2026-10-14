@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import MeetingRecycleBin from "../MeetingRecycleBin.jsx";
 import { meetingApi } from "../../services/meetingApi.js";
 import AppContent from "../../context/AppContent.js";
+import { RBACProvider } from "../../context/RBACContext.jsx";
 import { BrowserRouter } from "react-router-dom";
 
 // Mock services/apis
@@ -13,6 +14,10 @@ vi.mock("../../services/meetingApi.js", () => ({
     getPurgePreview: vi.fn(),
     purgeTrash: vi.fn(),
   },
+}));
+
+vi.mock("../../components/Navbar.jsx", () => ({
+  default: () => <div data-testid="mock-navbar" />,
 }));
 
 vi.mock("react-toastify", () => ({
@@ -29,7 +34,9 @@ const renderWithContext = (ui, { userRole = "admin" } = {}) => {
 
   return render(
     <BrowserRouter>
-      <AppContent.Provider value={contextValue}>{ui}</AppContent.Provider>
+      <AppContent.Provider value={contextValue}>
+        <RBACProvider>{ui}</RBACProvider>
+      </AppContent.Provider>
     </BrowserRouter>,
   );
 };
@@ -120,9 +127,10 @@ describe("MeetingRecycleBin Bulk Purge and Preview Modal (#2274)", () => {
       expect(screen.getByText("internal: 2")).toBeInTheDocument();
     });
 
-    const purgeSubmitBtn = screen.getByRole("button", {
+    const purgeSubmitButtons = screen.getAllByRole("button", {
       name: "Purge Recycle Bin",
     });
+    const purgeSubmitBtn = purgeSubmitButtons[purgeSubmitButtons.length - 1];
     expect(purgeSubmitBtn).toBeDisabled();
 
     // Type incorrect value

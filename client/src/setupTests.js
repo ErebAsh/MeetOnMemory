@@ -1,4 +1,5 @@
 import "@testing-library/jest-dom";
+import "./i18n.js";
 import { vi } from "vitest";
 
 // jsdom does not implement IntersectionObserver. Provide a minimal browser-like
@@ -51,6 +52,15 @@ if (typeof globalThis.ResizeObserver === "undefined") {
     unobserve() {}
     disconnect() {}
   };
+}
+
+// jsdom does not implement Element.prototype.scrollIntoView. Provide a mock function.
+if (typeof Element !== "undefined" && !Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = vi.fn();
+}
+
+if (typeof window !== "undefined") {
+  window.scrollTo = vi.fn();
 }
 
 vi.stubEnv("VITE_CLERK_PUBLISHABLE_KEY", "pk_test_bW9jay1jbGVyay1rZXk");

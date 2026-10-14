@@ -124,6 +124,7 @@ describe("ScheduleMeeting Agenda Rollover (#2591)", () => {
 
     // Select meeting-1
     const select = screen.getByLabelText(/select previous meeting/i);
+    await screen.findByText(/Project Sync/i);
     fireEvent.change(select, { target: { value: "meeting-1" } });
 
     await waitFor(() => {
@@ -151,6 +152,7 @@ describe("ScheduleMeeting Agenda Rollover (#2591)", () => {
 
     // Select meeting-1
     const select = screen.getByLabelText(/select previous meeting/i);
+    await screen.findByText(/Project Sync/i);
     fireEvent.change(select, { target: { value: "meeting-1" } });
 
     await waitFor(() => {

@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import React from "react";
-import { BrowserRouter } from "react-router-dom";
+import { MemoryRouter } from "react-router-dom";
 import ScheduleMeeting from "../ScheduleMeeting/ScheduleMeeting";
 import LiveMeeting from "../LiveMeeting/LiveMeeting";
 import SessionCards from "../SessionCards/SessionCards";
@@ -53,9 +53,11 @@ describe("CreateMeeting dark mode support", () => {
     };
 
     const { container } = render(
-      <AppContent.Provider value={{ userData: { organization: "org-1" } }}>
-        <ScheduleMeeting hookProps={mockHookProps} />
-      </AppContent.Provider>,
+      <MemoryRouter>
+        <AppContent.Provider value={{ userData: { organization: "org-1" } }}>
+          <ScheduleMeeting hookProps={mockHookProps} />
+        </AppContent.Provider>
+      </MemoryRouter>,
     );
 
     const scheduleCard = container.querySelector(".dark\\:bg-slate-900");
@@ -112,13 +114,17 @@ describe("CreateMeeting dark mode support", () => {
       handleSessionSubmit: vi.fn((e) => e.preventDefault()),
     };
 
-    const { container } = render(<SessionCards hookProps={mockHookProps} />);
+    const { container } = render(
+      <MemoryRouter>
+        <SessionCards hookProps={mockHookProps} />
+      </MemoryRouter>,
+    );
     const sessionCard = container.querySelector(".dark\\:bg-slate-900");
     expect(sessionCard).toBeTruthy();
     expect(screen.getByText("Auto Session Card Generation")).toHaveClass(
       "dark:text-white",
     );
-    expect(screen.getByText("✨ Generated Session Cards")).toHaveClass(
+    expect(screen.getByText(/Saved & Generated Session Cards/i)).toHaveClass(
       "dark:text-white",
     );
   });

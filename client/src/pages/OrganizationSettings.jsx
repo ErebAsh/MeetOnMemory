@@ -789,6 +789,17 @@ const OrganizationSettings = () => {
   const location = useLocation();
   const { getUserData, setUserData } = useContext(AppContent);
 
+  // Loading & state management
+  const [loading, setLoading] = useState(true);
+  const [isLinking, setIsLinking] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [copiedId, setCopiedId] = useState(false);
+  const [userRole, setUserRole] = useState("member");
+  const [canEdit, setCanEdit] = useState(false);
+
+  // Original fetched data for dirty state detection
+  const [initialData, setInitialData] = useState(null);
+
   useEffect(() => {
     if (location.hash && !loading) {
       const id = location.hash.replace("#", "");
@@ -818,17 +829,6 @@ const OrganizationSettings = () => {
       }
     }
   }, [location.hash, loading]);
-
-  // Loading & state management
-  const [loading, setLoading] = useState(true);
-  const [isLinking, setIsLinking] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [copiedId, setCopiedId] = useState(false);
-  const [userRole, setUserRole] = useState("member");
-  const [canEdit, setCanEdit] = useState(false);
-
-  // Original fetched data for dirty state detection
-  const [initialData, setInitialData] = useState(null);
 
   // Form State
   const [formData, setFormData] = useState({

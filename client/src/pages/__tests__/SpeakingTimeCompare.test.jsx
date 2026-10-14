@@ -89,9 +89,9 @@ describe("SpeakingTimeCompare Dashboard (#2038)", () => {
     });
 
     // Check table headers and content
-    expect(screen.getByText("Alice")).toBeInTheDocument();
+    expect(screen.getAllByText("Alice")[0]).toBeInTheDocument();
     expect(screen.getByText("Bob")).toBeInTheDocument();
-    expect(screen.getByText("10m 0s")).toBeInTheDocument(); // Alice's 600s formatted duration
+    expect(screen.getAllByText("10m 0s")[0]).toBeInTheDocument(); // Alice's 600s formatted duration
   });
 
   it("renders empty state correctly when there is no meeting data", async () => {

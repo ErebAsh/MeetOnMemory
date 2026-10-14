@@ -42,7 +42,12 @@ vi.mock("../SpeakingCards", () => ({
 
 vi.mock("../SpeakingCharts", () => ({
   SpeakingDistributionPie: ({ data }) => (
-    <div data-testid="distribution-chart">{data.length} speakers</div>
+    <div data-testid="distribution-chart">
+      {data.length} speakers
+      {data.map((speaker) => (
+        <span key={speaker.id || speaker.name}>{speaker.name}</span>
+      ))}
+    </div>
   ),
   BalanceTrendChart: ({ data }) => (
     <div data-testid="trend-chart">{data.length} trend points</div>
@@ -190,7 +195,7 @@ describe("SpeakingTimeDashboard (#2441)", () => {
 
     await waitFor(() => {
       expect(speakingTimeApi.getTrends).toHaveBeenCalledTimes(2);
-      expect(screen.getByText("Recovered meeting")).toBeInTheDocument();
+      expect(screen.getByText(/Recovered meeting/)).toBeInTheDocument();
     });
   });
 

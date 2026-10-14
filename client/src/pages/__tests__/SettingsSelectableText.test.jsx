@@ -15,6 +15,12 @@ vi.mock("../../components/ClerkUserControls.jsx", () => ({
   ClerkManageAccountButton: ({ children }) => <button>{children}</button>,
 }));
 
+vi.mock("@clerk/clerk-react", () => ({
+  useUser: () => ({ user: { id: "user_1", emailAddresses: [] } }),
+  useClerk: () => ({ openUserProfile: vi.fn() }),
+  useSession: () => ({ session: { id: "sess_1" } }),
+}));
+
 vi.mock("react-toastify", () => ({
   toast: {
     success: vi.fn(),

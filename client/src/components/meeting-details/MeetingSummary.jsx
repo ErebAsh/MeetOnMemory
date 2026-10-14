@@ -37,7 +37,6 @@ const MeetingSummary = ({ meeting, onSummaryUpdated }) => {
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [templates, setTemplates] = useState([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
-  const [setSelectedTemplate] = useState(null);
 
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
@@ -139,7 +138,6 @@ const MeetingSummary = ({ meeting, onSummaryUpdated }) => {
 
   const handleApplyTemplateSelect = (template) => {
     setIsTemplateModalOpen(false);
-    setSelectedTemplate(template);
 
     requestConfirmation(
       `Apply Template: ${template.name}`,

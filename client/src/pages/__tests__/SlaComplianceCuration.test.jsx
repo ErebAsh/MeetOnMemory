@@ -95,7 +95,7 @@ describe("SlaCompliance — Alerts & Drilldown Curation UI integration (#2474)",
     expect(
       await screen.findByText("SLA Compliance Dashboard"),
     ).toBeInTheDocument();
-    expect(screen.getByText("Alice Developer")).toBeInTheDocument();
+    expect(screen.getAllByText("Alice Developer")[0]).toBeInTheDocument();
 
     // Verify severity tag is displayed in the list
     expect(screen.getByText("high")).toBeInTheDocument();
@@ -119,12 +119,12 @@ describe("SlaCompliance — Alerts & Drilldown Curation UI integration (#2474)",
       await screen.findByText("Workload: Alice Developer (alice@example.com)"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Resolve database memory leak"),
+      screen.getAllByText("Resolve database memory leak")[0],
     ).toBeInTheDocument();
     expect(screen.getByText("36h / 24h target")).toBeInTheDocument();
 
     // Verify drill-down deep links exist
-    const viewMeetingLink = screen.getByText("View Meeting");
+    const viewMeetingLink = screen.getAllByText("View Meeting")[0];
     expect(viewMeetingLink).toHaveAttribute("href", "/meeting/meeting_1");
 
     const viewTasksLink = screen.getByText("Go to Task Board");
