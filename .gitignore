@@ -48,3 +48,8 @@ cm_*.txt
 # test logs
 test-logs/
 test-results/
+
+# Scratch / temporary code dumps
+javascript_*.js
+jsx_*.jsx
+tmp_*.js
