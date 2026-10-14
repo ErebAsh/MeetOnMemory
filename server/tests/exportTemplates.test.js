@@ -16,6 +16,7 @@ jest.unstable_mockModule("../middleware/userAuth.js", () => ({
 
 const { default: exportRoutes } = await import("../routes/export.routes.js");
 const { default: ExportTemplate } = await import("../models/ExportTemplate.js");
+await import("../models/userModel.js");
 const { default: express } = await import("express");
 
 const app = express();
@@ -49,6 +50,12 @@ describe("Custom Export Templates API & Authorization (#1670)", () => {
 
   let templateA;
 
+  beforeAll(async () => {
+    if (mongoose.connection.readyState !== 1) {
+      await mongoose.connect(process.env.TEST_MONGODB_URI);
+    }
+  });
+
   beforeEach(async () => {
     await ExportTemplate.deleteMany({});
 
@@ -70,7 +77,7 @@ describe("Custom Export Templates API & Authorization (#1670)", () => {
 
       const res = await request(app).get("/api/export-templates/templates");
 
-      expect(res.status).toBe(200 || 401);
+      expect(res.status).toBe(401);
       expect(res.body.success).toBe(false);
       expect(res.body.error).toMatch(/unauthorized/i);
     });

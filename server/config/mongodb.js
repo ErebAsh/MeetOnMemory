@@ -14,6 +14,19 @@ const connectDB = async () => {
         : process.env.MONGODB_URI;
 
     if (!rawUri) {
+      if (process.env.NODE_ENV === "test" || process.env.VITEST) {
+        console.warn(
+          "⚠️ No MongoDB URI provided in test environment. Falling back to in-memory MongoDB server...",
+        );
+        const { MongoMemoryServer } = await import("mongodb-memory-server");
+        mongoServer = await MongoMemoryServer.create();
+        const memoryUri = mongoServer.getUri();
+        await mongoose.connect(memoryUri, {
+          dbName: process.env.MONGODB_DB_NAME || "meetonmemory_test",
+        });
+        console.log("✅ Successfully connected to in-memory MongoDB.");
+        return;
+      }
       console.error("MongoDB URI is not set in environment variables.");
       process.exit(1);
     }
@@ -74,12 +87,9 @@ const connectDB = async () => {
         }
       })();
     } catch (err) {
-      if (
-        err.message.includes("ECONNREFUSED") &&
-        process.env.NODE_ENV !== "production"
-      ) {
+      if (process.env.NODE_ENV !== "production") {
         console.warn(
-          "⚠️ Local MongoDB connection refused. Falling back to in-memory MongoDB server...",
+          `⚠️ MongoDB connection failed (${err.message}). Falling back to in-memory MongoDB server...`,
         );
         const { MongoMemoryServer } = await import("mongodb-memory-server");
         mongoServer = await MongoMemoryServer.create();

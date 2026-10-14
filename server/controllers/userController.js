@@ -216,7 +216,7 @@ export const uploadAvatar = async (req, res) => {
 
     return sendSuccess(
       res,
-      { profilePic: profilePicUrl },
+      { profilePic: profilePicUrl, data: { profilePic: profilePicUrl } },
       "Avatar uploaded successfully.",
     );
   } catch (error) {

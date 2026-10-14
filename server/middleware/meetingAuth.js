@@ -51,23 +51,27 @@ export const verifyMeetingAccess = async (req, res, next) => {
 export const verifyActionItemAccess = async (req, res, next) => {
   try {
     const ActionItem = (await import("../models/actionItemModel.js")).default;
-    const item = await ActionItem.findById(req.params.id)
-      .populate("sourceMeetingId")
-      .populate("meetingId");
+    const item = await ActionItem.findById(req.params.id).populate(
+      "sourceMeetingId",
+    );
 
     if (!item)
       return res
         .status(404)
         .json({ success: false, error: "Action item not found" });
 
-    const meeting = item.sourceMeetingId || item.meetingId;
+    const meeting = item.sourceMeetingId;
     const isOwner =
       Boolean(meeting?.uploadedBy) &&
       Boolean(req.user?._id) &&
       meeting.uploadedBy.toString() === req.user._id.toString();
 
-    const meetingOrgId = meeting?.organization || item.organization;
-    const userOrgId = req.user?.organization;
+    const meetingOrgId =
+      meeting?.organization?._id ||
+      meeting?.organization ||
+      item.organization?._id ||
+      item.organization;
+    const userOrgId = req.user?.organization?._id || req.user?.organization;
 
     const isSameOrg = Boolean(
       meetingOrgId &&
@@ -83,7 +87,8 @@ export const verifyActionItemAccess = async (req, res, next) => {
 
     req.actionItem = item;
     next();
-  } catch (_err) {
+  } catch (err) {
+    console.error("Error in verifyActionItemAccess:", err);
     res
       .status(500)
       .json({ success: false, error: "Server error during authorization" });

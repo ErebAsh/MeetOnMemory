@@ -27,6 +27,7 @@ jest.unstable_mockModule("../controllers/meetingController.js", () => ({
   anonymizeMeeting: jest.fn(),
   getRawTranscript: jest.fn(),
   cloneMeeting: jest.fn(),
+  exportMeetingNotes: jest.fn(),
 }));
 
 jest.unstable_mockModule("../controllers/bookmarkController.js", () => ({

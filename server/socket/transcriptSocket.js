@@ -57,7 +57,8 @@ export default (io) => {
               status: transcript.status,
               isEncrypted: true,
               encryptedTranscript: meeting.encryptedTranscript || null,
-              transcriptEncryptionVersion: meeting.transcriptEncryptionVersion || null,
+              transcriptEncryptionVersion:
+                meeting.transcriptEncryptionVersion || null,
             });
           } else {
             // Emit full plaintext content for unencrypted meetings

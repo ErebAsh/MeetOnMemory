@@ -20,6 +20,7 @@ jest.unstable_mockModule("../middleware/userAuth.js", () => {
             _id: decoded.id,
             id: decoded.id,
             role: decoded.role,
+            organization: decoded.organization,
             activeOrganization: decoded.organization,
           };
           return next();
@@ -64,6 +65,9 @@ describe("Parking Lot API Integration Tests", () => {
       slug: "test-org-parking-lot",
       owner: user._id,
     });
+
+    user.organization = organization._id;
+    await user.save();
 
     meeting = await Meeting.create({
       title: "Test Meeting",

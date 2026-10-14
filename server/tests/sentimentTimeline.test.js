@@ -1,34 +1,29 @@
 import { jest } from "@jest/globals";
 import mongoose from "mongoose";
 import request from "supertest";
-import { app } from "../server.js";
-import Meeting from "../models/meetingModel.js";
-import Transcript from "../models/transcriptModel.js";
-import SentimentTimeline from "../models/sentimentTimelineModel.js";
-import Organization from "../models/organizationModel.js";
-import User from "../models/userModel.js";
-import {
-  generateText,
-  parseJsonOutput,
-} from "../services/GenerativeAIService.js";
 
-// Mock AI Service
-jest.mock("../services/GenerativeAIService.js", () => ({
-  generateText: jest.fn(),
-  parseJsonOutput: jest.fn(),
+const mockGenerateTimeline = jest.fn();
+
+jest.unstable_mockModule("../services/sentimentTimelineService.js", () => ({
+  generateSentimentTimeline: mockGenerateTimeline,
 }));
 
-jest.mock("../middleware/userAuth.js", () => ({
-  default: (req, res, next) => {
-    req.user = { _id: new mongoose.Types.ObjectId() };
-    next();
-  },
-}));
+const { app } = await import("../server.js");
+const { default: Meeting } = await import("../models/meetingModel.js");
+const { default: Transcript } = await import("../models/transcriptModel.js");
+const { default: SentimentTimeline } =
+  await import("../models/sentimentTimelineModel.js");
+const { default: Organization } =
+  await import("../models/organizationModel.js");
+const { default: User } = await import("../models/userModel.js");
+const { createClerkTestToken, authHeader } =
+  await import("./helpers/clerkTestAuth.js");
 
 describe("Sentiment Timeline Feature", () => {
   let meeting;
   let organization;
   let user;
+  let token;
 
   beforeEach(async () => {
     await Meeting.deleteMany({});
@@ -37,18 +32,28 @@ describe("Sentiment Timeline Feature", () => {
     await Organization.deleteMany({});
     await User.deleteMany({});
 
-    user = await User.create({
-      name: "Test User",
-      email: "test@example.com",
-      clerkId: "clerk_123",
-      password: "password123",
-    });
-
     organization = await Organization.create({
       name: "Test Org",
       domain: "example.com",
-      owner: user._id,
-      slug: "test-org",
+      owner: new mongoose.Types.ObjectId(),
+      slug: `test-org-${Date.now()}`,
+    });
+
+    const clerkUserId = `clerk_${Date.now()}`;
+    user = await User.create({
+      name: "Test User",
+      email: `test_${Date.now()}@example.com`,
+      clerkUserId,
+      role: "admin",
+      organization: organization._id,
+      password: "password123",
+    });
+    organization.owner = user._id;
+    await organization.save();
+
+    token = createClerkTestToken({
+      clerkUserId,
+      email: user.email,
     });
 
     meeting = await Meeting.create({
@@ -97,9 +102,12 @@ describe("Sentiment Timeline Feature", () => {
   });
 
   it("should generate a timeline successfully and save it", async () => {
-    // Mock the AI response
-    generateText.mockResolvedValueOnce(
-      JSON.stringify({
+    mockGenerateTimeline.mockImplementationOnce(async (meetingId) => {
+      const targetMeeting = await Meeting.findById(meetingId);
+      return await SentimentTimeline.create({
+        meeting: meetingId,
+        organization: targetMeeting.organization,
+        status: "completed",
         segments: [
           {
             startTime: 0,
@@ -113,7 +121,7 @@ describe("Sentiment Timeline Feature", () => {
           {
             startTime: 120000,
             endTime: 240000,
-            sentiment: "mixed",
+            sentiment: "negative",
             score: -0.2,
             textSnippet: "I disagree strongly",
             agendaItemIndex: 1,
@@ -121,35 +129,12 @@ describe("Sentiment Timeline Feature", () => {
           },
         ],
         overallArc: "Started neutral, became contentious.",
-      }),
-    );
-
-    parseJsonOutput.mockReturnValueOnce({
-      segments: [
-        {
-          startTime: 0,
-          endTime: 120000,
-          sentiment: "neutral",
-          score: 0.1,
-          textSnippet: "Hello everyone",
-          agendaItemIndex: 0,
-          agendaItemText: "Introduction",
-        },
-        {
-          startTime: 120000,
-          endTime: 240000,
-          sentiment: "negative",
-          score: -0.2,
-          textSnippet: "I disagree strongly",
-          agendaItemIndex: 1,
-          agendaItemText: "Main Discussion",
-        },
-      ],
-      overallArc: "Started neutral, became contentious.",
+      });
     });
 
     const res = await request(app)
       .post(`/api/sentiment-timeline/${meeting._id}/generate`)
+      .set(authHeader(token))
       .send();
 
     expect(res.status).toBe(200);
@@ -179,6 +164,7 @@ describe("Sentiment Timeline Feature", () => {
 
     const res = await request(app)
       .get(`/api/sentiment-timeline/${meeting._id}`)
+      .set(authHeader(token))
       .send();
 
     expect(res.status).toBe(200);
@@ -189,6 +175,7 @@ describe("Sentiment Timeline Feature", () => {
   it("should return 404 if no timeline exists when fetching", async () => {
     const res = await request(app)
       .get(`/api/sentiment-timeline/${meeting._id}`)
+      .set(authHeader(token))
       .send();
 
     expect(res.status).toBe(404);

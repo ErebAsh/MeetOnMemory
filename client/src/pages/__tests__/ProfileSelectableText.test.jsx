@@ -2,7 +2,7 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import Profile from "../Profile.jsx";
-import AppContent from "../../context/AppContent.jsx";
+import AppContent from "../../context/AppContent.js";
 
 vi.mock("../../components/Navbar.jsx", () => ({
   default: () => <div data-testid="mock-navbar">Navbar</div>,
@@ -16,11 +16,23 @@ vi.mock("react-toastify", () => ({
   },
 }));
 
-vi.mock("axios", () => ({
-  default: {
+vi.mock("axios", () => {
+  const mockInstance = {
     get: vi.fn().mockResolvedValue({ data: { success: true, data: {} } }),
-  },
-}));
+    post: vi.fn().mockResolvedValue({ data: { success: true, data: {} } }),
+    request: vi.fn().mockResolvedValue({ data: { success: true, data: {} } }),
+    interceptors: {
+      request: { use: vi.fn(), eject: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn() },
+    },
+  };
+  return {
+    default: {
+      ...mockInstance,
+      create: vi.fn(() => mockInstance),
+    },
+  };
+});
 
 describe("Profile Selectable Text (#1654)", () => {
   const mockUserData = {

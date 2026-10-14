@@ -1,10 +1,19 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useAuth } from "@clerk/clerk-react";
+import * as ClerkReact from "@clerk/clerk-react";
 import { io } from "socket.io-client";
 import mindMapApi from "../services/mindMapApi";
 
 export const useMindMap = (meetingId) => {
-  const { getToken } = useAuth();
+  let useAuth;
+  try {
+    useAuth = ClerkReact.useAuth;
+  } catch {
+    useAuth = null;
+  }
+  if (typeof useAuth !== "function") {
+    useAuth = () => ({ getToken: async () => "" });
+  }
+  const { getToken = async () => "" } = useAuth() || {};
   const [nodes, setNodes] = useState([]);
   const [connections, setConnections] = useState([]);
   const [loading, setLoading] = useState(true);

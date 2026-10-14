@@ -18,32 +18,30 @@ export const searchApi = {
   /**
    * Federated knowledge search across workspaces
    */
-  federatedSearch: async (payload, config = {}) => {
-    const response = await apiClient.post(
-      "/api/search/federated",
-      payload,
-      config,
-    );
+  federatedSearch: async (payload, config) => {
+    const response = await (config
+      ? apiClient.post("/api/search/federated", payload, config)
+      : apiClient.post("/api/search/federated", payload));
     return response.data;
   },
 
   /**
    * Hybrid vector + graph search
    */
-  hybridSearch: async (payload, config = {}) => {
-    const response = await apiClient.post(
-      "/api/search/hybrid",
-      payload,
-      config,
-    );
+  hybridSearch: async (payload, config) => {
+    const response = await (config
+      ? apiClient.post("/api/search/hybrid", payload, config)
+      : apiClient.post("/api/search/hybrid", payload));
     return response.data;
   },
 
   /**
    * Semantic vector search
    */
-  semanticSearch: async (payload, config = {}) => {
-    const response = await apiClient.post("/api/search", payload, config);
+  semanticSearch: async (payload, config) => {
+    const response = await (config
+      ? apiClient.post("/api/search", payload, config)
+      : apiClient.post("/api/search", payload));
     return response.data;
   },
 };

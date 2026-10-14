@@ -1,7 +1,7 @@
-/* global jest, describe, beforeEach, afterEach, it, expect */
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { describe, beforeEach, afterEach, it, expect, vi } from "vitest";
 import ParticipantContributions from "../ParticipantContributions";
 import {
   useMeetingContributions,
@@ -10,11 +10,14 @@ import {
 import "@testing-library/jest-dom";
 
 // Mock the hooks
-jest.mock("../../../hooks/useParticipantContributions");
+vi.mock("../../../hooks/useParticipantContributions", () => ({
+  useMeetingContributions: vi.fn(),
+  useCalculateMeetingContributions: vi.fn(),
+}));
 
-// Mock recharts to avoid rendering SVG issues in jest
-jest.mock("recharts", () => {
-  const OriginalRecharts = jest.requireActual("recharts");
+// Mock recharts to avoid rendering SVG issues in vitest
+vi.mock("recharts", async (importOriginal) => {
+  const OriginalRecharts = await importOriginal();
   return {
     ...OriginalRecharts,
     ResponsiveContainer: ({ children }) => (
@@ -33,13 +36,13 @@ describe("ParticipantContributions", () => {
     });
 
     useCalculateMeetingContributions.mockReturnValue({
-      mutate: jest.fn(),
+      mutate: vi.fn(),
       isPending: false,
     });
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   const renderComponent = () => {
@@ -111,7 +114,7 @@ describe("ParticipantContributions", () => {
   });
 
   it("calls calculate mutation on button click", () => {
-    const mockMutate = jest.fn();
+    const mockMutate = vi.fn();
     useCalculateMeetingContributions.mockReturnValue({
       mutate: mockMutate,
       isPending: false,

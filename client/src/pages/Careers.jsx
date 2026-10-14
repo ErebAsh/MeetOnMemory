@@ -310,6 +310,20 @@ const Careers = () => {
     }
   }, []);
 
+  // Open modal
+  const openApplication = (job) => {
+    modalTriggerRef.current = document.activeElement;
+    setActiveJobForModal(job);
+    setIsModalOpen(true);
+  };
+
+  // Close modal
+  const closeModal = useCallback(() => {
+    setIsModalOpen(false);
+    setActiveJobForModal(null);
+    resetApplicationForm();
+  }, [resetApplicationForm]);
+
   // Focus management: trap focus, handle Escape, restore focus on close
   useEffect(() => {
     if (!isModalOpen) return;
@@ -397,20 +411,6 @@ const Careers = () => {
   const toggleFaq = (index) => {
     setExpandedFaq(expandedFaq === index ? null : index);
   };
-
-  // Open modal
-  const openApplication = (job) => {
-    modalTriggerRef.current = document.activeElement;
-    setActiveJobForModal(job);
-    setIsModalOpen(true);
-  };
-
-  // Close modal
-  const closeModal = useCallback(() => {
-    setIsModalOpen(false);
-    setActiveJobForModal(null);
-    resetApplicationForm();
-  }, [resetApplicationForm]);
 
   // Handle Form Change
   const handleChange = (e) => {

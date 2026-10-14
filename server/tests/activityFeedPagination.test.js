@@ -23,6 +23,7 @@ jest.unstable_mockModule("../middleware/rbac.js", () => ({
   },
 }));
 
+const { default: userModel } = await import("../models/userModel.js");
 const { default: activityRoutes } = await import("../routes/activityRoutes.js");
 const { default: Activity } = await import("../models/activityModel.js");
 const { default: express } = await import("express");
@@ -33,6 +34,12 @@ app.use("/api/activities", activityRoutes);
 
 describe("Activity Feed Pagination Boundaries (#1668)", () => {
   const ORG_ID = new mongoose.Types.ObjectId();
+
+  beforeAll(async () => {
+    if (mongoose.connection.readyState !== 1) {
+      await mongoose.connect(process.env.TEST_MONGODB_URI);
+    }
+  });
 
   beforeEach(async () => {
     await Activity.deleteMany({});
@@ -51,6 +58,7 @@ describe("Activity Feed Pagination Boundaries (#1668)", () => {
         actor: currentUser._id,
         action: "meeting.created",
         targetType: "Meeting",
+        targetId: new mongoose.Types.ObjectId(),
         targetTitle: `Meeting ${i}`,
       });
     }

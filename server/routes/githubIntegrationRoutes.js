@@ -23,10 +23,11 @@ const router = express.Router();
 
 // Middleware to normalize organizationId from path, query, body, or req.user fallback
 const normalizeOrgId = (req, res, next) => {
+  if (!req.params) req.params = {};
   if (!req.params.organizationId) {
     req.params.organizationId =
-      req.query.organizationId ||
-      req.body.organizationId ||
+      req.query?.organizationId ||
+      req.body?.organizationId ||
       req.user?.organization?.toString() ||
       "";
   }

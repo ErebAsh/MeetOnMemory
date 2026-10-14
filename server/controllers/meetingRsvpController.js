@@ -99,19 +99,11 @@ export const respondToRsvp = async (req, res) => {
     const hasExistingRsvp = await MeetingRsvp.findOne({ meetingId, userId });
 
     if (!isOwner && !isAdmin && !isParticipant && !hasExistingRsvp) {
-      // If user has organization access or invite access, allow them to RSVP
-      const isInSameOrg =
-        meeting.organization &&
-        req.user.organization &&
-        meeting.organization.toString() === req.user.organization.toString();
-
-      if (!isInSameOrg) {
-        return res.status(403).json({
-          success: false,
-          message:
-            "Forbidden: You are not invited or authorized to RSVP for this meeting",
-        });
-      }
+      return res.status(403).json({
+        success: false,
+        message:
+          "Forbidden: You are not invited or authorized to RSVP for this meeting",
+      });
     }
 
     // 3. Enforce capacity limit when accepting

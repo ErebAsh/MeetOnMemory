@@ -12,7 +12,10 @@ import {
 import TranslationCache from "../models/translationCacheModel.js";
 import Meeting from "../models/meetingModel.js";
 import mongoose from "mongoose";
-import { sentimentAnalysisQueue, transcriptionQueue } from "../services/queueService.js";
+import {
+  sentimentAnalysisQueue,
+  transcriptionQueue,
+} from "../services/queueService.js";
 /**
  * Translation Controller
  * Handles HTTP requests for both legacy bulk translation and real-time

@@ -79,8 +79,33 @@ import DecisionVotingPanel from "../components/meetings/DecisionVotingPanel";
 import MindMapBoard from "../components/meetings/MindMapBoard";
 import { Printer } from "lucide-react";
 import RetrospectiveBoard from "../components/meeting-details/RetrospectiveBoard";
+import {
+  QueryClient,
+  QueryClientProvider,
+  QueryClientContext,
+} from "@tanstack/react-query";
 
-const MeetingDetails = () => {
+const fallbackQueryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+    },
+  },
+});
+
+const MeetingDetails = (props) => {
+  const hasClient = useContext(QueryClientContext);
+  if (!hasClient) {
+    return (
+      <QueryClientProvider client={fallbackQueryClient}>
+        <MeetingDetailsInner {...props} />
+      </QueryClientProvider>
+    );
+  }
+  return <MeetingDetailsInner {...props} />;
+};
+
+const MeetingDetailsInner = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -304,7 +329,7 @@ const MeetingDetails = () => {
                   />
                 </svg>
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                  {t("meetingDetails.errorLoading")}
+                  {t("meetingDetails.errorLoading", "Error Loading Meeting")}
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
                 <button

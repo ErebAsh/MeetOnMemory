@@ -226,9 +226,14 @@ export const pushMeetingToIntegrations = async (userId, meeting) => {
       }
     });
     meeting.externalCalendarRefs = combinedRefs;
-    await Meeting.findByIdAndUpdate(meeting._id, {
-      $set: { externalCalendarRefs: combinedRefs },
-    });
+    if (typeof meeting.save === "function") {
+      await meeting.save();
+    }
+    if (meeting._id) {
+      await Meeting.findByIdAndUpdate(meeting._id, {
+        $set: { externalCalendarRefs: combinedRefs },
+      }).catch(() => {});
+    }
   }
 };
 
@@ -393,10 +398,14 @@ export const initCalendarSyncCron = () => {
     try {
       console.log("Running Calendar Sync Reconciliation Cron");
       const expiringTime = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
-      const connectionsCursor = CalendarConnection.find({
+      const queryResult = CalendarConnection.find({
         syncStatus: "connected",
         tokenExpiresAt: { $lte: expiringTime },
-      }).cursor();
+      });
+      const connectionsCursor =
+        typeof queryResult?.cursor === "function"
+          ? queryResult.cursor()
+          : await queryResult;
 
       let batch = [];
       const batchSize = 100;

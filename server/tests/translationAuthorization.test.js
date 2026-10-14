@@ -61,7 +61,10 @@ const MEETING_ID = "507f1f77bcf86cd799439031";
 function countMatchingLayers(router, pathStr) {
   const stack = router.stack || [];
   return stack.filter(
-    (layer) => typeof layer.match === "function" && layer.match(pathStr),
+    (layer) =>
+      typeof layer.match === "function" &&
+      layer.match(pathStr) &&
+      layer.path === pathStr,
   ).length;
 }
 

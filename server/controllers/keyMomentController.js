@@ -57,12 +57,7 @@ export const createKeyMoment = async (req, res) => {
     const isParticipant = meeting.participants?.some(
       (p) => p.user?.toString() === userId.toString(),
     );
-    const isOrgMember =
-      req.user.organization &&
-      meeting.organization &&
-      req.user.organization.toString() === meeting.organization.toString();
-
-    if (!isOwner && !isParticipant && !isOrgMember) {
+    if (!isOwner && !isParticipant) {
       return res.status(403).json({
         success: false,
         message: "Not authorized to create key moments for this meeting",
@@ -163,12 +158,7 @@ export const getKeyMomentsForMeeting = async (req, res) => {
     const isParticipant = meeting.participants?.some(
       (p) => p.user?.toString() === userId.toString(),
     );
-    const isOrgMember =
-      req.user.organization &&
-      meeting.organization &&
-      req.user.organization.toString() === meeting.organization.toString();
-
-    if (!isOwner && !isParticipant && !isOrgMember) {
+    if (!isOwner && !isParticipant) {
       return res.status(403).json({
         success: false,
         message: "Not authorized to view key moments for this meeting",
@@ -384,12 +374,7 @@ export const exportKeyMoments = async (req, res) => {
     const isParticipant = meeting.participants?.some(
       (p) => p.user?.toString() === userId.toString(),
     );
-    const isOrgMember =
-      req.user.organization &&
-      meeting.organization &&
-      req.user.organization.toString() === meeting.organization.toString();
-
-    if (!isOwner && !isParticipant && !isOrgMember) {
+    if (!isOwner && !isParticipant) {
       return res.status(403).json({
         success: false,
         message: "Not authorized to export key moments for this meeting",

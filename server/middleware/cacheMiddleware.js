@@ -49,7 +49,13 @@ const normalizeId = (value) => {
 
   // Populated ref — e.g. `req.user.organization` after `.populate()`.
   if (typeof value === "object") {
-    if (value._id !== undefined && value._id !== null) {
+    if (
+      value._bsontype === "ObjectId" ||
+      value.constructor?.name === "ObjectId"
+    ) {
+      return value.toString();
+    }
+    if (value._id !== undefined && value._id !== null && value._id !== value) {
       return normalizeId(value._id);
     }
     if (typeof value.toString === "function") {

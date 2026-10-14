@@ -26,12 +26,27 @@ vi.mock("react-router-dom", () => ({
 
 vi.mock("lucide-react", () => {
   const Icon = () => <span />;
-  return new Proxy(
-    {},
-    {
-      get: () => Icon,
-    },
-  );
+  return {
+    Briefcase: Icon,
+    MapPin: Icon,
+    Users: Icon,
+    CheckCircle2: Icon,
+    ArrowRight: Icon,
+    Search: Icon,
+    Building: Icon,
+    Clock: Icon,
+    Heart: Icon,
+    Sparkles: Icon,
+    DollarSign: Icon,
+    GraduationCap: Icon,
+    X: Icon,
+    ChevronDown: Icon,
+    ChevronUp: Icon,
+    Award: Icon,
+    Coffee: Icon,
+    Globe: Icon,
+    HelpCircle: Icon,
+  };
 });
 
 const createResumeFile = (name = "resume.pdf") =>

@@ -7,7 +7,16 @@ import DOMPurify from "dompurify";
 class DocumentGenerator {
   constructor() {
     this.registerHelpers();
-    this.purify = DOMPurify(new JSDOM("").window);
+    try {
+      const dom = new JSDOM("");
+      const domPurifyFactory = DOMPurify?.default || DOMPurify;
+      this.purify =
+        typeof domPurifyFactory === "function"
+          ? domPurifyFactory(dom.window)
+          : null;
+    } catch {
+      this.purify = null;
+    }
   }
 
   registerHelpers() {
@@ -33,29 +42,34 @@ class DocumentGenerator {
   }
 
   sanitizeHTML(html) {
-    return this.purify.sanitize(html, {
-      ALLOWED_TAGS: [
-        "h1",
-        "h2",
-        "h3",
-        "p",
-        "ul",
-        "ol",
-        "li",
-        "strong",
-        "em",
-        "br",
-        "table",
-        "thead",
-        "tbody",
-        "tr",
-        "th",
-        "td",
-        "span",
-        "div",
-      ],
-      ALLOWED_ATTR: ["class", "style"],
-    });
+    if (this.purify && typeof this.purify.sanitize === "function") {
+      return this.purify.sanitize(html, {
+        ALLOWED_TAGS: [
+          "h1",
+          "h2",
+          "h3",
+          "p",
+          "ul",
+          "ol",
+          "li",
+          "strong",
+          "em",
+          "br",
+          "table",
+          "thead",
+          "tbody",
+          "tr",
+          "th",
+          "td",
+          "span",
+          "div",
+        ],
+        ALLOWED_ATTR: ["class", "style"],
+      });
+    }
+    return String(html || "")
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+      .replace(/on\w+\s*=\s*["'][^"']*["']/gi, "");
   }
 
   async generatePDF(fullHTML, _branding) {

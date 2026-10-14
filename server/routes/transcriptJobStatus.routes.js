@@ -6,7 +6,10 @@
  */
 
 import express from "express";
-import { transcriptionQueue, getQueueInstance } from "../services/queueService.js";
+import {
+  transcriptionQueue,
+  getQueueInstance,
+} from "../services/queueService.js";
 import userAuth from "../middleware/userAuth.js";
 import Transcript from "../models/transcriptModel.js";
 import Meeting from "../models/meetingModel.js";

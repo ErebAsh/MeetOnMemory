@@ -11,7 +11,7 @@ const TransferOwnershipModal = ({
   meetingId,
   meetingTitle,
 }) => {
-  const { userData } = useContext(AppContent);
+  const { userData } = useContext(AppContent) || {};
   const [members, setMembers] = useState([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
 
@@ -24,12 +24,12 @@ const TransferOwnershipModal = ({
     try {
       setLoadingMembers(true);
       const { data } = await organizationApi.getOrganizationMembers(
-        userData.currentOrganization,
+        userData?.currentOrganization,
       );
       if (data.success) {
         // Exclude current user from the list
         const filteredMembers = data.members.filter(
-          (m) => m.user?._id !== userData._id,
+          (m) => m.user?._id !== userData?._id,
         );
         setMembers(filteredMembers);
       }
@@ -39,7 +39,7 @@ const TransferOwnershipModal = ({
     } finally {
       setLoadingMembers(false);
     }
-  }, [userData.currentOrganization, userData._id]);
+  }, [userData?.currentOrganization, userData?._id]);
 
   useEffect(() => {
     if (isOpen && userData?.currentOrganization) {

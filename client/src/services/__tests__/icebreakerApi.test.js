@@ -43,9 +43,7 @@ describe("icebreakerApi (#2622) — /api prefix", () => {
   it("getForMeeting GETs /api/icebreakers/meeting/:meetingId", async () => {
     api.get.mockResolvedValue({ data: { success: true, question: "Q" } });
     await icebreakerApi.getForMeeting("meeting-3");
-    expect(api.get).toHaveBeenCalledWith(
-      "/api/icebreakers/meeting/meeting-3",
-    );
+    expect(api.get).toHaveBeenCalledWith("/api/icebreakers/meeting/meeting-3");
   });
 
   it("never produces a /api/api double-prefix", async () => {

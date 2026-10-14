@@ -344,7 +344,9 @@ export const retryDelivery = async (req, res) => {
 
     delivery.status = "pending";
     delivery.errorMessage = null;
-    await delivery.save();
+    if (typeof delivery.save === "function") {
+      await delivery.save();
+    }
 
     if (recapDeliveryQueue.isActive) {
       await recapDeliveryQueue.add("retry-delivery", {

@@ -36,7 +36,13 @@ jest.unstable_mockModule("../models/auditLogModel.js", () => ({
 }));
 
 jest.unstable_mockModule("../services/notificationService.js", () => ({
+  CATEGORY_TO_PREFERENCE: {},
+  getRoutingCategory: jest.fn(),
+  validateAndRepairLink: (url) => url,
+  createNotifications: jest.fn().mockResolvedValue([]),
+  processNotificationQueue: jest.fn().mockResolvedValue({}),
   createNotification: jest.fn().mockResolvedValue({}),
+  notifyUser: jest.fn().mockResolvedValue({}),
 }));
 
 const mockUser = {
@@ -57,18 +63,44 @@ jest.unstable_mockModule("../middleware/userAuth.js", () => ({
 }));
 
 jest.unstable_mockModule("../middleware/rbac.js", () => ({
+  canAccessMeetingDoc: () => true,
+  requireRole: () => (req, res, next) => next(),
   requireOwner: () => (req, res, next) => next(),
   requirePermission: () => (req, res, next) => next(),
+  requireAnyPermission: () => (req, res, next) => next(),
   requireOrgMembership: (req, res, next) => next(),
   requireOrgAccess: () => (req, res, next) => next(),
   requireAdminOrOwner: (req, res, next) => next(),
   requireOwnerOrAdmin: () => (req, res, next) => next(),
+  requireMinimumRole: () => (req, res, next) => next(),
+  requireOrganizationParamMatch: () => (req, res, next) => next(),
 }));
 
+const passthrough = (req, res, next) => next();
 jest.unstable_mockModule("../middleware/rateLimiter.js", () => ({
-  apiLimiter: (req, res, next) => next(),
-  writeLimiter: (req, res, next) => next(),
-  uploadLimiter: (req, res, next) => next(),
+  apiLimiter: passthrough,
+  writeLimiter: passthrough,
+  uploadLimiter: passthrough,
+  loginLimiter: passthrough,
+  registerLimiter: passthrough,
+  otpLimiter: passthrough,
+  globalLimiter: passthrough,
+  dataExportLimiter: passthrough,
+  assistantMessageLimiter: passthrough,
+  policyApiLimiter: passthrough,
+  policyUploadLimiter: passthrough,
+  policyAnalyzeLimiter: passthrough,
+  policyDownloadLimiter: passthrough,
+  policyDeleteLimiter: passthrough,
+  invitationCreateLimiter: passthrough,
+  testimonialSubmitLimiter: passthrough,
+  careersApplicationLimiter: passthrough,
+  contactSubmitLimiter: passthrough,
+  resolveInvitationRateLimitOrgId: jest.fn(),
+  createInvitationCreateLimiter: () => passthrough,
+  createTestimonialSubmitLimiter: () => passthrough,
+  createCareersApplicationLimiter: () => passthrough,
+  createContactSubmitLimiter: () => passthrough,
 }));
 
 const { default: appRouter } = await import("../routes/index.js");

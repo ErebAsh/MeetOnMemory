@@ -201,7 +201,7 @@ export class LazyRateLimitStore {
     let redisStore;
     try {
       redisStore = new RedisStore({
-        sendCommand: (...args) => client.sendCommand(args),
+        sendCommand: (...args) => client.sendCommand(...args),
         prefix: this.prefix,
       });
     } catch (error) {

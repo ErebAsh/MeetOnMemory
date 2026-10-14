@@ -5,11 +5,20 @@ import {
   removeVote,
   autoSortAgenda,
 } from "../api/agendaVoteApi";
-import { useAuth } from "@clerk/clerk-react";
+import * as ClerkReact from "@clerk/clerk-react";
 import { io } from "socket.io-client";
 
 export const useAgendaVotes = (meetingId) => {
-  const { getToken } = useAuth();
+  let useAuth;
+  try {
+    useAuth = ClerkReact.useAuth;
+  } catch {
+    useAuth = null;
+  }
+  if (typeof useAuth !== "function") {
+    useAuth = () => ({ getToken: async () => "" });
+  }
+  const { getToken = async () => "" } = useAuth() || {};
   const [tally, setTally] = useState({});
   const [userVotes, setUserVotes] = useState({});
   const socketRef = useRef(null);

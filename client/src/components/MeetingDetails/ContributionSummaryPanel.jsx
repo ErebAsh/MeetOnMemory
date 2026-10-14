@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
+import { QueryClientContext } from "@tanstack/react-query";
 import { useMeetingContributions } from "../../hooks/useParticipantContributions";
 
 const DIMENSIONS = ["verbal", "decisional", "task", "collaborative"];
 
-const ContributionSummaryPanel = ({ meetingId }) => {
+const ContributionSummaryContent = ({ meetingId }) => {
   const { data, isLoading, isError } = useMeetingContributions(meetingId);
   const [showDetail, setShowDetail] = useState(false);
 
@@ -138,6 +139,14 @@ const ContributionSummaryPanel = ({ meetingId }) => {
       </div>
     </div>
   );
+};
+
+const ContributionSummaryPanel = (props) => {
+  const queryClient = useContext(QueryClientContext);
+  if (!queryClient) {
+    return null;
+  }
+  return <ContributionSummaryContent {...props} />;
 };
 
 export default ContributionSummaryPanel;

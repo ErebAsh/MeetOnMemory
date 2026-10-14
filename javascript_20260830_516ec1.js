@@ -1,15 +1,15 @@
-import fs from 'fs';
-import path from 'path';
-import crypto from 'crypto';
-import { promisify } from 'util';
+import fs from "fs";
+import path from "path";
+import crypto from "crypto";
+import { promisify } from "util";
 import {
   UPLOAD_LIMITS,
   validateChunkSize,
   formatFileSize,
   ensureUploadDir,
   getSizeErrorMessage,
-} from '../config/uploadConfig.js';
-import logger from '../utils/logger.js';
+} from "../config/uploadConfig.js";
+import logger from "../utils/logger.js";
 
 const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
@@ -28,13 +28,13 @@ const getUploadSession = (uploadId, meetingId) => {
   if (!uploadSessions.has(sessionKey)) {
     const sessionDir = path.join(
       process.cwd(),
-      'uploads',
-      'chunks',
+      "uploads",
+      "chunks",
       meetingId,
-      uploadId
+      uploadId,
     );
     ensureUploadDir(sessionDir);
-    
+
     uploadSessions.set(sessionKey, {
       uploadId,
       meetingId,
@@ -61,7 +61,8 @@ export const startResumableUpload = async (req, res) => {
     if (!meetingId || !filename || !totalChunks || !totalSize) {
       return res.status(400).json({
         success: false,
-        error: 'Missing required fields: meetingId, filename, totalChunks, totalSize',
+        error:
+          "Missing required fields: meetingId, filename, totalChunks, totalSize",
       });
     }
 
@@ -70,8 +71,8 @@ export const startResumableUpload = async (req, res) => {
     if (totalSize > maxSize) {
       return res.status(413).json({
         success: false,
-        error: getSizeErrorMessage(maxSize, 'Total upload'),
-        code: 'FILE_TOO_LARGE',
+        error: getSizeErrorMessage(maxSize, "Total upload"),
+        code: "FILE_TOO_LARGE",
         maxSize: maxSize,
         maxSizeFormatted: formatFileSize(maxSize),
         totalSize: totalSize,
@@ -80,13 +81,15 @@ export const startResumableUpload = async (req, res) => {
     }
 
     // Generate unique upload ID
-    const uploadId = crypto.randomBytes(16).toString('hex');
+    const uploadId = crypto.randomBytes(16).toString("hex");
     const session = getUploadSession(uploadId, meetingId);
     session.filename = filename;
     session.totalChunks = totalChunks;
     session.totalSize = totalSize;
 
-    logger.info(`Resumable upload started: ${uploadId} for meeting ${meetingId}`);
+    logger.info(
+      `Resumable upload started: ${uploadId} for meeting ${meetingId}`,
+    );
 
     res.json({
       success: true,
@@ -103,10 +106,10 @@ export const startResumableUpload = async (req, res) => {
       },
     });
   } catch (error) {
-    logger.error('Error starting resumable upload:', error);
+    logger.error("Error starting resumable upload:", error);
     res.status(500).json({
       success: false,
-      error: 'Failed to start upload session',
+      error: "Failed to start upload session",
       details: error.message,
     });
   }
@@ -124,7 +127,7 @@ export const uploadChunk = async (req, res) => {
     if (!uploadId || chunkIndex === undefined || !chunkFile) {
       return res.status(400).json({
         success: false,
-        error: 'Missing required fields: uploadId, chunkIndex, file',
+        error: "Missing required fields: uploadId, chunkIndex, file",
       });
     }
 
@@ -134,14 +137,14 @@ export const uploadChunk = async (req, res) => {
 
     // Get session
     const session = getUploadSession(uploadId, meetingId);
-    
+
     // Validate chunk index
     const index = parseInt(chunkIndex);
     if (session.uploadedChunks.has(index)) {
       return res.status(409).json({
         success: false,
         error: `Chunk ${index} already uploaded`,
-        code: 'CHUNK_ALREADY_UPLOADED',
+        code: "CHUNK_ALREADY_UPLOADED",
       });
     }
 
@@ -173,24 +176,24 @@ export const uploadChunk = async (req, res) => {
         totalChunks: session.totalChunks,
         isComplete,
         progress: Math.round(
-          (session.uploadedChunks.size / session.totalChunks) * 100
+          (session.uploadedChunks.size / session.totalChunks) * 100,
         ),
       },
     });
   } catch (error) {
-    logger.error('Error uploading chunk:', error);
-    
-    if (error.message.includes('exceeds maximum allowed')) {
+    logger.error("Error uploading chunk:", error);
+
+    if (error.message.includes("exceeds maximum allowed")) {
       return res.status(413).json({
         success: false,
         error: error.message,
-        code: 'CHUNK_TOO_LARGE',
+        code: "CHUNK_TOO_LARGE",
       });
     }
 
     res.status(500).json({
       success: false,
-      error: 'Failed to upload chunk',
+      error: "Failed to upload chunk",
       details: error.message,
     });
   }
@@ -209,8 +212,8 @@ export const completeResumableUpload = async (req, res) => {
     if (session.uploadedChunks.size !== session.totalChunks) {
       return res.status(400).json({
         success: false,
-        error: 'Not all chunks uploaded',
-        code: 'INCOMPLETE_UPLOAD',
+        error: "Not all chunks uploaded",
+        code: "INCOMPLETE_UPLOAD",
         uploaded: session.uploadedChunks.size,
         total: session.totalChunks,
         missing: session.totalChunks - session.uploadedChunks.size,
@@ -218,9 +221,14 @@ export const completeResumableUpload = async (req, res) => {
     }
 
     // Assemble chunks
-    const outputDir = path.join(process.cwd(), 'uploads', 'recordings', meetingId);
+    const outputDir = path.join(
+      process.cwd(),
+      "uploads",
+      "recordings",
+      meetingId,
+    );
     ensureUploadDir(outputDir);
-    
+
     const outputPath = path.join(outputDir, session.filename);
     const writeStream = fs.createWriteStream(outputPath);
 
@@ -260,7 +268,9 @@ export const completeResumableUpload = async (req, res) => {
     // Remove session
     uploadSessions.delete(`${uploadId}-${meetingId}`);
 
-    logger.info(`Resumable upload completed: ${uploadId} for meeting ${meetingId}`);
+    logger.info(
+      `Resumable upload completed: ${uploadId} for meeting ${meetingId}`,
+    );
 
     res.json({
       success: true,
@@ -275,10 +285,10 @@ export const completeResumableUpload = async (req, res) => {
       },
     });
   } catch (error) {
-    logger.error('Error completing resumable upload:', error);
+    logger.error("Error completing resumable upload:", error);
     res.status(500).json({
       success: false,
-      error: 'Failed to complete upload',
+      error: "Failed to complete upload",
       details: error.message,
     });
   }
@@ -300,7 +310,7 @@ export const getUploadStatus = async (req, res) => {
       totalChunks: session.totalChunks,
       uploadedChunks: Array.from(session.uploadedChunks),
       progress: Math.round(
-        (session.uploadedChunks.size / session.totalChunks) * 100
+        (session.uploadedChunks.size / session.totalChunks) * 100,
       ),
       startedAt: session.startedAt,
       lastChunkAt: session.lastChunkAt,
@@ -314,10 +324,10 @@ export const getUploadStatus = async (req, res) => {
       data,
     });
   } catch (error) {
-    logger.error('Error getting upload status:', error);
+    logger.error("Error getting upload status:", error);
     res.status(500).json({
       success: false,
-      error: 'Failed to get upload status',
+      error: "Failed to get upload status",
       details: error.message,
     });
   }
@@ -356,13 +366,13 @@ export const cancelResumableUpload = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Upload cancelled successfully',
+      message: "Upload cancelled successfully",
     });
   } catch (error) {
-    logger.error('Error cancelling upload:', error);
+    logger.error("Error cancelling upload:", error);
     res.status(500).json({
       success: false,
-      error: 'Failed to cancel upload',
+      error: "Failed to cancel upload",
       details: error.message,
     });
   }
@@ -384,10 +394,10 @@ export const getUploadLimits = async (req, res) => {
       },
     });
   } catch (error) {
-    logger.error('Error getting upload limits:', error);
+    logger.error("Error getting upload limits:", error);
     res.status(500).json({
       success: false,
-      error: 'Failed to get upload limits',
+      error: "Failed to get upload limits",
       details: error.message,
     });
   }

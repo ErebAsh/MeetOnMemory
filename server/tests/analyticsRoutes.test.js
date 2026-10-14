@@ -51,7 +51,7 @@ describe("Analytics Routes Integration Tests", () => {
           date: new Date(),
           organization: organizationId,
           uploadedBy: user._id,
-          status: "pending",
+          status: "uploaded",
           participants: [],
         },
         {
@@ -67,13 +67,15 @@ describe("Analytics Routes Integration Tests", () => {
       // Create some policies inside and outside organization
       await Policy.create([
         {
-          title: "Org Policy 1",
+          name: "Org Policy 1",
+          fileUrl: "https://example.com/p1.pdf",
           organization: organizationId,
           uploadedBy: user._id,
           version: "1.0",
         },
         {
-          title: "Org Policy 2",
+          name: "Org Policy 2",
+          fileUrl: "https://example.com/p2.pdf",
           organization: organizationId,
           uploadedBy: user._id,
           version: "2.0", // updated policy
@@ -320,7 +322,9 @@ describe("Analytics Routes Integration Tests", () => {
       expect(res.statusCode).toBe(200);
       expect(res.body.data).toHaveLength(1);
       expect(res.body.data[0].title).toBe("Team Match Meeting");
-      expect(res.body.data[0].teamName).toBe("Engineering Core"); // matching mock teamId conversion or similar logic
+      expect(res.body.data[0].teamName).toBe(
+        `Team ${teamObjId.toString().substring(0, 6)}`,
+      );
     });
   });
 });

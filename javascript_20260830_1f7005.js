@@ -1,16 +1,16 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const guestAccessSchema = new mongoose.Schema(
   {
     meetingId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Meeting',
+      ref: "Meeting",
       required: true,
       index: true,
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: true,
     },
     token: {
@@ -21,8 +21,8 @@ const guestAccessSchema = new mongoose.Schema(
     },
     accessLevel: {
       type: String,
-      enum: ['view', 'comment', 'edit'],
-      default: 'view',
+      enum: ["view", "comment", "edit"],
+      default: "view",
     },
     expiresAt: {
       type: Date,
@@ -38,7 +38,7 @@ const guestAccessSchema = new mongoose.Schema(
     },
     revokedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
     },
     metadata: {
       createdAt: {
@@ -62,7 +62,7 @@ const guestAccessSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Indexes
@@ -71,19 +71,19 @@ guestAccessSchema.index({ meetingId: 1, expiresAt: 1 });
 guestAccessSchema.index({ createdBy: 1, createdAt: -1 });
 
 // Virtual for isExpired
-guestAccessSchema.virtual('isExpired').get(function () {
+guestAccessSchema.virtual("isExpired").get(function () {
   return this.expiresAt && new Date() > this.expiresAt;
 });
 
 // Virtual for isValid
-guestAccessSchema.virtual('isValid').get(function () {
+guestAccessSchema.virtual("isValid").get(function () {
   return !this.isRevoked && !this.isExpired;
 });
 
 // Ensure virtuals are included in JSON
-guestAccessSchema.set('toJSON', { virtuals: true });
-guestAccessSchema.set('toObject', { virtuals: true });
+guestAccessSchema.set("toJSON", { virtuals: true });
+guestAccessSchema.set("toObject", { virtuals: true });
 
-const GuestAccess = mongoose.model('GuestAccess', guestAccessSchema);
+const GuestAccess = mongoose.model("GuestAccess", guestAccessSchema);
 
 export default GuestAccess;

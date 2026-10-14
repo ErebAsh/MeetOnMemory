@@ -182,7 +182,7 @@ describe("AiSearch meeting navigation (#615)", () => {
     fireEvent.change(getQueryInput(), {
       target: { value: "campaign target" },
     });
-    fireEvent.change(screen.getByPlaceholderText(/name or email/i), {
+    fireEvent.change(screen.getAllByPlaceholderText(/name or email/i)[1], {
       target: { value: "Search Expert" },
     });
     fireEvent.change(screen.getByPlaceholderText(/e\.g\. Sales/i), {

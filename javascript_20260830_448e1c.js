@@ -4,52 +4,52 @@
 
 // Format file size for display
 export const formatFileSize = (bytes) => {
-  if (bytes === 0) return '0 Bytes';
+  if (bytes === 0) return "0 Bytes";
   const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const sizes = ["Bytes", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 };
 
 // Get upload limits from server
 export const getUploadLimits = async (api) => {
   try {
-    const response = await api.get('/meetings/upload-limits');
+    const response = await api.get("/meetings/upload-limits");
     return response.data.data;
   } catch (error) {
-    console.error('Failed to fetch upload limits:', error);
+    console.error("Failed to fetch upload limits:", error);
     // Return default limits if API fails
     return {
       recording: {
         maxSize: 500 * 1024 * 1024,
-        maxSizeFormatted: '500 MB',
-        allowedTypes: ['video/mp4', 'video/webm', 'audio/mp3', 'audio/wav'],
+        maxSizeFormatted: "500 MB",
+        allowedTypes: ["video/mp4", "video/webm", "audio/mp3", "audio/wav"],
       },
       audio: {
         maxSize: 100 * 1024 * 1024,
-        maxSizeFormatted: '100 MB',
-        allowedTypes: ['audio/mpeg', 'audio/wav', 'audio/aac'],
+        maxSizeFormatted: "100 MB",
+        allowedTypes: ["audio/mpeg", "audio/wav", "audio/aac"],
       },
       chunk: {
         maxSize: 100 * 1024 * 1024,
-        maxSizeFormatted: '100 MB',
+        maxSizeFormatted: "100 MB",
       },
       transcript: {
         maxSize: 50 * 1024 * 1024,
-        maxSizeFormatted: '50 MB',
-        allowedTypes: ['text/plain', 'application/json', 'application/pdf'],
+        maxSizeFormatted: "50 MB",
+        allowedTypes: ["text/plain", "application/json", "application/pdf"],
       },
     };
   }
 };
 
 // Validate file size before upload
-export const validateFileSize = (file, maxSize, type = 'File') => {
+export const validateFileSize = (file, maxSize, type = "File") => {
   if (file.size > maxSize) {
     const error = new Error(
-      `${type} size (${formatFileSize(file.size)}) exceeds maximum allowed size of ${formatFileSize(maxSize)}`
+      `${type} size (${formatFileSize(file.size)}) exceeds maximum allowed size of ${formatFileSize(maxSize)}`,
     );
-    error.code = 'FILE_TOO_LARGE';
+    error.code = "FILE_TOO_LARGE";
     error.maxSize = maxSize;
     error.fileSize = file.size;
     return { valid: false, error };
@@ -61,9 +61,9 @@ export const validateFileSize = (file, maxSize, type = 'File') => {
 export const validateFileType = (file, allowedTypes) => {
   if (!allowedTypes.includes(file.type)) {
     const error = new Error(
-      `File type "${file.type}" is not allowed. Allowed types: ${allowedTypes.join(', ')}`
+      `File type "${file.type}" is not allowed. Allowed types: ${allowedTypes.join(", ")}`,
     );
-    error.code = 'FILE_TYPE_NOT_ALLOWED';
+    error.code = "FILE_TYPE_NOT_ALLOWED";
     return { valid: false, error };
   }
   return { valid: true, error: null };
@@ -73,8 +73,8 @@ export const validateFileType = (file, allowedTypes) => {
 export const validateFile = (file, options = {}) => {
   const {
     maxSize = 500 * 1024 * 1024,
-    allowedTypes = ['video/mp4', 'video/webm', 'audio/mpeg'],
-    type = 'File',
+    allowedTypes = ["video/mp4", "video/webm", "audio/mpeg"],
+    type = "File",
   } = options;
 
   // Size validation
@@ -95,7 +95,7 @@ export const uploadFileWithProgress = async (
   file,
   uploadUrl,
   onProgress,
-  options = {}
+  options = {},
 ) => {
   const {
     maxSize = 500 * 1024 * 1024,
@@ -111,15 +111,15 @@ export const uploadFileWithProgress = async (
 
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    
-    xhr.upload.addEventListener('progress', (event) => {
+
+    xhr.upload.addEventListener("progress", (event) => {
       if (event.lengthComputable && onProgress) {
         const progress = Math.round((event.loaded / event.total) * 100);
         onProgress(progress, event.loaded, event.total);
       }
     });
 
-    xhr.addEventListener('load', () => {
+    xhr.addEventListener("load", () => {
       if (xhr.status >= 200 && xhr.status < 300) {
         try {
           const response = JSON.parse(xhr.responseText);
@@ -137,21 +137,21 @@ export const uploadFileWithProgress = async (
       }
     });
 
-    xhr.addEventListener('error', () => {
-      reject(new Error('Network error during upload'));
+    xhr.addEventListener("error", () => {
+      reject(new Error("Network error during upload"));
     });
 
-    xhr.open('POST', uploadUrl);
+    xhr.open("POST", uploadUrl);
 
     // Add auth token
-    const token = localStorage.getItem('clerk_token');
+    const token = localStorage.getItem("clerk_token");
     if (token) {
-      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      xhr.setRequestHeader("Authorization", `Bearer ${token}`);
     }
 
     // Prepare form data
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append("file", file);
     Object.entries(additionalData).forEach(([key, value]) => {
       formData.append(key, value);
     });
@@ -161,7 +161,10 @@ export const uploadFileWithProgress = async (
 };
 
 // Check if file size is acceptable for recording
-export const isRecordingSizeAcceptable = (fileSize, maxSize = 500 * 1024 * 1024) => {
+export const isRecordingSizeAcceptable = (
+  fileSize,
+  maxSize = 500 * 1024 * 1024,
+) => {
   return fileSize <= maxSize;
 };
 

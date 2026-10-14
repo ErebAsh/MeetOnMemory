@@ -131,7 +131,7 @@ export const deleteTemplate = async (req, res) => {
     }
 
     await template.deleteOne();
-    res.json({ message: "Template removed" });
+    res.json({ success: true, message: "Template removed" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -161,7 +161,11 @@ export const setDefaultTemplate = async (req, res) => {
     template.isDefault = true;
     await template.save();
 
-    res.json({ message: "Default template updated successfully", template });
+    res.json({
+      success: true,
+      message: "Default template updated successfully",
+      template,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

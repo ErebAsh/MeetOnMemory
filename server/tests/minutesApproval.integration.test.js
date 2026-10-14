@@ -13,9 +13,18 @@ jest.unstable_mockModule("../models/minutesApprovalModel.js", () => ({
   },
 }));
 
-// Mock @clerk/express middleware
+// Mock @clerk/express and userAuth middleware
 jest.unstable_mockModule("@clerk/express", () => ({
   requireAuth: () => (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthenticated" });
+    }
+    next();
+  },
+}));
+
+jest.unstable_mockModule("../middleware/userAuth.js", () => ({
+  default: (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({ error: "Unauthenticated" });
     }

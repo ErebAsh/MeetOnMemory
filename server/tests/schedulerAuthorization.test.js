@@ -28,7 +28,14 @@ const createGoogleEventSpy = jest.fn();
 
 jest.unstable_mockModule("../models/userModel.js", () => ({
   default: {
-    find: (...args) => userFindSpy(...args),
+    find: (...args) => {
+      const p = Promise.resolve(userFindSpy(...args));
+      return {
+        select: jest.fn().mockReturnValue(p),
+        then: p.then.bind(p),
+        catch: p.catch.bind(p),
+      };
+    },
   },
 }));
 

@@ -6,8 +6,9 @@
  * Generate a random encryption key
  */
 export const generateEncryptionKey = (length = 32) => {
-  const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=';
-  let key = '';
+  const charset =
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=";
+  let key = "";
   for (let i = 0; i < length; i++) {
     const randomIndex = Math.floor(Math.random() * charset.length);
     key += charset[randomIndex];
@@ -20,7 +21,7 @@ export const generateEncryptionKey = (length = 32) => {
  */
 export const isTranscriptEncrypted = (transcript) => {
   if (!transcript) return false;
-  if (typeof transcript === 'string') return false;
+  if (typeof transcript === "string") return false;
   return !!(transcript.encrypted && transcript.iv && transcript.authTag);
 };
 
@@ -67,22 +68,23 @@ export const isValidDecryptionKey = (key) => {
 export const getEncryptionStatusMessage = (isEncrypted, hasAccess) => {
   if (isEncrypted && !hasAccess) {
     return {
-      message: 'Transcript is encrypted. Please enter the decryption key to view.',
-      type: 'warning',
-      icon: '🔒',
+      message:
+        "Transcript is encrypted. Please enter the decryption key to view.",
+      type: "warning",
+      icon: "🔒",
     };
   }
   if (isEncrypted && hasAccess) {
     return {
-      message: 'Transcript is encrypted but you have access to view it.',
-      type: 'info',
-      icon: '🔓',
+      message: "Transcript is encrypted but you have access to view it.",
+      type: "info",
+      icon: "🔓",
     };
   }
   return {
-    message: 'Transcript is available in plaintext.',
-    type: 'success',
-    icon: '📄',
+    message: "Transcript is available in plaintext.",
+    type: "success",
+    icon: "📄",
   };
 };
 
@@ -91,7 +93,7 @@ export const getEncryptionStatusMessage = (isEncrypted, hasAccess) => {
  */
 export const isGuestUser = () => {
   const path = window.location.pathname;
-  return path.includes('/guest/');
+  return path.includes("/guest/");
 };
 
 /**

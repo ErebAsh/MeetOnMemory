@@ -15,6 +15,15 @@ jest.mock("../models/meetingModel.js", () => ({
 jest.mock("../models/userModel.js", () => ({
   default: {
     find: jest.fn(),
+    findOne: jest.fn().mockResolvedValue(null),
+  },
+}));
+
+jest.mock("../models/notificationPreferenceModel.js", () => ({
+  default: {
+    find: jest.fn(() => ({
+      lean: jest.fn().mockResolvedValue([]),
+    })),
   },
 }));
 

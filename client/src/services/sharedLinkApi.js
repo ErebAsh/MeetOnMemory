@@ -9,7 +9,11 @@ export const sharedLinkApi = {
 
 export const publicSharedApi = {
   verifyPasscode: (hash, data, config) =>
-    apiClient.post(`/api/public/shared/${hash}/verify`, data, config),
+    config
+      ? apiClient.post(`/api/public/shared/${hash}/verify`, data, config)
+      : apiClient.post(`/api/public/shared/${hash}/verify`, data),
   getPublicResource: (hash, config) =>
-    apiClient.get(`/api/public/shared/${hash}`, config),
+    config
+      ? apiClient.get(`/api/public/shared/${hash}`, config)
+      : apiClient.get(`/api/public/shared/${hash}`),
 };
