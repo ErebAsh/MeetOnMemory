@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { apiClient as api } from "../../services"; // assuming standard api utility
 import {
   LineChart,
@@ -238,12 +239,13 @@ const SeriesEvolutionTimeline = ({ seriesId }) => {
                       </span>
                     </div>
                   </div>
-                  <a
-                    href={`/meetings/${meeting.meetingId}`}
+                  <Link
+                    to={`/meeting/${meeting.meetingId}`}
+                    data-testid={`view-meeting-${meeting.meetingId}`}
                     className="text-sm text-blue-600 hover:underline"
                   >
                     View Meeting
-                  </a>
+                  </Link>
                 </div>
               </div>
             </div>

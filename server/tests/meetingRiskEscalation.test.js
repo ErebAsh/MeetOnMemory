@@ -111,9 +111,9 @@ describe("Meeting Risk Mitigation & SLA Escalation System (#2555)", () => {
       createdBy: testAdmin._id,
     });
 
-    // 2. Backdate the risk to 50 hours ago using updateOne to bypass mongoose default timestamps
+    // 2. Backdate the risk to 50 hours ago using collection.updateOne to bypass mongoose default timestamps
     const fiftyHoursAgo = new Date(Date.now() - 50 * 60 * 60 * 1000);
-    await MeetingRisk.updateOne(
+    await MeetingRisk.collection.updateOne(
       { _id: risk._id },
       { $set: { createdAt: fiftyHoursAgo } },
     );

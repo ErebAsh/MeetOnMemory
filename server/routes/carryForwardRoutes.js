@@ -13,30 +13,33 @@ import {
 
 const router = express.Router();
 
-router.use(userAuth);
-router.use(requireOrgMembership);
+const auth = [userAuth, requireOrgMembership];
 
 // --- Original Routes (Relative to mount point: /api/meeting-series) ---
 router.get(
   "/:seriesId/carry-forward/config",
+  ...auth,
   requirePermission("meetings", "view"),
   getConfig,
 );
 
 router.put(
   "/:seriesId/carry-forward/config",
+  ...auth,
   requirePermission("meetings", "edit"),
   updateConfig,
 );
 
 router.get(
   "/:seriesId/carry-forward/preview",
+  ...auth,
   requirePermission("meetings", "view"),
   getPreview,
 );
 
 router.post(
   "/:seriesId/carry-forward/apply",
+  ...auth,
   requirePermission("meetings", "edit"),
   applyCarryForward,
 );
@@ -44,18 +47,21 @@ router.post(
 // --- New Routes (Relative to mount point: /api) ---
 router.get(
   "/meetings/:meetingId/carry-forward/preview",
+  ...auth,
   requirePermission("meetings", "view"),
   getMeetingPreview,
 );
 
 router.post(
   "/meetings/:meetingId/carry-forward/apply",
+  ...auth,
   requirePermission("meetings", "edit"),
   applyMeetingCarryForward,
 );
 
 router.get(
   "/series/:seriesId/carry-forward/history",
+  ...auth,
   requirePermission("meetings", "view"),
   getHistory,
 );

@@ -75,6 +75,7 @@ beforeEach(async () => {
   template = await ActionItemTemplate.create({
     name: "Standard Sync Template",
     organization: orgId,
+    createdBy: organizerUser._id,
     applicableMeetingTypes: ["conference"],
     items: [
       {

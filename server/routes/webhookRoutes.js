@@ -18,8 +18,18 @@ const router = express.Router();
 // Apply global rate limiting to webhook routes
 router.use(apiLimiter);
 
-// Apply authentication middleware to all routes
-router.use(userAuth);
+// Apply authentication middleware to subscription routes, bypassing inbound external webhooks
+router.use((req, res, next) => {
+  if (
+    req.path === "/github" ||
+    req.path === "/jira" ||
+    req.path === "/linear" ||
+    req.path.startsWith("/github/")
+  ) {
+    return next();
+  }
+  return userAuth(req, res, next);
+});
 
 // Create Webhook Subscription
 router.post(

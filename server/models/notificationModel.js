@@ -29,6 +29,7 @@ const notificationSchema = new mongoose.Schema(
         "organizations",
         "policies",
         "reports",
+        "comments",
         "system",
       ],
       default: "system",

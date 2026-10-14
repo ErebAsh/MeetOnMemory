@@ -1,23 +1,21 @@
 import { jest } from "@jest/globals";
 import express from "express";
 import supertest from "supertest";
-import sharedLinkRoutes from "../routes/sharedLinkRoutes.js";
-import publicSharedRoutes from "../routes/publicSharedRoutes.js";
 
 // Mock userAuth middleware for testing protected shared link routes
-jest.mock("../middleware/userAuth.js", () => {
-  return (req, res, next) => {
+jest.unstable_mockModule("../middleware/userAuth.js", () => ({
+  default: (req, res, next) => {
     req.user = {
       _id: "507f1f77bcf86cd799439011",
       organization: "507f1f77bcf86cd799439022",
       role: "admin",
     };
     next();
-  };
-});
+  },
+}));
 
 // Mock controllers
-jest.mock("../controllers/sharedLinkController.js", () => ({
+jest.unstable_mockModule("../controllers/sharedLinkController.js", () => ({
   createLink: jest.fn().mockImplementation((req, res) =>
     res.status(201).json({
       success: true,
@@ -39,9 +37,6 @@ jest.mock("../controllers/sharedLinkController.js", () => ({
     .mockImplementation((req, res) =>
       res.status(200).json({ success: true, message: "Link revoked" }),
     ),
-}));
-
-jest.mock("../controllers/publicSharedController.js", () => ({
   getPublicResource: jest.fn().mockImplementation((req, res) =>
     res.status(200).json({
       success: true,
@@ -55,6 +50,12 @@ jest.mock("../controllers/publicSharedController.js", () => ({
       res.status(200).json({ success: true, verified: true }),
     ),
 }));
+
+// Dynamically import routes after mocking
+const { default: sharedLinkRoutes } =
+  await import("../routes/sharedLinkRoutes.js");
+const { default: publicSharedRoutes } =
+  await import("../routes/publicSharedRoutes.js");
 
 describe("Shared Links and Public Shared View Route Prefixes (#1999)", () => {
   let app;

@@ -21,7 +21,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 function countMatchingLayers(router, pathStr) {
   const stack = router.stack || [];
   return stack.filter(
-    (layer) => typeof layer.match === "function" && layer.match(pathStr),
+    (layer) =>
+      typeof layer.match === "function" &&
+      layer.match(pathStr) &&
+      layer.path === pathStr,
   ).length;
 }
 

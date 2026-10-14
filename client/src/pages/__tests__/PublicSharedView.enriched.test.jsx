@@ -70,13 +70,15 @@ describe("PublicSharedView enriched sections (#2239)", () => {
     });
 
     fireEvent.click(screen.getByRole("tab", { name: /Transcript/i }));
-    expect(screen.getByTestId("shared-transcript-section")).toBeInTheDocument();
-    expect(screen.getByText("Welcome everyone")).toBeInTheDocument();
+    expect(
+      await screen.findByTestId("shared-transcript-section"),
+    ).toBeInTheDocument();
+    expect(await screen.findByText("Welcome everyone")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: /Attachments/i }));
     expect(
-      screen.getByTestId("shared-attachments-section"),
+      await screen.findByTestId("shared-attachments-section"),
     ).toBeInTheDocument();
-    expect(screen.getByText("slides.pdf")).toBeInTheDocument();
+    expect(await screen.findByText("slides.pdf")).toBeInTheDocument();
   });
 });

@@ -1001,7 +1001,7 @@ export const getRawTranscript = async (req, res, next) => {
 
     return sendSuccess(
       res,
-      { original },
+      { data: { original }, original },
       "Original unredacted contents decrypted successfully",
     );
   } catch (err) {

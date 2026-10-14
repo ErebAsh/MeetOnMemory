@@ -1,14 +1,14 @@
-import fs from 'fs';
-import path from 'path';
-import { promisify } from 'util';
+import fs from "fs";
+import path from "path";
+import { promisify } from "util";
 import {
   UPLOAD_LIMITS,
   ALLOWED_MIME_TYPES,
   formatFileSize,
   getSizeErrorMessage,
   ensureUploadDir,
-} from '../config/uploadConfig.js';
-import logger from '../utils/logger.js';
+} from "../config/uploadConfig.js";
+import logger from "../utils/logger.js";
 
 const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
@@ -26,7 +26,7 @@ export const uploadTranscript = async (req, res) => {
     if (!file) {
       return res.status(400).json({
         success: false,
-        error: 'No file uploaded',
+        error: "No file uploaded",
       });
     }
 
@@ -37,13 +37,13 @@ export const uploadTranscript = async (req, res) => {
       try {
         await unlink(file.path);
       } catch (err) {
-        logger.warn('Failed to delete oversized file:', err);
+        logger.warn("Failed to delete oversized file:", err);
       }
 
       return res.status(413).json({
         success: false,
-        error: getSizeErrorMessage(maxSize, 'Transcript'),
-        code: 'FILE_TOO_LARGE',
+        error: getSizeErrorMessage(maxSize, "Transcript"),
+        code: "FILE_TOO_LARGE",
         maxSize: maxSize,
         maxSizeFormatted: formatFileSize(maxSize),
         fileSize: file.size,
@@ -58,18 +58,23 @@ export const uploadTranscript = async (req, res) => {
       try {
         await unlink(file.path);
       } catch (err) {
-        logger.warn('Failed to delete invalid file:', err);
+        logger.warn("Failed to delete invalid file:", err);
       }
 
       return res.status(415).json({
         success: false,
-        error: `Invalid file type. Allowed types: ${allowedTypes.join(', ')}`,
-        code: 'FILE_TYPE_NOT_ALLOWED',
+        error: `Invalid file type. Allowed types: ${allowedTypes.join(", ")}`,
+        code: "FILE_TYPE_NOT_ALLOWED",
       });
     }
 
     // Save transcript metadata
-    const transcriptDir = path.join(process.cwd(), 'uploads', 'transcripts', meetingId);
+    const transcriptDir = path.join(
+      process.cwd(),
+      "uploads",
+      "transcripts",
+      meetingId,
+    );
     ensureUploadDir(transcriptDir);
 
     const newPath = path.join(transcriptDir, file.filename);
@@ -77,7 +82,9 @@ export const uploadTranscript = async (req, res) => {
 
     const fileStats = await stat(newPath);
 
-    logger.info(`Transcript uploaded for meeting ${meetingId}: ${file.originalname}`);
+    logger.info(
+      `Transcript uploaded for meeting ${meetingId}: ${file.originalname}`,
+    );
 
     res.json({
       success: true,
@@ -91,10 +98,10 @@ export const uploadTranscript = async (req, res) => {
       },
     });
   } catch (error) {
-    logger.error('Error uploading transcript:', error);
+    logger.error("Error uploading transcript:", error);
     res.status(500).json({
       success: false,
-      error: 'Failed to upload transcript',
+      error: "Failed to upload transcript",
       details: error.message,
     });
   }
@@ -106,14 +113,19 @@ export const uploadTranscript = async (req, res) => {
 export const getTranscript = async (req, res) => {
   try {
     const { meetingId } = req.params;
-    const { format = 'json' } = req.query;
+    const { format = "json" } = req.query;
 
-    const transcriptDir = path.join(process.cwd(), 'uploads', 'transcripts', meetingId);
-    
+    const transcriptDir = path.join(
+      process.cwd(),
+      "uploads",
+      "transcripts",
+      meetingId,
+    );
+
     if (!fs.existsSync(transcriptDir)) {
       return res.status(404).json({
         success: false,
-        error: 'No transcript found for this meeting',
+        error: "No transcript found for this meeting",
       });
     }
 
@@ -122,21 +134,21 @@ export const getTranscript = async (req, res) => {
     if (files.length === 0) {
       return res.status(404).json({
         success: false,
-        error: 'No transcript file found',
+        error: "No transcript file found",
       });
     }
 
     const latestFile = files[files.length - 1];
     const filePath = path.join(transcriptDir, latestFile);
-    const content = await readFile(filePath, 'utf-8');
+    const content = await readFile(filePath, "utf-8");
 
-    if (format === 'text') {
+    if (format === "text") {
       return res.json({
         success: true,
         data: {
           content,
           filename: latestFile,
-          format: 'text',
+          format: "text",
         },
       });
     }
@@ -149,7 +161,7 @@ export const getTranscript = async (req, res) => {
         data: {
           content: jsonContent,
           filename: latestFile,
-          format: 'json',
+          format: "json",
         },
       });
     } catch {
@@ -159,15 +171,15 @@ export const getTranscript = async (req, res) => {
         data: {
           content,
           filename: latestFile,
-          format: 'text',
+          format: "text",
         },
       });
     }
   } catch (error) {
-    logger.error('Error getting transcript:', error);
+    logger.error("Error getting transcript:", error);
     res.status(500).json({
       success: false,
-      error: 'Failed to get transcript',
+      error: "Failed to get transcript",
       details: error.message,
     });
   }
@@ -180,13 +192,18 @@ export const deleteTranscript = async (req, res) => {
   try {
     const { meetingId, filename } = req.params;
 
-    const transcriptDir = path.join(process.cwd(), 'uploads', 'transcripts', meetingId);
+    const transcriptDir = path.join(
+      process.cwd(),
+      "uploads",
+      "transcripts",
+      meetingId,
+    );
     const filePath = path.join(transcriptDir, filename);
 
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({
         success: false,
-        error: 'Transcript file not found',
+        error: "Transcript file not found",
       });
     }
 
@@ -195,13 +212,13 @@ export const deleteTranscript = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Transcript deleted successfully',
+      message: "Transcript deleted successfully",
     });
   } catch (error) {
-    logger.error('Error deleting transcript:', error);
+    logger.error("Error deleting transcript:", error);
     res.status(500).json({
       success: false,
-      error: 'Failed to delete transcript',
+      error: "Failed to delete transcript",
       details: error.message,
     });
   }
@@ -221,10 +238,10 @@ export const getTranscriptLimits = async (req, res) => {
       },
     });
   } catch (error) {
-    logger.error('Error getting transcript limits:', error);
+    logger.error("Error getting transcript limits:", error);
     res.status(500).json({
       success: false,
-      error: 'Failed to get transcript limits',
+      error: "Failed to get transcript limits",
       details: error.message,
     });
   }

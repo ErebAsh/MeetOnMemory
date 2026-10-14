@@ -15,12 +15,32 @@ jest.unstable_mockModule("../middleware/userAuth.js", () => {
       if (authHeader && authHeader.startsWith("Bearer ")) {
         const token = authHeader.split(" ")[1];
         try {
-          // Instead of verify, we can just blindly decode base64 for tests
-          // to avoid require() issues in ESM jest.mock
           const jwt = await import("jsonwebtoken");
-          const decoded = jwt.default.verify(token, process.env.JWT_SECRET);
+          const decoded = jwt.default.decode(token);
+          if (!decoded) throw new Error("Invalid token");
 
-          req.user = { id: decoded.id, _id: decoded.id, role: decoded.role };
+          const User = (await import("../models/userModel.js")).default;
+          const dbUser = await User.findById(decoded.id);
+          const role =
+            decoded.role === "user"
+              ? "member"
+              : decoded.role || dbUser?.role || "member";
+
+          req.user = dbUser
+            ? {
+                id: dbUser._id,
+                _id: dbUser._id,
+                role,
+                organization: dbUser.organization,
+                activeOrganization: dbUser.organization,
+              }
+            : {
+                id: decoded.id,
+                _id: decoded.id,
+                role,
+                organization: decoded.organization,
+                activeOrganization: decoded.organization,
+              };
           req.auth = { clerkUserId: "mockClerkId" };
           return next();
         } catch (err) {
@@ -84,9 +104,12 @@ describe("Meeting Checklist API", () => {
       organization: organization._id,
     });
 
-    token = jwt.sign({ id: user._id, role: "user" }, process.env.JWT_SECRET);
+    token = jwt.sign(
+      { id: user._id, role: "member", organization: organization._id },
+      process.env.JWT_SECRET,
+    );
     otherToken = jwt.sign(
-      { id: otherUser._id, role: "user" },
+      { id: otherUser._id, role: "member", organization: organization._id },
       process.env.JWT_SECRET,
     );
 

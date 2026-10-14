@@ -1,5 +1,5 @@
-import express from 'express';
-import multer from 'multer';
+import express from "express";
+import multer from "multer";
 import {
   startResumableUpload,
   uploadChunk,
@@ -7,13 +7,13 @@ import {
   getUploadStatus,
   cancelResumableUpload,
   getUploadLimits,
-} from '../controllers/resumableUploadController.js';
+} from "../controllers/resumableUploadController.js";
 import {
   UPLOAD_LIMITS,
   createMulterConfig,
   handleMulterError,
-} from '../config/uploadConfig.js';
-import { authenticateUser, requireOrganization } from '../middleware/auth.js';
+} from "../config/uploadConfig.js";
+import { authenticateUser, requireOrganization } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -23,7 +23,7 @@ router.use(requireOrganization);
 
 // Configure multer for chunk uploads
 const chunkUploadConfig = createMulterConfig({
-  destination: 'chunks',
+  destination: "chunks",
   maxSize: UPLOAD_LIMITS.CHUNK.MAX_SIZE,
   maxFiles: UPLOAD_LIMITS.CHUNK.MAX_FILES,
   fieldName: UPLOAD_LIMITS.CHUNK.FIELD_NAME,
@@ -36,14 +36,14 @@ const chunkUpload = multer(chunkUploadConfig);
  * @desc    Get upload limits for resumable uploads
  * @access  Private
  */
-router.get('/limits', getUploadLimits);
+router.get("/limits", getUploadLimits);
 
 /**
  * @route   POST /api/resumable/meeting/:meetingId/start
  * @desc    Start a new resumable upload session
  * @access  Private
  */
-router.post('/meeting/:meetingId/start', startResumableUpload);
+router.post("/meeting/:meetingId/start", startResumableUpload);
 
 /**
  * @route   POST /api/resumable/meeting/:meetingId/upload/:uploadId
@@ -52,10 +52,10 @@ router.post('/meeting/:meetingId/start', startResumableUpload);
  * @limits  Max 100MB per chunk
  */
 router.post(
-  '/meeting/:meetingId/upload/:uploadId',
-  chunkUpload.single('chunk'),
+  "/meeting/:meetingId/upload/:uploadId",
+  chunkUpload.single("chunk"),
   uploadChunk,
-  handleMulterError
+  handleMulterError,
 );
 
 /**
@@ -63,20 +63,20 @@ router.post(
  * @desc    Complete resumable upload and assemble chunks
  * @access  Private
  */
-router.post('/meeting/:meetingId/complete/:uploadId', completeResumableUpload);
+router.post("/meeting/:meetingId/complete/:uploadId", completeResumableUpload);
 
 /**
  * @route   GET /api/resumable/meeting/:meetingId/status/:uploadId
  * @desc    Get upload status
  * @access  Private
  */
-router.get('/meeting/:meetingId/status/:uploadId', getUploadStatus);
+router.get("/meeting/:meetingId/status/:uploadId", getUploadStatus);
 
 /**
  * @route   DELETE /api/resumable/meeting/:meetingId/cancel/:uploadId
  * @desc    Cancel resumable upload
  * @access  Private
  */
-router.delete('/meeting/:meetingId/cancel/:uploadId', cancelResumableUpload);
+router.delete("/meeting/:meetingId/cancel/:uploadId", cancelResumableUpload);
 
 export default router;

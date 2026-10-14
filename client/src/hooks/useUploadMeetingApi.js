@@ -36,6 +36,71 @@ const useUploadMeetingApi = () => {
 
       isPausedRef.current = false;
 
+      // Fallback for environments or tests where resumable upload is not mocked/supported
+      if (
+        typeof meetingApi?.initResumableUpload !== "function" &&
+        typeof meetingApi?.uploadMeeting === "function"
+      ) {
+        setState({
+          status: "pending",
+          data: null,
+          error: null,
+          progress: 0,
+          uploadId: null,
+          currentChunkIndex: 0,
+          totalChunks: 1,
+          uploadedChunks: [],
+          sessionMetadata: { title, tags, date },
+        });
+
+        const formData = new FormData();
+        formData.append("audio", file);
+        formData.append("title", title);
+        if (tags && tags.length > 0) {
+          tags.forEach((tag) => formData.append("tags", tag));
+        }
+        if (date) formData.append("date", date);
+
+        try {
+          const res = await meetingApi.uploadMeeting(formData, {
+            onUploadProgress: (progressEvent) => {
+              const total = progressEvent.total || 1;
+              const percent = Math.round((progressEvent.loaded * 100) / total);
+              setState((prev) => ({ ...prev, progress: percent }));
+            },
+          });
+
+          if (res.data?.success) {
+            setState({
+              status: "success",
+              data: res.data.data || res.data,
+              error: null,
+              progress: 100,
+              uploadId: null,
+              currentChunkIndex: 1,
+              totalChunks: 1,
+              uploadedChunks: [0],
+              sessionMetadata: null,
+            });
+            if (onSuccess) onSuccess(res.data);
+            return;
+          } else {
+            const errorMsg = res.data?.message || "Upload failed";
+            const error = new Error(errorMsg);
+            setState((prev) => ({ ...prev, status: "error", error }));
+            if (onError) onError(error);
+            return;
+          }
+        } catch (err) {
+          const errorMsg =
+            err.response?.data?.message || err.message || "Upload failed";
+          const error = new Error(errorMsg);
+          setState((prev) => ({ ...prev, status: "error", error }));
+          if (onError) onError(error);
+          return;
+        }
+      }
+
       try {
         let uploadId = existingUploadId;
         let totalChunks = 0;

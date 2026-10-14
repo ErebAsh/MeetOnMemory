@@ -205,17 +205,19 @@ export const getPreferences = async (req, res) => {
       return sendError(res, 401, "Authentication error, user ID not found.");
     }
 
+    const targetUserId = req.user.id || req.user._id;
+
     let preferences = await NotificationPreference.findOne({
-      user: req.user.id,
+      user: targetUserId,
     });
 
     if (!preferences) {
       preferences = await NotificationPreference.create({
-        user: req.user.id,
+        user: targetUserId,
       });
     }
 
-    sendSuccess(res, { preferences });
+    sendSuccess(res, { preferences, data: { preferences } });
   } catch (error) {
     console.error("Error in getPreferences:", error);
     sendError(res, 500, "Server error");
@@ -227,7 +229,7 @@ export const getPreferences = async (req, res) => {
 // @access  Private
 export const updatePreferences = async (req, res) => {
   try {
-    if (!req.user || !req.user.id) {
+    if (!req.user || (!req.user.id && !req.user._id)) {
       return sendError(res, 401, "Authentication error, user ID not found.");
     }
 
@@ -262,13 +264,19 @@ export const updatePreferences = async (req, res) => {
       return sendError(res, 400, "No valid preference fields provided.");
     }
 
+    const targetUserId = req.user.id || req.user._id;
+
     const preferences = await NotificationPreference.findOneAndUpdate(
-      { user: req.user.id },
+      { user: targetUserId },
       { $set: updates },
       { new: true, upsert: true },
     );
 
-    sendSuccess(res, { preferences }, "Preferences updated successfully");
+    sendSuccess(
+      res,
+      { preferences, data: { preferences } },
+      "Preferences updated successfully",
+    );
   } catch (error) {
     console.error("Error in updatePreferences:", error);
     sendError(res, 500, "Server error");

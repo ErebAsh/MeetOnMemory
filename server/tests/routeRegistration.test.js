@@ -10,7 +10,10 @@ import routes from "../routes/index.js";
 function countMatchingLayers(router, pathStr) {
   const stack = router.stack || [];
   return stack.filter(
-    (layer) => typeof layer.match === "function" && layer.match(pathStr),
+    (layer) =>
+      typeof layer.match === "function" &&
+      layer.match(pathStr) &&
+      layer.path === pathStr,
   ).length;
 }
 

@@ -30,6 +30,11 @@ vi.mock("@clerk/clerk-react", () => ({
   useUser: () => ({
     user: { id: "user_123", publicMetadata: { dbUserId: "db_123" } },
   }),
+  useAuth: () => ({
+    getToken: vi.fn().mockResolvedValue("mock-token"),
+    isSignedIn: true,
+    userId: "user_123",
+  }),
 }));
 
 vi.mock("../../services", () => ({

@@ -120,14 +120,19 @@ export const processActionItemReminders = async ({ organization } = {}) => {
       const orgId = item.organization || item.sourceMeetingId?.organization;
       const meetingOrganizer = item.sourceMeetingId?.organizer;
 
-      const targetUserId = await resolveTargetUserId(
-        item.owner,
-        orgId,
-        meetingOrganizer,
-      );
+      const targetUserId =
+        (await resolveTargetUserId(
+          item.owner || item.assignee?._id || item.assignee,
+          orgId,
+          meetingOrganizer,
+        )) ||
+        (item.assignee?._id
+          ? item.assignee._id.toString()
+          : item.assignee?.toString?.() || null);
       if (!targetUserId) continue;
 
       let updated = false;
+      const actionUrl = item._id ? `/followup/tasks/${item._id}` : "/tasks";
 
       // Check for Upcoming Reminder (due within 24 hours)
       if (
@@ -143,8 +148,8 @@ export const processActionItemReminders = async ({ organization } = {}) => {
           `⏰ Action Item Due Soon`,
           `Your action item "${item.text}"${meetingTitle} is due on ${dueDate.toLocaleDateString()}.`,
           "tasks",
-          `/followup/tasks/${item._id}`,
-          "View Task",
+          actionUrl,
+          "View Action Items",
           { actionItemId: item._id, reminderType: "upcoming", dueDate },
         );
 
@@ -167,8 +172,8 @@ export const processActionItemReminders = async ({ organization } = {}) => {
           `⚠️ Action Item Overdue`,
           `Your action item "${item.text}"${meetingTitle} was due on ${dueDate.toLocaleDateString()}.`,
           "tasks",
-          `/followup/tasks/${item._id}`,
-          "View Task",
+          actionUrl,
+          "View Action Items",
           { actionItemId: item._id, reminderType: "overdue", dueDate },
         );
 
@@ -202,3 +207,5 @@ export const processActionItemReminders = async ({ organization } = {}) => {
     errorCount,
   };
 };
+
+export const checkActionItemReminders = processActionItemReminders;

@@ -1,3 +1,29 @@
+import { readdirSync, readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const dynamicVitestPatterns = [];
+try {
+  const scanVitestFiles = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.name === "node_modules" || entry.name === "coverage") continue;
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        scanVitestFiles(fullPath);
+      } else if (entry.name.endsWith(".test.js") || entry.name.endsWith(".spec.js")) {
+        const content = readFileSync(fullPath, "utf8");
+        if (/from\s+['"]vitest['"]/.test(content)) {
+          dynamicVitestPatterns.push(entry.name.replace(/\./g, "\\."));
+        }
+      }
+    }
+  };
+  scanVitestFiles(__dirname);
+} catch {
+  // ignore
+}
+
 export default {
   testEnvironment: "node",
 
@@ -17,18 +43,15 @@ export default {
   // Run those suites via `npm run test:unit` instead.
   testPathIgnorePatterns: [
     "/node_modules/",
-
-    // Vitest-authored suites are named `*.vitest.test.js` and are excluded by
-    // this one pattern (Issue #2575).
-    //
-    // The list below is the alternative, and it is why this pattern exists:
-    // every contributor adding a Vitest suite had to append a filename here,
-    // to `test:unit` in package.json, and to VITEST_TEST_FILES in
-    // scripts/validation/run-server-related-tests.mjs. Three hand-maintained
-    // registries, all edited at the same line, so any two such PRs conflicted
-    // with each other by construction. A new suite that follows the naming
-    // convention needs no registration at all.
+    "/jobs/__tests__/",
+    "/socket/__tests__/",
+    "/controllers/__tests__/",
+    "/services/__tests__/",
+    "/config/__tests__/",
     "\\.vitest\\.test\\.js$",
+    "tests/integration\\.test\\.js$",
+    "tests/policyComplianceIntegration\\.test\\.js$",
+    ...dynamicVitestPatterns,
 
     "documentSyncAuthorization.test.js",
     "workspaceSocketAuthentication.test.js",

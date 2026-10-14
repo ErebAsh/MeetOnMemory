@@ -109,6 +109,9 @@
       "name": "Custom Fields"
     },
     {
+      "name": "Custom Roles"
+    },
+    {
       "name": "Dashboard"
     },
     {
@@ -12460,7 +12463,6 @@
         }
       }
     },
- feature/wire-decision-dashboard-2440
     "/api/decision-log/analytics": {
       "get": {
         "tags": ["Decision Log"],
@@ -12480,8 +12482,6 @@
         }
       }
     },
-
- main
     "/api/decision-log/timeline": {
       "get": {
         "tags": ["Decision Log"],
@@ -12580,54 +12580,6 @@
       "put": {
         "tags": ["Decision Log"],
         "summary": "PUT /api/decision-log/{id}",
- feature/wire-decision-dashboard-2440
-
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          },
-          "401": {
-            "description": "Unauthorized"
-          }
-        },
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": ["Decision Log"],
-        "summary": "DELETE /api/decision-log/{id}",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          },
-          "401": {
-            "description": "Unauthorized"
-          }
-        }
-      }
-    },
-    "/api/decisions/impact/report": {
-      "get": {
-        "tags": ["Decisions"],
-        "summary": "GET /api/decisions/impact/report",
- main
         "security": [
           {
             "bearerAuth": []
@@ -23044,6 +22996,98 @@
                 "type": "object"
               }
             }
+          }
+        }
+      }
+    },
+    "/api/custom-roles/roles": {
+      "post": {
+        "tags": ["Custom Roles"],
+        "summary": "POST /api/custom-roles/roles",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Custom Roles"],
+        "summary": "GET /api/custom-roles/roles",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/custom-roles/acl": {
+      "post": {
+        "tags": ["Custom Roles"],
+        "summary": "POST /api/custom-roles/acl",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/custom-roles/check-permission": {
+      "get": {
+        "tags": ["Custom Roles"],
+        "summary": "GET /api/custom-roles/check-permission",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Unauthorized"
           }
         }
       }

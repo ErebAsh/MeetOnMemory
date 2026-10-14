@@ -11,6 +11,17 @@ import {
   ConflictError,
 } from "../utils/errors.js";
 
+const handleError = (res, next, error, defaultStatus = 500) => {
+  if (typeof next === "function") {
+    return next(error);
+  }
+  const status = error.statusCode || error.status || defaultStatus;
+  return res.status(status).json({
+    success: false,
+    message: error.message,
+  });
+};
+
 /**
  * ✅ Create or Join Organization
  * - If org exists → join as Member
@@ -23,12 +34,22 @@ export const createOrJoinOrganization = async (req, res, next) => {
 
     // Validate authentication
     if (!req.user || !req.user.id) {
-      return next(new UnauthorizedError("Authentication failed."));
+      return handleError(
+        res,
+        next,
+        new UnauthorizedError("Authentication failed."),
+        401,
+      );
     }
 
     // Validate org name
     if (!name || !name.trim()) {
-      return next(new ValidationError("Please provide an organization name."));
+      return handleError(
+        res,
+        next,
+        new ValidationError("Please provide an organization name."),
+        400,
+      );
     }
 
     const result = await OrganizationService.createOrJoinOrganization(
@@ -38,7 +59,7 @@ export const createOrJoinOrganization = async (req, res, next) => {
 
     sendSuccess(res, result);
   } catch (error) {
-    return next(error);
+    return handleError(res, next, error);
   }
 };
 
@@ -51,7 +72,7 @@ export const getAllOrganizations = async (req, res, next) => {
     const result = await OrganizationService.getAllOrganizations();
     sendSuccess(res, result);
   } catch (error) {
-    return next(error);
+    return handleError(res, next, error);
   }
 };
 
@@ -62,7 +83,12 @@ export const getAllOrganizations = async (req, res, next) => {
 export const joinOrganization = async (req, res, next) => {
   try {
     if (!req.user || !req.user.id) {
-      return next(new UnauthorizedError("Authentication failed."));
+      return handleError(
+        res,
+        next,
+        new UnauthorizedError("Authentication failed."),
+        401,
+      );
     }
 
     const result = await OrganizationService.joinOrganizationById(
@@ -72,7 +98,7 @@ export const joinOrganization = async (req, res, next) => {
 
     sendSuccess(res, result);
   } catch (error) {
-    return next(error);
+    return handleError(res, next, error);
   }
 };
 

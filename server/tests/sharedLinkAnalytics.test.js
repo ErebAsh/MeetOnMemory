@@ -22,6 +22,12 @@ vi.mock("../models/meetingModel.js", () => ({
         }),
       })),
     })),
+    aggregate: vi.fn().mockResolvedValue([
+      {
+        _id: "meeting-1",
+        title: "Standup",
+      },
+    ]),
   },
 }));
 

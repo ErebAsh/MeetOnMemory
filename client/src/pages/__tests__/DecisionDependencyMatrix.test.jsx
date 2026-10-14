@@ -118,9 +118,11 @@ describe("DecisionDependencyMatrix Page", () => {
 
     expect(screen.getByText("Dependency Detail")).toBeInTheDocument();
     expect(
-      screen.getByText("Adopt Microservices Architecture"),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Migrate Auth to OAuth 2.0")).toBeInTheDocument();
+      screen.getAllByText("Adopt Microservices Architecture").length,
+    ).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getAllByText("Migrate Auth to OAuth 2.0").length,
+    ).toBeGreaterThanOrEqual(1);
   });
 
   it("renders error state when matrix fetch fails", async () => {

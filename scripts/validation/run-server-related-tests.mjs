@@ -6,11 +6,11 @@ import {
   run,
   runNpx,
 } from "./changed-files.mjs";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 const JEST =
-  "node --max-old-space-size=4096 --experimental-vm-modules node_modules/jest/bin/jest.js --forceExit";
+  "node --max-old-space-size=8192 --experimental-vm-modules node_modules/jest/bin/jest.js --forceExit";
 const serverCwd = `${repoRoot}/server`;
 
 const TEST_FILE_REGEX = /(\.test\.|\.spec\.|__tests__)/;
@@ -31,6 +31,51 @@ const VITEST_TEST_FILES = new Set([
   "server/tests/meetingROIController.test.js",
   "server/tests/aiMeetingNoteController.test.js",
   "server/__tests__/audit.test.js",
+  "server/tests/documentSyncAuthorization.test.js",
+  "server/tests/workspaceSocketAuthentication.test.js",
+  "server/tests/topicValidation.test.js",
+  "server/tests/glossarySearchSecurity.test.js",
+  "server/tests/clerkRbacIntegration.test.js",
+  "server/tests/decisionGraphOptimized.test.js",
+  "server/tests/sessionAiPermission.test.js",
+  "server/tests/attendanceAnalyticsOptimized.test.js",
+  "server/tests/calendarSyncOrganization.test.js",
+  "server/tests/pollExpirationBatch.test.js",
+  "server/tests/voiceSearchTenantIsolation.test.js",
+  "server/tests/ragAssistantSocketScope.test.js",
+  "server/tests/dashboardController.test.js",
+  "server/tests/routeRegistration.test.js",
+  "server/tests/knowledgeSearchRegexSafety.test.js",
+  "server/tests/periodBucket.test.js",
+  "server/tests/rateLimitStore.test.js",
+  "server/tests/attachmentDownloadHeaders.test.js",
+  "server/tests/vectorSearchOrgFiltering.test.js",
+  "server/tests/vectorMetadataMinimization.test.js",
+  "server/tests/translationSocketAuth.test.js",
+  "server/tests/publicOrgDiscovery.test.js",
+  "server/tests/rateLimiter.test.js",
+  "server/tests/pollExpirationJob.test.js",
+  "server/tests/originValidation.test.js",
+  "server/tests/meetingQualityWiring.test.js",
+  "server/tests/meetingPresenceSpoofing.test.js",
+  "server/tests/liveMeetingInvitationValidation.test.js",
+  "server/tests/corsOptions.test.js",
+  "server/tests/bookmarkOrphanedSafety.test.js",
+  "server/tests/bookmarkOwnership.test.js",
+  "server/tests/archivedKnowledgeService.test.js",
+  "server/tests/aiMomWorkerRegistration.test.js",
+  "server/tests/agendaPacingAuthorization.test.js",
+  "server/tests/followUpReminderJobRegistration.test.js",
+  "server/tests/automationRulesRbac.test.js",
+  "server/tests/calendarConnectionSync.test.js",
+  "server/tests/clerkUserProvisioningRace.test.js",
+  "server/tests/reactionSocketAuthorization.test.js",
+  "server/tests/translationAuthorization.test.js",
+  "server/tests/policyComplianceRoutePrefix.test.js",
+  "server/tests/knowledgeGraphRouteMount.test.js",
+  "server/tests/icebreaker.test.js",
+  "server/tests/analyticsRouteWiring.test.js",
+  "server/jobs/__tests__/actionItemReminderJobRegistration.test.js",
 ]);
 const JEST_RELATED_IGNORE = [
   "tests/integration.test.js",
@@ -108,6 +153,8 @@ const vitestOwnedSources = new Set([
   "server/controllers/decisionLogController.js",
   "server/routes/decisionLogRoutes.js",
   "server/services/decisionLogService.js",
+  "server/controllers/preMeetingBriefingController.js",
+  "server/routes/preMeetingBriefingRoutes.js",
   "server/routes/index.js",
 ]);
 const VITEST_SOURCE_TEST_MAP = {
@@ -117,17 +164,10 @@ const VITEST_SOURCE_TEST_MAP = {
     "server/tests/decisionLogAnalytics.vitest.test.js",
   "server/services/decisionLogService.js":
     "server/tests/decisionLogAnalytics.vitest.test.js",
-
-  "server/controllers/preMeetingBriefingController.js",
-  "server/routes/preMeetingBriefingRoutes.js",
-  "server/routes/index.js",
-]);
-const VITEST_SOURCE_TEST_MAP = {
   "server/controllers/preMeetingBriefingController.js":
     "server/tests/preMeetingBriefingController.vitest.test.js",
   "server/routes/preMeetingBriefingRoutes.js":
     "server/tests/preMeetingBriefingController.vitest.test.js",
- main
   "server/routes/auditRoutes.js": "server/__tests__/audit.test.js",
   "server/controllers/standupController.js":
     "server/tests/standupController.vitest.test.js",
@@ -218,8 +258,18 @@ const VITEST_SOURCE_TEST_MAP = {
 };
 // Suites named `*.vitest.test.js` are Vitest-owned by convention and need no
 // entry in VITEST_TEST_FILES above (Issue #2575).
-const isVitestSuite = (file) =>
-  VITEST_TEST_FILES.has(file) || file.endsWith(".vitest.test.js");
+const isVitestSuite = (file) => {
+  if (VITEST_TEST_FILES.has(file) || file.endsWith(".vitest.test.js"))
+    return true;
+  const absPath = path.isAbsolute(file) ? file : path.join(repoRoot, file);
+  if (!existsSync(absPath)) return false;
+  try {
+    const content = readFileSync(absPath, "utf8");
+    return /from\s+['"]vitest['"]/.test(content);
+  } catch {
+    return false;
+  }
+};
 
 const vitestTests = [
   ...directTests.filter(isVitestSuite),
@@ -235,7 +285,7 @@ const vitestTests = [
 const uniqueVitestTests = [...new Set(vitestTests)];
 // Skip deleted legacy test files still present in the diff against main.
 const jestTests = directTests.filter(
-  (file) => !VITEST_TEST_FILES.has(file) && fileExists(file),
+  (file) => !isVitestSuite(file) && fileExists(file),
 );
 const jestSources = sourceFiles.filter(
   (file) => !vitestOwnedSources.has(file) && fileExists(file),
@@ -263,24 +313,48 @@ if (jestTests.length > 0) {
 }
 
 if (jestSources.length > 0) {
-  const scopedSources = jestSources.map((file) => file.slice("server/".length));
-  const ignoreArgs = JEST_RELATED_IGNORE.map(
-    (pattern) => `--testPathIgnorePatterns=${pattern}`,
-  ).join(" ");
+  const JEST_GLOBAL_SOURCES = new Set([
+    "server/config/mongodb.js",
+    "server/config/workers.js",
+    "server/tests/setup.js",
+    "server/middleware/cacheMiddleware.js",
+    "server/middleware/meetingAuth.js",
+    "server/middleware/rateLimitStore.js",
+    "server/middleware/validateObjectId.js",
+    "server/models/notificationModel.js",
+    "server/models/MediaSession.js",
+    "server/services/notificationService.js",
+    "server/services/queueService.js",
+    "server/services/calendarSyncService.js",
+    "server/services/dataExtractor.js",
+    "server/services/documentGenerator.js",
+    "server/services/authLinkingService.js",
+    "server/controllers/userController.js",
+    "server/jobs/processTranscriptionJob.js",
+  ]);
 
-  // File paths must immediately follow --findRelatedTests (Jest 30+).
-  run(
-    `${JEST} --runInBand --passWithNoTests --findRelatedTests ${quoteFiles(
-      scopedSources,
-    )} ${ignoreArgs}`,
-    {
-      cwd: serverCwd,
-    },
-  );
+  const scopedSources = jestSources
+    .filter((file) => !JEST_GLOBAL_SOURCES.has(file))
+    .map((file) => file.slice("server/".length));
 
-  runNpx(`vitest related --passWithNoTests ${quoteFiles(scopedSources)}`, {
-    cwd: serverCwd,
-  });
+  if (scopedSources.length > 0) {
+    // File paths must immediately follow --findRelatedTests (Jest 30+).
+    run(
+      `${JEST} --runInBand --passWithNoTests --findRelatedTests ${quoteFiles(
+        scopedSources,
+      )}`,
+      {
+        cwd: serverCwd,
+      },
+    );
+
+    runNpx(
+      `vitest related --run --passWithNoTests ${quoteFiles(scopedSources)}`,
+      {
+        cwd: serverCwd,
+      },
+    );
+  }
 }
 
 if (uniqueVitestTests.length > 0) {

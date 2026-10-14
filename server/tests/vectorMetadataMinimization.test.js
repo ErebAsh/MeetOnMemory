@@ -27,6 +27,12 @@ vi.mock("@xenova/transformers", () => {
   };
 });
 
+vi.mock("../models/meetingModel.js", () => ({
+  default: {
+    updateOne: vi.fn().mockResolvedValue({}),
+  },
+}));
+
 describe("Vector Metadata Minimization & Sensitive Fields Removal", () => {
   beforeEach(() => {
     vi.clearAllMocks();

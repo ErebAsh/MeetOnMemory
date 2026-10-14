@@ -92,8 +92,8 @@ describe("SeriesNavigation Component (Issue #915)", () => {
       expect(screen.getByText(/Meeting 105 of 120/i)).toBeInTheDocument();
     });
 
-    const prevButton = screen.getByRole("button", { name: /Previous/i });
-    const nextButton = screen.getByRole("button", { name: /Next/i });
+    const prevButton = screen.getByRole("button", { name: /^Previous$/i });
+    const nextButton = screen.getByRole("button", { name: /^Next$/i });
 
     expect(prevButton).not.toBeDisabled();
     expect(nextButton).not.toBeDisabled();

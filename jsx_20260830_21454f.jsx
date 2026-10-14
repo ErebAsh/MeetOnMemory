@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
 import {
   ArrowLeft,
   Users,
@@ -15,7 +15,7 @@ import {
   Loader2,
   TrendingUp,
   PieChart,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   LineChart,
   Line,
@@ -30,28 +30,28 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-} from 'recharts';
+} from "recharts";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-const API_PREFIX = '/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+const API_PREFIX = "/api";
 
 const api = axios.create({
   baseURL: `${API_BASE_URL}${API_PREFIX}`,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
   withCredentials: true,
 });
 
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('clerk_token');
+    const token = localStorage.getItem("clerk_token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 const MeetingAnalytics = () => {
@@ -74,40 +74,45 @@ const MeetingAnalytics = () => {
       if (response.data.success) {
         setAnalytics(response.data.data);
       } else {
-        setError(response.data.error || 'Failed to load analytics');
+        setError(response.data.error || "Failed to load analytics");
       }
     } catch (err) {
-      console.error('Analytics fetch error:', err);
+      console.error("Analytics fetch error:", err);
       if (err.response?.status === 403) {
-        setError('You do not have permission to view analytics for this meeting');
+        setError(
+          "You do not have permission to view analytics for this meeting",
+        );
       } else if (err.response?.status === 404) {
-        setError('Meeting not found');
+        setError("Meeting not found");
       } else {
-        setError(err.response?.data?.error || 'Failed to load analytics. Please try again.');
+        setError(
+          err.response?.data?.error ||
+            "Failed to load analytics. Please try again.",
+        );
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleExport = async (format = 'csv') => {
+  const handleExport = async (format = "csv") => {
     setExporting(true);
     try {
       const response = await api.get(`/analytics/meetings/${id}/export`, {
         params: { format },
-        responseType: 'blob',
+        responseType: "blob",
       });
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      link.setAttribute('download', `meeting_analytics_${id}.${format}`);
+      link.setAttribute("download", `meeting_analytics_${id}.${format}`);
       document.body.appendChild(link);
       link.click();
       link.remove();
     } catch (err) {
-      console.error('Export error:', err);
-      alert('Failed to export analytics');
+      console.error("Export error:", err);
+      alert("Failed to export analytics");
     } finally {
       setExporting(false);
     }
@@ -163,23 +168,31 @@ const MeetingAnalytics = () => {
     );
   }
 
-  const { meeting, attendance, transcript, actionItems, engagement, icebreakers, summary } = analytics;
+  const {
+    meeting,
+    attendance,
+    transcript,
+    actionItems,
+    engagement,
+    icebreakers,
+    summary,
+  } = analytics;
 
   // Prepare chart data
   const attendanceData = [
-    { name: 'Present', value: attendance.present || 0 },
-    { name: 'Absent', value: attendance.absent || 0 },
-    { name: 'Excused', value: attendance.excused || 0 },
+    { name: "Present", value: attendance.present || 0 },
+    { name: "Absent", value: attendance.absent || 0 },
+    { name: "Excused", value: attendance.excused || 0 },
   ];
 
   const actionItemsData = [
-    { name: 'Completed', value: actionItems.completed || 0 },
-    { name: 'In Progress', value: actionItems.inProgress || 0 },
-    { name: 'Pending', value: actionItems.pending || 0 },
+    { name: "Completed", value: actionItems.completed || 0 },
+    { name: "In Progress", value: actionItems.inProgress || 0 },
+    { name: "Pending", value: actionItems.pending || 0 },
   ];
 
-  const COLORS = ['#22c55e', '#eab308', '#ef4444'];
-  const ENGAGEMENT_COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b'];
+  const COLORS = ["#22c55e", "#eab308", "#ef4444"];
+  const ENGAGEMENT_COLORS = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b"];
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
@@ -194,10 +207,14 @@ const MeetingAnalytics = () => {
               <ArrowLeft className="w-4 h-4" />
               Back to Meeting
             </button>
-            <h1 className="text-2xl font-bold text-gray-800">{meeting.title}</h1>
+            <h1 className="text-2xl font-bold text-gray-800">
+              {meeting.title}
+            </h1>
             <p className="text-sm text-gray-500">
-              {new Date(meeting.startTime).toLocaleDateString()} • 
-              {meeting.duration ? ` ${meeting.duration} min` : ' No duration data'}
+              {new Date(meeting.startTime).toLocaleDateString()} •
+              {meeting.duration
+                ? ` ${meeting.duration} min`
+                : " No duration data"}
             </p>
           </div>
           <div className="flex gap-2">
@@ -209,7 +226,7 @@ const MeetingAnalytics = () => {
               Refresh
             </button>
             <button
-              onClick={() => handleExport('csv')}
+              onClick={() => handleExport("csv")}
               disabled={exporting}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50"
             >
@@ -230,7 +247,9 @@ const MeetingAnalytics = () => {
               <Users className="w-4 h-4" />
               <span>Participants</span>
             </div>
-            <div className="text-2xl font-bold text-gray-800">{summary.totalParticipants}</div>
+            <div className="text-2xl font-bold text-gray-800">
+              {summary.totalParticipants}
+            </div>
             <div className="text-xs text-gray-400 mt-1">
               {attendance.completionRate}% attendance rate
             </div>
@@ -241,7 +260,9 @@ const MeetingAnalytics = () => {
               <CheckCircle className="w-4 h-4 text-green-500" />
               <span>Completion Rate</span>
             </div>
-            <div className="text-2xl font-bold text-gray-800">{summary.completionRate}%</div>
+            <div className="text-2xl font-bold text-gray-800">
+              {summary.completionRate}%
+            </div>
             <div className="text-xs text-gray-400 mt-1">
               {attendance.present || 0} present
             </div>
@@ -252,7 +273,9 @@ const MeetingAnalytics = () => {
               <FileText className="w-4 h-4 text-blue-500" />
               <span>Action Items</span>
             </div>
-            <div className="text-2xl font-bold text-gray-800">{actionItems.total || 0}</div>
+            <div className="text-2xl font-bold text-gray-800">
+              {actionItems.total || 0}
+            </div>
             <div className="text-xs text-gray-400 mt-1">
               {actionItems.completionRate}% completed
             </div>
@@ -263,7 +286,9 @@ const MeetingAnalytics = () => {
               <TrendingUp className="w-4 h-4 text-purple-500" />
               <span>Engagement Score</span>
             </div>
-            <div className="text-2xl font-bold text-gray-800">{summary.engagementScore}%</div>
+            <div className="text-2xl font-bold text-gray-800">
+              {summary.engagementScore}%
+            </div>
             <div className="text-xs text-gray-400 mt-1">
               {engagement.totalIcebreakers || 0} icebreakers
             </div>
@@ -286,13 +311,18 @@ const MeetingAnalytics = () => {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }) =>
+                      `${name} ${(percent * 100).toFixed(0)}%`
+                    }
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
                   >
                     {attendanceData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
                     ))}
                   </Pie>
                   <Tooltip />
@@ -315,13 +345,18 @@ const MeetingAnalytics = () => {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }) =>
+                      `${name} ${(percent * 100).toFixed(0)}%`
+                    }
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
                   >
                     {actionItemsData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
                     ))}
                   </Pie>
                   <Tooltip />
@@ -338,10 +373,14 @@ const MeetingAnalytics = () => {
             {transcript.hasTranscript ? (
               <div>
                 <p className="text-sm text-gray-600">
-                  Word count: <span className="font-semibold">{transcript.wordCount}</span>
+                  Word count:{" "}
+                  <span className="font-semibold">{transcript.wordCount}</span>
                 </p>
                 <p className="text-sm text-gray-600">
-                  Length: <span className="font-semibold">{transcript.length} characters</span>
+                  Length:{" "}
+                  <span className="font-semibold">
+                    {transcript.length} characters
+                  </span>
                 </p>
                 {transcript.isEncrypted && (
                   <p className="text-sm text-yellow-600 flex items-center gap-1 mt-2">
@@ -356,19 +395,27 @@ const MeetingAnalytics = () => {
           </div>
 
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <h4 className="font-medium text-gray-700 mb-3">Action Items by Priority</h4>
+            <h4 className="font-medium text-gray-700 mb-3">
+              Action Items by Priority
+            </h4>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-red-600">High</span>
-                <span className="font-semibold">{actionItems.byPriority?.high || 0}</span>
+                <span className="font-semibold">
+                  {actionItems.byPriority?.high || 0}
+                </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-yellow-600">Medium</span>
-                <span className="font-semibold">{actionItems.byPriority?.medium || 0}</span>
+                <span className="font-semibold">
+                  {actionItems.byPriority?.medium || 0}
+                </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-green-600">Low</span>
-                <span className="font-semibold">{actionItems.byPriority?.low || 0}</span>
+                <span className="font-semibold">
+                  {actionItems.byPriority?.low || 0}
+                </span>
               </div>
             </div>
           </div>
@@ -377,13 +424,22 @@ const MeetingAnalytics = () => {
             <h4 className="font-medium text-gray-700 mb-3">Engagement</h4>
             <div>
               <p className="text-sm text-gray-600">
-                Total Icebreakers: <span className="font-semibold">{engagement.totalIcebreakers || 0}</span>
+                Total Icebreakers:{" "}
+                <span className="font-semibold">
+                  {engagement.totalIcebreakers || 0}
+                </span>
               </p>
               <p className="text-sm text-gray-600">
-                Total Responses: <span className="font-semibold">{engagement.totalResponses || 0}</span>
+                Total Responses:{" "}
+                <span className="font-semibold">
+                  {engagement.totalResponses || 0}
+                </span>
               </p>
               <p className="text-sm text-gray-600">
-                Average Responses: <span className="font-semibold">{engagement.averageResponses || 0}</span>
+                Average Responses:{" "}
+                <span className="font-semibold">
+                  {engagement.averageResponses || 0}
+                </span>
               </p>
             </div>
           </div>
@@ -398,9 +454,14 @@ const MeetingAnalytics = () => {
             </h3>
             <div className="space-y-3">
               {icebreakers.recent.map((ib, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                >
                   <div>
-                    <p className="text-sm font-medium text-gray-700">{ib.question}</p>
+                    <p className="text-sm font-medium text-gray-700">
+                      {ib.question}
+                    </p>
                     <p className="text-xs text-gray-400">
                       {ib.type} • {new Date(ib.createdAt).toLocaleDateString()}
                     </p>
@@ -418,7 +479,9 @@ const MeetingAnalytics = () => {
         <div className="mt-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg shadow-sm p-6 border border-blue-100">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-semibold text-gray-800">Overall Meeting Score</h3>
+              <h3 className="font-semibold text-gray-800">
+                Overall Meeting Score
+              </h3>
               <p className="text-sm text-gray-600 mt-1">
                 Based on attendance, action items, and engagement metrics
               </p>

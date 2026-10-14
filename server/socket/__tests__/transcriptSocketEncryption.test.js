@@ -153,7 +153,11 @@ describe("Transcript Socket Encryption (#2646)", () => {
         isTranscriptEncrypted: true,
       });
 
-      const segment = { text: "PLAINTEXT LEAK", speaker: "Alice", timestamp: 1000 };
+      const segment = {
+        text: "PLAINTEXT LEAK",
+        speaker: "Alice",
+        timestamp: 1000,
+      };
       await eventHandlers["transcript-segment"]({ meetingId, segment });
 
       expect(socketMock.to).toHaveBeenCalledWith(roomId);
@@ -184,7 +188,10 @@ describe("Transcript Socket Encryption (#2646)", () => {
       await eventHandlers["transcript-final"]({ meetingId, transcript });
 
       expect(ioMock.to).toHaveBeenCalledWith(roomId);
-      expect(ioMock.to().emit).toHaveBeenCalledWith("transcript-final", transcript);
+      expect(ioMock.to().emit).toHaveBeenCalledWith(
+        "transcript-final",
+        transcript,
+      );
     });
 
     it("broadcasts encrypted metadata only for encrypted meetings (no plaintext)", async () => {

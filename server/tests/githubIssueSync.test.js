@@ -2,16 +2,8 @@ import crypto from "crypto";
 import mongoose from "mongoose";
 import request from "supertest";
 import { jest } from "@jest/globals";
-import { app } from "../server.js";
-import { createClerkTestToken } from "./helpers/clerkTestAuth.js";
-import User from "../models/userModel.js";
-import Organization from "../models/organizationModel.js";
-import Membership from "../models/membershipModel.js";
-import ActionItem from "../models/actionItemModel.js";
-import Meeting from "../models/meetingModel.js";
-import GithubIntegration from "../models/githubIntegrationModel.js";
-import GitHubIssueSync from "../models/githubIssueSyncModel.js";
-import { encryptToken } from "../utils/crypto.js";
+
+process.env.GITHUB_WEBHOOK_SECRET = "test_secret";
 
 // Mock nodemailer
 jest.mock("../config/nodeMailer.js", () => ({
@@ -28,6 +20,19 @@ jest.unstable_mockModule("@octokit/rest", () => ({
   })),
 }));
 
+const { app } = await import("../server.js");
+const { createClerkTestToken } = await import("./helpers/clerkTestAuth.js");
+const { default: User } = await import("../models/userModel.js");
+const { default: Organization } =
+  await import("../models/organizationModel.js");
+const { default: Membership } = await import("../models/membershipModel.js");
+const { default: ActionItem } = await import("../models/actionItemModel.js");
+const { default: Meeting } = await import("../models/meetingModel.js");
+const { default: GithubIntegration } =
+  await import("../models/githubIntegrationModel.js");
+const { default: GitHubIssueSync } =
+  await import("../models/githubIssueSyncModel.js");
+const { encryptToken } = await import("../utils/crypto.js");
 const { syncActionItemToGitHub } =
   await import("../services/githubSyncService.js");
 
@@ -81,6 +86,8 @@ describe("GitHub Issue Sync — Issue #1600", () => {
     meeting = await Meeting.create({
       title: "Sprint Retro",
       organizationId: orgA._id,
+      organization: orgA._id,
+      uploadedBy: user._id,
       createdBy: user._id,
       date: new Date(),
     });
@@ -146,6 +153,11 @@ describe("GitHub Issue Sync — Issue #1600", () => {
       await syncActionItemToGitHub(actionItem);
     });
 
+    const sign = (body) => {
+      const hmac = crypto.createHmac("sha256", "test_secret");
+      return "sha256=" + hmac.update(JSON.stringify(body)).digest("hex");
+    };
+
     it("should mark action item completed when GitHub issue is closed", async () => {
       const payload = {
         action: "closed",
@@ -157,6 +169,7 @@ describe("GitHub Issue Sync — Issue #1600", () => {
         .post("/api/webhooks/github")
         .set("x-github-event", "issues")
         .set("x-github-delivery", "delivery-close-1")
+        .set("x-hub-signature-256", sign(payload))
         .send(payload);
 
       expect(res.statusCode).toBe(200);
@@ -177,15 +190,21 @@ describe("GitHub Issue Sync — Issue #1600", () => {
     });
 
     it("should reopen action item when GitHub issue is reopened", async () => {
+      const payload = {
+        action: "reopened",
+        issue: { number: 42 },
+        repository: { full_name: "acme/project" },
+      };
+      const hmac = crypto.createHmac("sha256", "test_secret");
+      const sig =
+        "sha256=" + hmac.update(JSON.stringify(payload)).digest("hex");
+
       const res = await request(app)
         .post("/api/webhooks/github")
         .set("x-github-event", "issues")
         .set("x-github-delivery", "delivery-reopen-1")
-        .send({
-          action: "reopened",
-          issue: { number: 42 },
-          repository: { full_name: "acme/project" },
-        });
+        .set("x-hub-signature-256", sig)
+        .send(payload);
 
       expect(res.statusCode).toBe(200);
       const item = await ActionItem.findById(actionItem._id);
@@ -207,11 +226,15 @@ describe("GitHub Issue Sync — Issue #1600", () => {
         issue: { number: 42 },
         repository: { full_name: "acme/project" },
       };
+      const hmac = crypto.createHmac("sha256", "test_secret");
+      const sig =
+        "sha256=" + hmac.update(JSON.stringify(payload)).digest("hex");
 
       await request(app)
         .post("/api/webhooks/github")
         .set("x-github-event", "issues")
         .set("x-github-delivery", "dup-delivery-1")
+        .set("x-hub-signature-256", sig)
         .send(payload);
 
       // Reopen manually so we can tell if a second close went through
@@ -224,6 +247,7 @@ describe("GitHub Issue Sync — Issue #1600", () => {
         .post("/api/webhooks/github")
         .set("x-github-event", "issues")
         .set("x-github-delivery", "dup-delivery-1")
+        .set("x-hub-signature-256", sig)
         .send(payload);
 
       expect(res2.body.message).toBe("Already processed");
@@ -280,15 +304,21 @@ describe("GitHub Issue Sync — Issue #1600", () => {
 
   describe("Webhook with no matching mapping", () => {
     it("should return 200 without updating anything", async () => {
+      const payload = {
+        action: "closed",
+        issue: { number: 9999 },
+        repository: { full_name: "unknown/repo" },
+      };
+      const hmac = crypto.createHmac("sha256", "test_secret");
+      const sig =
+        "sha256=" + hmac.update(JSON.stringify(payload)).digest("hex");
+
       const res = await request(app)
         .post("/api/webhooks/github")
         .set("x-github-event", "issues")
         .set("x-github-delivery", "no-mapping-1")
-        .send({
-          action: "closed",
-          issue: { number: 9999 },
-          repository: { full_name: "unknown/repo" },
-        });
+        .set("x-hub-signature-256", sig)
+        .send(payload);
 
       expect(res.statusCode).toBe(200);
       expect(res.body.updated).toBe(false);
@@ -302,6 +332,8 @@ describe("GitHub Issue Sync — Issue #1600", () => {
       const otherMeeting = await Meeting.create({
         title: "Other Meeting",
         organizationId: orgB._id,
+        organization: orgB._id,
+        uploadedBy: userB._id,
         createdBy: userB._id,
         date: new Date(),
       });

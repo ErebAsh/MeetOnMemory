@@ -1,5 +1,21 @@
 import { MongoMemoryServer } from "mongodb-memory-server";
 import mongoose from "mongoose";
+import { jest } from "@jest/globals";
+
+// Mock jsdom virtually to bypass Jest CJS/ESM loader issues with EXODUS bytes
+if (typeof jest !== "undefined" && jest.unstable_mockModule) {
+  jest.unstable_mockModule(
+    "jsdom",
+    () => ({
+      JSDOM: class JSDOM {
+        constructor() {
+          this.window = {};
+        }
+      },
+    }),
+    { virtual: true },
+  );
+}
 
 process.env.CALENDAR_ENCRYPTION_KEY =
   "test_encryption_key_32_bytes_long_xxxxxxxxx";

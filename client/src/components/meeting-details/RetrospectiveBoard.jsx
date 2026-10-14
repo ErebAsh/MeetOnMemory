@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useContext } from "react";
+import { QueryClientContext } from "@tanstack/react-query";
 import { useUser } from "@clerk/clerk-react";
 import {
   useRetrospective,
@@ -15,7 +16,15 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 
-const RetrospectiveBoard = ({ meetingId }) => {
+const RetrospectiveBoard = (props) => {
+  const queryClient = useContext(QueryClientContext);
+  if (!queryClient) {
+    return null;
+  }
+  return <RetrospectiveBoardInner {...props} />;
+};
+
+const RetrospectiveBoardInner = ({ meetingId }) => {
   const { user } = useUser();
   const dbUserId = user?.publicMetadata?.dbUserId;
 

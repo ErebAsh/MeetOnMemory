@@ -1,6 +1,6 @@
-import Meeting from '../models/Meeting.js';
-import Organization from '../models/Organization.js';
-import GuestAccess from '../models/GuestAccess.js';
+import Meeting from "../models/Meeting.js";
+import Organization from "../models/Organization.js";
+import GuestAccess from "../models/GuestAccess.js";
 import {
   getGuestTranscriptAccess,
   getGuestEncryptedEnvelope,
@@ -8,19 +8,22 @@ import {
   decryptTranscript,
   isEncrypted,
   generateEncryptedPreview,
-} from '../utils/transcriptEncryption.js';
-import logger from '../utils/logger.js';
-import jwt from 'jsonwebtoken';
+} from "../utils/transcriptEncryption.js";
+import logger from "../utils/logger.js";
+import jwt from "jsonwebtoken";
 
 /**
  * Validate guest access token
  */
 const validateGuestToken = (token) => {
   try {
-    const decoded = jwt.verify(token, process.env.GUEST_ACCESS_SECRET || process.env.JWT_SECRET);
+    const decoded = jwt.verify(
+      token,
+      process.env.GUEST_ACCESS_SECRET || process.env.JWT_SECRET,
+    );
     return decoded;
   } catch (error) {
-    logger.error('Invalid guest token:', error);
+    logger.error("Invalid guest token:", error);
     return null;
   }
 };
@@ -38,15 +41,15 @@ export const createGuestAccess = async (req, res) => {
     if (!meeting) {
       return res.status(404).json({
         success: false,
-        error: 'Meeting not found',
+        error: "Meeting not found",
       });
     }
 
     // Check if user has permission to create guest access
-    if (meeting.createdBy.toString() !== userId && req.user.role !== 'admin') {
+    if (meeting.createdBy.toString() !== userId && req.user.role !== "admin") {
       return res.status(403).json({
         success: false,
-        error: 'Not authorized to create guest access',
+        error: "Not authorized to create guest access",
       });
     }
 
@@ -54,12 +57,12 @@ export const createGuestAccess = async (req, res) => {
     const token = jwt.sign(
       {
         meetingId,
-        accessLevel: accessLevel || 'view',
+        accessLevel: accessLevel || "view",
         createdBy: userId,
         createdAt: Date.now(),
       },
       process.env.GUEST_ACCESS_SECRET || process.env.JWT_SECRET,
-      { expiresIn: expiresIn || '7d' }
+      { expiresIn: expiresIn || "7d" },
     );
 
     // Create guest access record
@@ -67,12 +70,15 @@ export const createGuestAccess = async (req, res) => {
       meetingId,
       createdBy: userId,
       token,
-      accessLevel: accessLevel || 'view',
-      expiresAt: new Date(Date.now() + (expiresIn ? parseExpiry(expiresIn) : 7 * 24 * 60 * 60 * 1000)),
+      accessLevel: accessLevel || "view",
+      expiresAt: new Date(
+        Date.now() +
+          (expiresIn ? parseExpiry(expiresIn) : 7 * 24 * 60 * 60 * 1000),
+      ),
       metadata: {
         createdAt: new Date(),
         ipAddress: req.ip,
-        userAgent: req.headers['user-agent'],
+        userAgent: req.headers["user-agent"],
       },
     });
 
@@ -81,7 +87,9 @@ export const createGuestAccess = async (req, res) => {
     // Generate shareable link
     const shareableLink = `${process.env.CLIENT_URL}/guest/${token}`;
 
-    logger.info(`Guest access created for meeting ${meetingId} by user ${userId}`);
+    logger.info(
+      `Guest access created for meeting ${meetingId} by user ${userId}`,
+    );
 
     res.json({
       success: true,
@@ -93,10 +101,10 @@ export const createGuestAccess = async (req, res) => {
       },
     });
   } catch (error) {
-    logger.error('Create guest access error:', error);
+    logger.error("Create guest access error:", error);
     res.status(500).json({
       success: false,
-      error: 'Failed to create guest access',
+      error: "Failed to create guest access",
       details: error.message,
     });
   }
@@ -114,8 +122,8 @@ export const getGuestMeetingView = async (req, res) => {
     if (!decoded) {
       return res.status(401).json({
         success: false,
-        error: 'Invalid or expired guest token',
-        code: 'INVALID_TOKEN',
+        error: "Invalid or expired guest token",
+        code: "INVALID_TOKEN",
       });
     }
 
@@ -124,29 +132,29 @@ export const getGuestMeetingView = async (req, res) => {
     if (!guestAccess) {
       return res.status(404).json({
         success: false,
-        error: 'Guest access not found',
-        code: 'ACCESS_NOT_FOUND',
+        error: "Guest access not found",
+        code: "ACCESS_NOT_FOUND",
       });
     }
 
     if (guestAccess.expiresAt && new Date() > guestAccess.expiresAt) {
       return res.status(401).json({
         success: false,
-        error: 'Guest access has expired',
-        code: 'ACCESS_EXPIRED',
+        error: "Guest access has expired",
+        code: "ACCESS_EXPIRED",
       });
     }
 
     // Get meeting
     const meeting = await Meeting.findById(guestAccess.meetingId)
-      .populate('createdBy', 'name email')
-      .populate('participants', 'name email');
+      .populate("createdBy", "name email")
+      .populate("participants", "name email");
 
     if (!meeting) {
       return res.status(404).json({
         success: false,
-        error: 'Meeting not found',
-        code: 'MEETING_NOT_FOUND',
+        error: "Meeting not found",
+        code: "MEETING_NOT_FOUND",
       });
     }
 
@@ -171,10 +179,11 @@ export const getGuestMeetingView = async (req, res) => {
             name: meeting.createdBy?.name,
             email: meeting.createdBy?.email,
           },
-          participants: meeting.participants?.map(p => ({
-            name: p.name,
-            email: p.email,
-          })) || [],
+          participants:
+            meeting.participants?.map((p) => ({
+              name: p.name,
+              email: p.email,
+            })) || [],
         },
         access: {
           level: guestAccess.accessLevel,
@@ -184,7 +193,7 @@ export const getGuestMeetingView = async (req, res) => {
     };
 
     // Add transcript based on encryption status
-    if (meeting.transcript && guestAccess.accessLevel === 'view') {
+    if (meeting.transcript && guestAccess.accessLevel === "view") {
       const isE2EE = isE2EEEnabled(organization);
       const isTranscriptEncrypted = meeting.isTranscriptEncrypted || false;
 
@@ -196,18 +205,23 @@ export const getGuestMeetingView = async (req, res) => {
           envelope,
           requiresDecryption: true,
           // If we have the encryption secret, provide encrypted data for client-side decryption
-          encryptedData: isTranscriptEncrypted && meeting.transcript ? {
-            encrypted: meeting.transcript.encrypted,
-            iv: meeting.transcript.iv,
-            salt: meeting.transcript.salt,
-            authTag: meeting.transcript.authTag,
-            algorithm: meeting.transcript.algorithm || 'aes-256-gcm',
-          } : null,
-          preview: transcriptAccess.canAccess ? null : (
-            meeting.transcript ? '[Encrypted content]' : null
-          ),
+          encryptedData:
+            isTranscriptEncrypted && meeting.transcript
+              ? {
+                  encrypted: meeting.transcript.encrypted,
+                  iv: meeting.transcript.iv,
+                  salt: meeting.transcript.salt,
+                  authTag: meeting.transcript.authTag,
+                  algorithm: meeting.transcript.algorithm || "aes-256-gcm",
+                }
+              : null,
+          preview: transcriptAccess.canAccess
+            ? null
+            : meeting.transcript
+              ? "[Encrypted content]"
+              : null,
         };
-        
+
         logger.info(`Guest access (encrypted) to meeting ${meeting._id}`);
       }
       // Case 2: Plaintext transcript allowed
@@ -226,7 +240,9 @@ export const getGuestMeetingView = async (req, res) => {
           content: null,
           preview: null,
           restricted: true,
-          message: transcriptAccess.canAccess ? 'Access granted' : 'Transcript access restricted',
+          message: transcriptAccess.canAccess
+            ? "Access granted"
+            : "Transcript access restricted",
         };
       }
     } else {
@@ -235,21 +251,22 @@ export const getGuestMeetingView = async (req, res) => {
         content: null,
         preview: null,
         available: false,
-        message: 'No transcript available',
+        message: "No transcript available",
       };
     }
 
     // Log guest access
     guestAccess.metadata.lastAccessedAt = new Date();
-    guestAccess.metadata.accessCount = (guestAccess.metadata.accessCount || 0) + 1;
+    guestAccess.metadata.accessCount =
+      (guestAccess.metadata.accessCount || 0) + 1;
     await guestAccess.save();
 
     res.json(response);
   } catch (error) {
-    logger.error('Get guest meeting view error:', error);
+    logger.error("Get guest meeting view error:", error);
     res.status(500).json({
       success: false,
-      error: 'Failed to get meeting view',
+      error: "Failed to get meeting view",
       details: error.message,
     });
   }
@@ -269,32 +286,37 @@ export const guestDecryptTranscript = async (req, res) => {
     if (!decoded) {
       return res.status(401).json({
         success: false,
-        error: 'Invalid or expired guest token',
+        error: "Invalid or expired guest token",
       });
     }
 
     if (!encryptedData || !decryptionKey) {
       return res.status(400).json({
         success: false,
-        error: 'Encrypted data and decryption key are required',
+        error: "Encrypted data and decryption key are required",
       });
     }
 
     // Verify guest access
     const guestAccess = await GuestAccess.findOne({ token });
-    if (!guestAccess || (guestAccess.expiresAt && new Date() > guestAccess.expiresAt)) {
+    if (
+      !guestAccess ||
+      (guestAccess.expiresAt && new Date() > guestAccess.expiresAt)
+    ) {
       return res.status(401).json({
         success: false,
-        error: 'Invalid or expired guest access',
+        error: "Invalid or expired guest access",
       });
     }
 
     // Decrypt transcript
     try {
       const decrypted = decryptTranscript(encryptedData, decryptionKey);
-      
+
       // Log decryption attempt
-      logger.info(`Guest decrypted transcript for token ${token.substring(0, 10)}...`);
+      logger.info(
+        `Guest decrypted transcript for token ${token.substring(0, 10)}...`,
+      );
 
       res.json({
         success: true,
@@ -304,18 +326,18 @@ export const guestDecryptTranscript = async (req, res) => {
         },
       });
     } catch (error) {
-      logger.error('Guest decryption error:', error);
+      logger.error("Guest decryption error:", error);
       res.status(400).json({
         success: false,
-        error: 'Failed to decrypt transcript',
+        error: "Failed to decrypt transcript",
         details: error.message,
       });
     }
   } catch (error) {
-    logger.error('Guest decrypt transcript error:', error);
+    logger.error("Guest decrypt transcript error:", error);
     res.status(500).json({
       success: false,
-      error: 'Failed to process decryption request',
+      error: "Failed to process decryption request",
     });
   }
 };
@@ -332,15 +354,18 @@ export const revokeGuestAccess = async (req, res) => {
     if (!guestAccess) {
       return res.status(404).json({
         success: false,
-        error: 'Guest access not found',
+        error: "Guest access not found",
       });
     }
 
     // Check if user has permission to revoke
-    if (guestAccess.createdBy.toString() !== userId && req.user.role !== 'admin') {
+    if (
+      guestAccess.createdBy.toString() !== userId &&
+      req.user.role !== "admin"
+    ) {
       return res.status(403).json({
         success: false,
-        error: 'Not authorized to revoke this guest access',
+        error: "Not authorized to revoke this guest access",
       });
     }
 
@@ -349,17 +374,19 @@ export const revokeGuestAccess = async (req, res) => {
     guestAccess.revokedBy = userId;
     await guestAccess.save();
 
-    logger.info(`Guest access revoked: ${token.substring(0, 10)}... by user ${userId}`);
+    logger.info(
+      `Guest access revoked: ${token.substring(0, 10)}... by user ${userId}`,
+    );
 
     res.json({
       success: true,
-      message: 'Guest access revoked successfully',
+      message: "Guest access revoked successfully",
     });
   } catch (error) {
-    logger.error('Revoke guest access error:', error);
+    logger.error("Revoke guest access error:", error);
     res.status(500).json({
       success: false,
-      error: 'Failed to revoke guest access',
+      error: "Failed to revoke guest access",
     });
   }
 };
@@ -371,17 +398,20 @@ export const getGuestAccessStatus = async (req, res) => {
   try {
     const { token } = req.params;
 
-    const guestAccess = await GuestAccess.findOne({ token })
-      .populate('meetingId', 'title status');
+    const guestAccess = await GuestAccess.findOne({ token }).populate(
+      "meetingId",
+      "title status",
+    );
 
     if (!guestAccess) {
       return res.status(404).json({
         success: false,
-        error: 'Guest access not found',
+        error: "Guest access not found",
       });
     }
 
-    const isExpired = guestAccess.expiresAt && new Date() > guestAccess.expiresAt;
+    const isExpired =
+      guestAccess.expiresAt && new Date() > guestAccess.expiresAt;
     const isRevoked = guestAccess.isRevoked || false;
 
     res.json({
@@ -405,10 +435,10 @@ export const getGuestAccessStatus = async (req, res) => {
       },
     });
   } catch (error) {
-    logger.error('Get guest access status error:', error);
+    logger.error("Get guest access status error:", error);
     res.status(500).json({
       success: false,
-      error: 'Failed to get guest access status',
+      error: "Failed to get guest access status",
     });
   }
 };

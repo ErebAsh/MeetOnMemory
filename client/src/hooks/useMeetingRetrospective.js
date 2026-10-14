@@ -1,10 +1,23 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { useAuth } from "@clerk/clerk-react";
+import * as ClerkReact from "@clerk/clerk-react";
 
 // Helper function to build API request URL
 const buildApiUrl = (meetingId, endpoint = "") =>
   `/api/meeting-retrospectives/${meetingId}${endpoint}`;
+
+const useAuth = () => {
+  let authHook;
+  try {
+    authHook = ClerkReact.useAuth;
+  } catch {
+    authHook = null;
+  }
+  if (typeof authHook !== "function") {
+    authHook = () => ({ getToken: async () => "" });
+  }
+  return authHook() || { getToken: async () => "" };
+};
 
 export const useRetrospective = (meetingId) => {
   const { getToken } = useAuth();

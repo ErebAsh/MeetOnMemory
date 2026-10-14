@@ -71,7 +71,8 @@ export const redactTextAndAudit = async (text, meetingId, organizationId) => {
     },
     {
       type: "PHONE",
-      regex: /\b(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g,
+      regex:
+        /(?:(?<=\s|^|\W)\+?\d{1,3}[-.\s]+)?(?:\(?\d{3}\)?[-.\s]*)?\d{3}[-.\s]?\d{4}\b/g,
       mask: "[REDACTED_PHONE]",
     },
     {

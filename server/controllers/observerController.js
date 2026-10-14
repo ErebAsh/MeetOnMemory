@@ -77,7 +77,8 @@ export const approveShadowRequest = async (req, res) => {
     }
 
     // Ensure only owner/organizer can approve
-    if (meeting.uploadedBy.toString() !== req.user._id.toString()) {
+    const hostId = (meeting.uploadedBy || meeting.host)?.toString();
+    if (!hostId || hostId !== req.user._id.toString()) {
       return res.status(403).json({
         message: "Not authorized to approve shadow requests for this meeting",
       });

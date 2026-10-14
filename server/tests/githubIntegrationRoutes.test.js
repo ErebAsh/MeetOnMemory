@@ -1,11 +1,11 @@
 // server/tests/githubIntegrationRoutes.test.js
+import { jest } from "@jest/globals";
 import express from "express";
 import supertest from "supertest";
-import githubRoutes from "../routes/githubIntegrationRoutes.js";
 
 // Mock userAuth middleware for testing
-jest.mock("../middleware/userAuth.js", () => {
-  return (req, res, next) => {
+jest.unstable_mockModule("../middleware/userAuth.js", () => ({
+  default: (req, res, next) => {
     req.user = {
       _id: "507f1f77bcf86cd799439011",
       organization: "507f1f77bcf86cd799439022",
@@ -16,8 +16,19 @@ jest.mock("../middleware/userAuth.js", () => {
       save: jest.fn().mockResolvedValue(true),
     };
     next();
-  };
-});
+  },
+}));
+
+jest.unstable_mockModule("../models/githubIntegrationModel.js", () => ({
+  default: {
+    findOne: jest.fn().mockResolvedValue(null),
+    findOneAndUpdate: jest.fn().mockResolvedValue(null),
+    findOneAndDelete: jest.fn().mockResolvedValue(null),
+  },
+}));
+
+const { default: githubRoutes } =
+  await import("../routes/githubIntegrationRoutes.js");
 
 describe("GitHub Integration Routes & Hook Configuration Tests", () => {
   let app;

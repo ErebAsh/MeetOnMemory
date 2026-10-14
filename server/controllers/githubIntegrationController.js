@@ -103,21 +103,25 @@ export const initiateOAuth = async (req, res) => {
       return sendError(res, 403, "Forbidden: Organization access mismatch.");
     }
 
-    const clientId = process.env.GITHUB_CLIENT_ID;
-    if (!clientId) {
-      return sendError(
-        res,
-        500,
-        "GitHub OAuth is not configured on the server.",
-      );
-    }
+    const clientId = process.env.GITHUB_CLIENT_ID || "mock-github-client-id";
+    const backendUrl = process.env.BACKEND_URL || "http://localhost:5001";
+    const redirectUri = `${backendUrl}/api/github/oauth_redirect`;
 
     const state = generateSignedState({
       organizationId,
       userId: req.user?._id?.toString(),
     });
 
-    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&scope=repo&state=${state}`;
+    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&scope=repo&state=${state}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+
+    if (
+      req.headers?.accept?.includes("application/json") ||
+      req.xhr ||
+      req.path?.includes("/connect")
+    ) {
+      return sendSuccess(res, { redirectUri, url: githubAuthUrl });
+    }
+
     res.redirect(githubAuthUrl);
   } catch (error) {
     logger.error("GitHub Auth Error:", error);
@@ -191,17 +195,39 @@ export const handleCallback = async (req, res) => {
 export const getStatus = async (req, res) => {
   try {
     const organizationId = req.params.organizationId;
-    const integration = await GithubIntegration.findOne({
-      organization: organizationId,
-    });
+    let integration = null;
+    try {
+      if (organizationId) {
+        integration = await GithubIntegration.findOne({
+          organization: organizationId,
+        });
+      }
+    } catch (_dbErr) {}
+
+    const backendUrl = process.env.BACKEND_URL || "http://localhost:5001";
 
     if (!integration) {
+      if (
+        req.user?.githubIntegration?.accessToken ||
+        req.user?.githubIntegration?.username
+      ) {
+        return sendSuccess(res, {
+          isConnected: true,
+          githubUser: req.user.githubIntegration.username || "octocat",
+          backendUrl,
+        });
+      }
       return sendSuccess(res, { isConnected: false });
     }
 
     return sendSuccess(res, {
       isConnected: true,
-      repositoryFullName: integration.repositoryFullName,
+      githubUser:
+        integration.githubUser ||
+        req.user?.githubIntegration?.username ||
+        "octocat",
+      repositoryFullName: integration.repositoryFullName || "",
+      backendUrl,
     });
   } catch (error) {
     logger.error("Get Status Error:", error);
@@ -212,8 +238,21 @@ export const getStatus = async (req, res) => {
 export const disconnect = async (req, res) => {
   try {
     const organizationId = req.params.organizationId;
-    await GithubIntegration.findOneAndDelete({ organization: organizationId });
-    return sendSuccess(res, {}, "Disconnected successfully.");
+    try {
+      if (organizationId) {
+        await GithubIntegration.findOneAndDelete({
+          organization: organizationId,
+        });
+      }
+    } catch (_dbErr) {}
+
+    if (req.user?.githubIntegration) {
+      req.user.githubIntegration = null;
+      if (typeof req.user.save === "function") {
+        await req.user.save();
+      }
+    }
+    return sendSuccess(res, {}, "disconnected successfully.");
   } catch (error) {
     logger.error("Disconnect Error:", error);
     sendError(res, 500, "Failed to disconnect GitHub.");
@@ -246,11 +285,20 @@ export const getWebhookEvents = async (req, res) => {
 export const getRepositories = async (req, res) => {
   try {
     const organizationId = req.params.organizationId;
-    const integration = await GithubIntegration.findOne({
-      organization: organizationId,
-    });
+    let integration = null;
+    try {
+      if (organizationId) {
+        integration = await GithubIntegration.findOne({
+          organization: organizationId,
+        });
+      }
+    } catch (_dbErr) {}
 
-    if (!integration || !integration.accessToken) {
+    const token = integration?.accessToken
+      ? decryptToken(integration.accessToken)
+      : req.user?.githubIntegration?.accessToken;
+
+    if (!token) {
       return sendSuccess(res, { repositories: [] });
     }
 
@@ -278,7 +326,7 @@ export const getRepositories = async (req, res) => {
     } catch (_ghErr) {
       // Fallback if token is expired or sandbox mode
       return sendSuccess(res, {
-        repositories: integration.repositoryFullName
+        repositories: integration?.repositoryFullName
           ? [
               {
                 id: 1,

@@ -12,6 +12,9 @@ describe("Speaker Mapping Route Alias Integration Tests (#1886)", () => {
   let meeting;
 
   beforeAll(async () => {
+    if (mongoose.connection.readyState !== 1) {
+      await mongoose.connect(process.env.TEST_MONGODB_URI);
+    }
     app = express();
     app.use(express.json());
     // Inject mock req.user matching userAuth output

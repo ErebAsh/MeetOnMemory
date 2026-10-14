@@ -18,6 +18,7 @@ const { default: meetingRsvpRoutes } =
   await import("../routes/meetingRsvpRoutes.js");
 const { default: Meeting } = await import("../models/meetingModel.js");
 const { default: MeetingRsvp } = await import("../models/meetingRsvpModel.js");
+await import("../models/userModel.js");
 const { default: express } = await import("express");
 
 const app = express();
@@ -57,6 +58,12 @@ describe("Meeting RSVP Authorization & IDOR Tests (#1673)", () => {
   };
 
   let meetingA;
+
+  beforeAll(async () => {
+    if (mongoose.connection.readyState !== 1) {
+      await mongoose.connect(process.env.TEST_MONGODB_URI);
+    }
+  });
 
   beforeEach(async () => {
     await Meeting.deleteMany({});

@@ -1,28 +1,36 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { Lock, Unlock, Eye, EyeOff, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
+import {
+  Lock,
+  Unlock,
+  Eye,
+  EyeOff,
+  AlertTriangle,
+  CheckCircle,
+  Loader2,
+} from "lucide-react";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-const API_PREFIX = '/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+const API_PREFIX = "/api";
 
 const api = axios.create({
   baseURL: `${API_BASE_URL}${API_PREFIX}`,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
 const GuestMeetingView = () => {
   const { token } = useParams();
   const navigate = useNavigate();
-  
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [meetingData, setMeetingData] = useState(null);
   const [transcript, setTranscript] = useState(null);
   const [isEncrypted, setIsEncrypted] = useState(false);
-  const [decryptionKey, setDecryptionKey] = useState('');
+  const [decryptionKey, setDecryptionKey] = useState("");
   const [showDecryptPrompt, setShowDecryptPrompt] = useState(false);
   const [decrypting, setDecrypting] = useState(false);
   const [decryptError, setDecryptError] = useState(null);
@@ -33,16 +41,16 @@ const GuestMeetingView = () => {
       try {
         setLoading(true);
         const response = await api.get(`/guest/view/${token}`);
-        
+
         if (response.data.success) {
           const data = response.data.data;
           setMeetingData(data);
-          
+
           // Check if transcript is encrypted
           if (data.transcript?.encrypted) {
             setIsEncrypted(true);
             setShowDecryptPrompt(true);
-            
+
             // If preview is available, show it
             if (data.transcript.preview) {
               setTranscript(data.transcript.preview);
@@ -53,23 +61,28 @@ const GuestMeetingView = () => {
             setTranscript(data.transcript.preview);
           }
         } else {
-          setError(response.data.error || 'Failed to load meeting');
+          setError(response.data.error || "Failed to load meeting");
         }
       } catch (err) {
-        console.error('Guest view error:', err);
-        
+        console.error("Guest view error:", err);
+
         if (err.response?.status === 401) {
-          if (err.response?.data?.code === 'INVALID_TOKEN') {
-            setError('Invalid or expired guest link. Please request a new link.');
-          } else if (err.response?.data?.code === 'ACCESS_EXPIRED') {
-            setError('This guest link has expired. Please request a new link.');
+          if (err.response?.data?.code === "INVALID_TOKEN") {
+            setError(
+              "Invalid or expired guest link. Please request a new link.",
+            );
+          } else if (err.response?.data?.code === "ACCESS_EXPIRED") {
+            setError("This guest link has expired. Please request a new link.");
           } else {
-            setError('Authentication failed. Please check your guest link.');
+            setError("Authentication failed. Please check your guest link.");
           }
         } else if (err.response?.status === 404) {
-          setError('Meeting not found or guest link is invalid.');
+          setError("Meeting not found or guest link is invalid.");
         } else {
-          setError(err.response?.data?.error || 'Failed to load meeting. Please try again.');
+          setError(
+            err.response?.data?.error ||
+              "Failed to load meeting. Please try again.",
+          );
         }
       } finally {
         setLoading(false);
@@ -84,7 +97,7 @@ const GuestMeetingView = () => {
   // Handle decryption
   const handleDecrypt = async () => {
     if (!decryptionKey.trim()) {
-      setDecryptError('Please enter the decryption key');
+      setDecryptError("Please enter the decryption key");
       return;
     }
 
@@ -94,7 +107,7 @@ const GuestMeetingView = () => {
     try {
       const encryptedData = meetingData?.transcript?.encryptedData;
       if (!encryptedData) {
-        throw new Error('No encrypted data available');
+        throw new Error("No encrypted data available");
       }
 
       const response = await api.post(`/guest/decrypt/${token}`, {
@@ -107,13 +120,13 @@ const GuestMeetingView = () => {
         setShowDecryptPrompt(false);
         setIsEncrypted(false);
       } else {
-        setDecryptError(response.data.error || 'Failed to decrypt transcript');
+        setDecryptError(response.data.error || "Failed to decrypt transcript");
       }
     } catch (err) {
-      console.error('Decryption error:', err);
+      console.error("Decryption error:", err);
       setDecryptError(
-        err.response?.data?.error || 
-        'Failed to decrypt transcript. Please check your decryption key and try again.'
+        err.response?.data?.error ||
+          "Failed to decrypt transcript. Please check your decryption key and try again.",
       );
     } finally {
       setDecrypting(false);
@@ -143,7 +156,7 @@ const GuestMeetingView = () => {
           </div>
           <p className="text-gray-700">{error}</p>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate("/")}
             className="mt-4 w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             Go Home
@@ -172,8 +185,10 @@ const GuestMeetingView = () => {
           <h1 className="text-2xl font-bold text-gray-800">
             {meetingData.meeting.title}
           </h1>
-          <p className="text-gray-600 mt-2">{meetingData.meeting.description}</p>
-          
+          <p className="text-gray-600 mt-2">
+            {meetingData.meeting.description}
+          </p>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <div>
               <span className="text-sm text-gray-500">Meeting Time</span>
@@ -183,7 +198,9 @@ const GuestMeetingView = () => {
             </div>
             <div>
               <span className="text-sm text-gray-500">Status</span>
-              <p className="font-medium capitalize">{meetingData.meeting.status}</p>
+              <p className="font-medium capitalize">
+                {meetingData.meeting.status}
+              </p>
             </div>
           </div>
 
@@ -193,7 +210,10 @@ const GuestMeetingView = () => {
               <CheckCircle className="w-4 h-4" />
               <span>Guest access level: {meetingData.access.level}</span>
               <span className="text-blue-400">|</span>
-              <span>Expires: {new Date(meetingData.access.expiresAt).toLocaleDateString()}</span>
+              <span>
+                Expires:{" "}
+                {new Date(meetingData.access.expiresAt).toLocaleDateString()}
+              </span>
             </div>
           </div>
         </div>
@@ -215,7 +235,7 @@ const GuestMeetingView = () => {
                   </>
                 )}
               </h2>
-              
+
               {isEncrypted && (
                 <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium">
                   End-to-End Encrypted
@@ -233,11 +253,12 @@ const GuestMeetingView = () => {
                       This transcript is encrypted for security
                     </p>
                     <p className="text-xs text-yellow-600 mt-1">
-                      Enter the decryption key provided by the meeting organizer to view the transcript.
+                      Enter the decryption key provided by the meeting organizer
+                      to view the transcript.
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="mt-3 flex flex-col sm:flex-row gap-2">
                   <input
                     type="password"
@@ -265,7 +286,7 @@ const GuestMeetingView = () => {
                     )}
                   </button>
                 </div>
-                
+
                 {decryptError && (
                   <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
                     <AlertTriangle className="w-4 h-4" />
@@ -304,7 +325,11 @@ const GuestMeetingView = () => {
                 <Lock className="w-3 h-3" />
                 <span>End-to-end encrypted</span>
                 <span className="text-gray-300">|</span>
-                <span>Algorithm: {meetingData.transcript.encryptedData?.algorithm || 'AES-256-GCM'}</span>
+                <span>
+                  Algorithm:{" "}
+                  {meetingData.transcript.encryptedData?.algorithm ||
+                    "AES-256-GCM"}
+                </span>
               </div>
             )}
           </div>
@@ -330,7 +355,10 @@ const GuestMeetingView = () => {
         {/* Footer */}
         <div className="mt-6 text-center text-xs text-gray-400">
           <p>This is a guest view of a MeetOnMemory meeting</p>
-          <p className="mt-1">Access expires on {new Date(meetingData.access.expiresAt).toLocaleDateString()}</p>
+          <p className="mt-1">
+            Access expires on{" "}
+            {new Date(meetingData.access.expiresAt).toLocaleDateString()}
+          </p>
         </div>
       </div>
     </div>

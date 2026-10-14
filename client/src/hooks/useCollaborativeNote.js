@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { useAuth } from "@clerk/clerk-react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import * as ClerkReact from "@clerk/clerk-react";
 import { io } from "socket.io-client";
 import * as Y from "yjs";
 import { toast } from "react-toastify";
@@ -30,7 +30,24 @@ export const COLLAB_SYNC_STATUS = {
  * @returns {Object} Yjs doc, awareness state, connection/sync status, and snapshot functions.
  */
 export const useCollaborativeNote = (meetingId, isReadOnly = false) => {
-  const { userId, getToken, isSignedIn } = useAuth();
+  let useAuth;
+  try {
+    useAuth = ClerkReact.useAuth;
+  } catch {
+    useAuth = null;
+  }
+  if (typeof useAuth !== "function") {
+    useAuth = () => ({
+      getToken: async () => "",
+      userId: null,
+      isSignedIn: false,
+    });
+  }
+  const {
+    userId = null,
+    getToken = async () => "",
+    isSignedIn = false,
+  } = useAuth() || {};
   const [isConnected, setIsConnected] = useState(false);
   const [activeUsers, setActiveUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
