@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Routes, Route } from "react-router-dom";
 import TranscriptViewer from "../TranscriptViewer.jsx";
 import api from "../../services/apiClient.js";
 import AppContent from "../../context/AppContent.js";
@@ -102,7 +102,12 @@ describe("TranscriptViewer PII Redaction UI Integration (#2557)", () => {
     render(
       <AppContent.Provider value={{ userData: mockUserDataMember }}>
         <MemoryRouter initialEntries={["/meeting/meeting-123/transcript"]}>
-          <TranscriptViewer />
+          <Routes>
+            <Route
+              path="/meeting/:meetingId/transcript"
+              element={<TranscriptViewer />}
+            />
+          </Routes>
         </MemoryRouter>
       </AppContent.Provider>,
     );
@@ -130,7 +135,12 @@ describe("TranscriptViewer PII Redaction UI Integration (#2557)", () => {
     render(
       <AppContent.Provider value={{ userData: mockUserDataAdmin }}>
         <MemoryRouter initialEntries={["/meeting/meeting-123/transcript"]}>
-          <TranscriptViewer />
+          <Routes>
+            <Route
+              path="/meeting/:meetingId/transcript"
+              element={<TranscriptViewer />}
+            />
+          </Routes>
         </MemoryRouter>
       </AppContent.Provider>,
     );

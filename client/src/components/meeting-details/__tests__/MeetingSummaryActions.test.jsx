@@ -12,6 +12,13 @@ vi.mock("../../../services", () => ({
   aiSummaryTemplateApi: {
     getTemplates: vi.fn(),
   },
+  mindMapApi: {
+    getMindMap: vi.fn().mockResolvedValue({ success: false }),
+  },
+}));
+
+vi.mock("../GlossaryHighlighter", () => ({
+  default: ({ text }) => <span>{text}</span>,
 }));
 
 // Mock NoteVersionHistory component

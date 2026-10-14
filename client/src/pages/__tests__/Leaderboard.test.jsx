@@ -66,6 +66,7 @@ describe("Leaderboard Page (#1799)", () => {
     await waitFor(() => {
       expect(apiClient.get).toHaveBeenCalledWith(
         "/api/gamification/leaderboard",
+        expect.anything(),
       );
       expect(screen.getByText("Alice")).toBeInTheDocument();
       expect(screen.getByText("120 pts")).toBeInTheDocument();
@@ -82,7 +83,7 @@ describe("Leaderboard Page (#1799)", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("No leaderboard data available."),
+        screen.getByText("No gamification scores found for this filter."),
       ).toBeInTheDocument();
       expect(
         screen.getByRole("link", { name: /browse badges gallery/i }),

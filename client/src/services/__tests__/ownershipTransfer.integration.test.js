@@ -27,7 +27,9 @@ describe("Ownership Transfer Client Service Integration Tests (#2666)", () => {
 
       const res = await transferApi.getTransferInbox();
 
-      expect(apiClient.get).toHaveBeenCalledWith("/ownership-transfers/inbox");
+      expect(apiClient.get).toHaveBeenCalledWith(
+        "/api/ownership-transfers/inbox",
+      );
       expect(res).toEqual(mockResponse);
     });
 
@@ -43,9 +45,12 @@ describe("Ownership Transfer Client Service Integration Tests (#2666)", () => {
 
       const res = await transferApi.initiateTransfer("m-100", "u-200");
 
-      expect(apiClient.post).toHaveBeenCalledWith("/meetings/m-100/transfers", {
-        targetUserId: "u-200",
-      });
+      expect(apiClient.post).toHaveBeenCalledWith(
+        "/api/meetings/m-100/transfers",
+        {
+          targetUserId: "u-200",
+        },
+      );
       expect(res).toEqual(mockResponse);
     });
 
@@ -58,7 +63,7 @@ describe("Ownership Transfer Client Service Integration Tests (#2666)", () => {
       const res = await transferApi.acceptTransfer("t-100");
 
       expect(apiClient.post).toHaveBeenCalledWith(
-        "/ownership-transfers/t-100/accept",
+        "/api/ownership-transfers/t-100/accept",
       );
       expect(res).toEqual(mockResponse);
     });
@@ -72,7 +77,7 @@ describe("Ownership Transfer Client Service Integration Tests (#2666)", () => {
       const res = await transferApi.rejectTransfer("t-100");
 
       expect(apiClient.post).toHaveBeenCalledWith(
-        "/ownership-transfers/t-100/reject",
+        "/api/ownership-transfers/t-100/reject",
       );
       expect(res).toEqual(mockResponse);
     });

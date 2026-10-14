@@ -6,6 +6,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import AiAssistant from "../AiAssistant.jsx";
 import useAssistant from "../../context/useAssistant.js";
 
+vi.mock("../../components/Navbar.jsx", () => ({
+  default: () => <div data-testid="navbar">Navbar</div>,
+}));
+
 vi.mock("../../context/useAssistant.js");
 vi.mock("../../context/AppContent.js", () => ({
   default: React.createContext({ isLoggedin: true }),
@@ -50,7 +54,7 @@ describe("AiAssistant Workspace Page (#2011)", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("Project Sync")).toBeInTheDocument();
+    expect(screen.getAllByText("Project Sync")[0]).toBeInTheDocument();
     expect(screen.getByText("Pinned Context:")).toBeInTheDocument();
     expect(screen.getByText("Sprint 42 Retrospective")).toBeInTheDocument();
     expect(

@@ -96,7 +96,11 @@ const PresentMode = ({ meeting = {}, onClose }) => {
                 : opt.text || `Option ${optIdx + 1}`,
             votes:
               typeof opt === "object"
-                ? opt.votes?.length || opt.voteCount || 0
+                ? typeof opt.votes === "number"
+                  ? opt.votes
+                  : Array.isArray(opt.votes)
+                    ? opt.votes.length
+                    : opt.voteCount || 0
                 : 0,
           })),
         }))

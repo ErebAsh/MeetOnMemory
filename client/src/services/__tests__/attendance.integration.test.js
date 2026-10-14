@@ -24,7 +24,9 @@ describe("Meeting Attendance Client Service Integration Tests (#2666)", () => {
 
       const res = await meetingAttendanceApi.getMeetingAttendance("m-100");
 
-      expect(apiClient.get).toHaveBeenCalledWith("/meetings/m-100/attendance");
+      expect(apiClient.get).toHaveBeenCalledWith(
+        "/api/meetings/m-100/attendance",
+      );
       expect(res).toEqual(mockResponse);
     });
 
@@ -42,7 +44,7 @@ describe("Meeting Attendance Client Service Integration Tests (#2666)", () => {
       );
 
       expect(apiClient.post).toHaveBeenCalledWith(
-        "/meetings/m-100/attendance/checkin",
+        "/api/meetings/m-100/attendance/checkin",
         {
           email: "user@example.com",
           joinTime,
@@ -65,7 +67,7 @@ describe("Meeting Attendance Client Service Integration Tests (#2666)", () => {
       );
 
       expect(apiClient.post).toHaveBeenCalledWith(
-        "/meetings/m-100/attendance/checkout",
+        "/api/meetings/m-100/attendance/checkout",
         {
           email: "user@example.com",
           leaveTime,
@@ -86,7 +88,7 @@ describe("Meeting Attendance Client Service Integration Tests (#2666)", () => {
       );
 
       expect(apiClient.put).toHaveBeenCalledWith(
-        "/meetings/m-100/attendance/excuse",
+        "/api/meetings/m-100/attendance/excuse",
         { email: "user@example.com" },
       );
       expect(res).toEqual(mockResponse);
@@ -101,7 +103,7 @@ describe("Meeting Attendance Client Service Integration Tests (#2666)", () => {
       const res = await meetingAttendanceApi.finalizeAttendance("m-100");
 
       expect(apiClient.post).toHaveBeenCalledWith(
-        "/meetings/m-100/attendance/finalize",
+        "/api/meetings/m-100/attendance/finalize",
       );
       expect(res).toEqual(mockResponse);
     });

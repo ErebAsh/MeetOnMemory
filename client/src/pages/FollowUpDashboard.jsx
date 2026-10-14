@@ -50,7 +50,12 @@ const FollowUpDashboard = () => {
 
   // Persist status filter in localStorage
   const [statusFilter, setStatusFilter] = useState(() => {
-    return localStorage.getItem("meetonmemory:followup_status_filter") || "all";
+    const saved = localStorage.getItem("meetonmemory:followup_status_filter");
+    if (!saved) {
+      localStorage.setItem("meetonmemory:followup_status_filter", "all");
+      return "all";
+    }
+    return saved;
   });
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, totalPages: 0 });

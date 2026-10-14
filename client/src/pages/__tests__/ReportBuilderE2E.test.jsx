@@ -5,6 +5,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import ReportBuilder from "../ReportBuilder.jsx";
 import reportApi from "../../services/reportApi.js";
+import { toast } from "react-toastify";
 
 vi.mock("react-toastify", () => ({
   toast: {
@@ -100,13 +101,13 @@ describe("ReportBuilder End-to-End Generate & Export (#2278)", () => {
 
     // 2. Trigger generate report
     const generateBtn = screen.getByRole("button", {
-      name: /generate report/i,
+      name: /generate (preview|report)/i,
     });
     fireEvent.click(generateBtn);
 
     await waitFor(() => {
       expect(reportApi.generateReport).toHaveBeenCalledWith("tpl_123");
-      expect(screen.getByText("Report generated!")).toBeInTheDocument();
+      expect(toast.success).toHaveBeenCalledWith("Report generated!");
     });
 
     // 3. Trigger CSV export & verify blob download link creation

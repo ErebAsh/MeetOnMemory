@@ -103,7 +103,7 @@ describe("FollowUpDashboard — Snooze, Escalate Curation UI integration (#2475)
     );
 
     // Verify Snooze button is rendered
-    const snoozeBtn = screen.getByTestId("snooze-btn-task-101");
+    const snoozeBtn = await screen.findByTestId("snooze-btn-task-101");
     expect(snoozeBtn).toBeInTheDocument();
 
     // Click Snooze button

@@ -29,7 +29,7 @@ describe("Minutes Approval Client Service Integration Tests (#2666)", () => {
       const res = await minutesApprovalApi.getApprovalStatus("m-123");
 
       expect(apiClient.get).toHaveBeenCalledWith(
-        "/meetings/m-123/minutes-approval",
+        "/api/meetings/m-123/minutes-approval",
       );
       expect(res).toEqual(mockResponse);
     });
@@ -50,10 +50,10 @@ describe("Minutes Approval Client Service Integration Tests (#2666)", () => {
       );
 
       expect(apiClient.post).toHaveBeenCalledWith(
-        "/meetings/m-123/minutes-approval/submit",
+        "/api/meetings/m-123/minutes-approval/submit",
         {
-          summary: "Key discussion notes and decisions",
-          approverIds: ["user-1", "user-2"],
+          snapshotSummary: "Key discussion notes and decisions",
+          approvers: ["user-1", "user-2"],
         },
       );
       expect(res).toEqual(mockResponse);
@@ -75,7 +75,7 @@ describe("Minutes Approval Client Service Integration Tests (#2666)", () => {
       );
 
       expect(apiClient.put).toHaveBeenCalledWith(
-        "/meetings/m-123/minutes-approval/respond",
+        "/api/meetings/m-123/minutes-approval/respond",
         {
           status: "approved",
           comment: "Looks good to me",

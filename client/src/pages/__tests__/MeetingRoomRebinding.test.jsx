@@ -46,6 +46,7 @@ const { mockSocketInstances, mockIo } = vi.hoisted(() => {
       }),
       emit: vi.fn(),
       disconnect: vi.fn(),
+      removeAllListeners: vi.fn(),
       // Test helper to trigger events
       fire: (event, data) => {
         if (listeners[event]) {
@@ -69,6 +70,15 @@ const { mockApiClient } = vi.hoisted(() => ({
 }));
 
 vi.mock("../../services/apiClient.js", () => ({
+  default: {
+    get: vi.fn().mockImplementation((url) => {
+      if (typeof url === "string" && url.includes("/roles")) {
+        return Promise.resolve({ data: [] });
+      }
+      return Promise.resolve({ data: { meeting: {} } });
+    }),
+    post: vi.fn().mockResolvedValue({ data: {} }),
+  },
   createClerkSocketOptions: vi.fn(async (extra) => ({
     auth: { token: mockApiClient.token },
     transports: ["websocket"],

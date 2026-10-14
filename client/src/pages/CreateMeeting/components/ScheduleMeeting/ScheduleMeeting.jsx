@@ -349,10 +349,15 @@ const ScheduleMeeting = ({ hookProps, loadingDuplicate = false }) => {
           {rolloverEnabled && (
             <div className="mt-4 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">
+                <label
+                  htmlFor="rollover-source-meeting-select"
+                  className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5"
+                >
                   Select Previous Meeting
                 </label>
                 <select
+                  id="rollover-source-meeting-select"
+                  aria-label="Select Previous Meeting"
                   value={selectedSourceId}
                   onChange={handleSourceMeetingChange}
                   className="w-full px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-750 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none text-sm text-gray-700 dark:text-gray-200"

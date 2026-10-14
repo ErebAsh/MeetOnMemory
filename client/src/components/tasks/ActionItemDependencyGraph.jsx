@@ -373,8 +373,8 @@ const ActionItemDependencyGraph = ({
     setResolveMessage("");
     try {
       await resolveActionItemBlockers(selectedNodeId);
-      setResolveMessage("Blocker dependencies resolved.");
       await loadGraph();
+      setResolveMessage("Blocker dependencies resolved.");
     } catch (err) {
       setResolveMessage(
         err?.response?.data?.error ||

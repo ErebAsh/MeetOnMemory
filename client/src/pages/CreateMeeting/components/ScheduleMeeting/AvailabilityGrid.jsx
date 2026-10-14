@@ -21,11 +21,15 @@ const SLOT_MINUTES = 30;
 const toParticipantList = (participants) =>
   (Array.isArray(participants) ? participants : []).filter(Boolean);
 
-const getParticipantLabel = (participant) =>
-  participant?.name ||
-  participant?.user?.name ||
-  participant?.email ||
-  "Participant";
+const getParticipantLabel = (participant) => {
+  if (typeof participant === "string") return participant;
+  return (
+    participant?.name ||
+    participant?.user?.name ||
+    participant?.email ||
+    "Participant"
+  );
+};
 
 const getParticipantEmail = (participant) =>
   participant?.email || participant?.user?.email || "";

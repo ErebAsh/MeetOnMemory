@@ -184,7 +184,7 @@ describe("ProtectedRoute", () => {
     );
 
     expect(mockHasPermission).toHaveBeenCalledWith("meetings", "delete");
-    expect(screen.getByText("accessDenied.title")).toBeInTheDocument();
+    expect(screen.getByText(/access denied/i)).toBeInTheDocument();
   });
 
   it("renders children if user has required permissions", () => {

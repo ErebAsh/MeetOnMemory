@@ -95,8 +95,8 @@ describe("RbacPermissionExplorer", () => {
       ).toBeInTheDocument();
     });
 
-    expect(screen.getByText("Owner")).toBeInTheDocument();
-    expect(screen.getByText("Viewer")).toBeInTheDocument();
+    expect(screen.getAllByText("Owner")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("Viewer")[0]).toBeInTheDocument();
   });
 
   it("evaluates simulated access denial accurately", async () => {
@@ -113,9 +113,8 @@ describe("RbacPermissionExplorer", () => {
       expect(
         screen.getByText(/Access Audit & Denial Explainer/i),
       ).toBeInTheDocument();
+      // Default simulator has role viewer, resource meetings, action view -> permitted
+      expect(screen.getByText(/Access Permitted/i)).toBeInTheDocument();
     });
-
-    // Default simulator has role viewer, resource meetings, action view -> permitted
-    expect(screen.getByText(/Access Permitted/i)).toBeInTheDocument();
   });
 });

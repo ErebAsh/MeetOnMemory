@@ -11,6 +11,12 @@ vi.mock("../../services", () => ({
   },
 }));
 
+vi.mock("../../hooks/useRBAC.js", () => ({
+  useRBAC: () => ({
+    hasPermission: () => true,
+  }),
+}));
+
 describe("SpeakingTimeTrends Accessibility (#1610)", () => {
   beforeEach(() => {
     vi.clearAllMocks();

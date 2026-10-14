@@ -16,6 +16,17 @@ vi.mock("../../services/teamAvailabilityApi.js", () => ({
   },
 }));
 
+vi.mock("../../components/Navbar.jsx", () => ({
+  default: () => <nav>Navbar</nav>,
+}));
+
+vi.mock("../../hooks/useRBAC.js", () => ({
+  useRBAC: () => ({
+    hasPermission: () => true,
+    userRole: "admin",
+  }),
+}));
+
 const mockContextValue = {
   userData: { id: "user_1", role: "admin" },
 };

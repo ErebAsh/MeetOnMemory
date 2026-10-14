@@ -1,5 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import TemplateLibrary from "../TemplateLibrary.jsx";
 import {
@@ -7,6 +8,13 @@ import {
   cloneTemplate,
   rateTemplate,
 } from "../../services/templateLibraryApi";
+
+const renderComponent = () =>
+  render(
+    <MemoryRouter>
+      <TemplateLibrary />
+    </MemoryRouter>,
+  );
 
 vi.mock("../../components/Navbar.jsx", () => ({
   default: () => <nav>Navbar</nav>,
@@ -68,7 +76,7 @@ describe("TemplateLibrary duplicate-submission protection (#1525)", () => {
         }),
     );
 
-    render(<TemplateLibrary />);
+    renderComponent();
 
     await waitFor(() => {
       expect(screen.getByText("Weekly Sync")).toBeInTheDocument();
@@ -102,7 +110,7 @@ describe("TemplateLibrary duplicate-submission protection (#1525)", () => {
         }),
     );
 
-    render(<TemplateLibrary />);
+    renderComponent();
 
     await waitFor(() => {
       expect(screen.getByText("Weekly Sync")).toBeInTheDocument();
@@ -131,7 +139,7 @@ describe("TemplateLibrary duplicate-submission protection (#1525)", () => {
         }),
     );
 
-    render(<TemplateLibrary />);
+    renderComponent();
 
     await waitFor(() => {
       expect(screen.getByText("Weekly Sync")).toBeInTheDocument();
@@ -167,7 +175,7 @@ describe("TemplateLibrary duplicate-submission protection (#1525)", () => {
         }),
     );
 
-    render(<TemplateLibrary />);
+    renderComponent();
 
     await waitFor(() => {
       expect(screen.getByText("Weekly Sync")).toBeInTheDocument();
@@ -204,7 +212,7 @@ describe("TemplateLibrary duplicate-submission protection (#1525)", () => {
         ],
       });
 
-      render(<TemplateLibrary />);
+      renderComponent();
 
       await waitFor(() => {
         expect(
@@ -216,7 +224,7 @@ describe("TemplateLibrary duplicate-submission protection (#1525)", () => {
     });
 
     it("opens template modal via keyboard navigation (Enter key) and provides dialog semantics", async () => {
-      render(<TemplateLibrary />);
+      renderComponent();
 
       await waitFor(() => {
         expect(screen.getByText("Weekly Sync")).toBeInTheDocument();
@@ -238,7 +246,7 @@ describe("TemplateLibrary duplicate-submission protection (#1525)", () => {
     });
 
     it("closes template modal when Escape key is pressed", async () => {
-      render(<TemplateLibrary />);
+      renderComponent();
 
       await waitFor(() => {
         expect(screen.getByText("Weekly Sync")).toBeInTheDocument();
@@ -253,7 +261,7 @@ describe("TemplateLibrary duplicate-submission protection (#1525)", () => {
 
     it("displays error banner when browseTemplates fails", async () => {
       browseTemplates.mockRejectedValueOnce(new Error("Network Error"));
-      render(<TemplateLibrary />);
+      renderComponent();
 
       await waitFor(() => {
         expect(

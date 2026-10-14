@@ -16,6 +16,8 @@ describe("schedule conflict helpers", () => {
 
   it("detects a recurring focus block on the selected weekday", () => {
     const slot = buildScheduleSlot("2026-08-24", "10:30", 30);
+    const focusStart = new Date(2026, 7, 1, 10, 0, 0);
+    const focusEnd = new Date(2026, 7, 1, 11, 0, 0);
     const conflicts = findFocusConflicts(
       [
         {
@@ -23,8 +25,8 @@ describe("schedule conflict helpers", () => {
           title: "Deep work",
           isRecurring: true,
           daysOfWeek: [1],
-          startTime: "2026-08-01T10:00:00.000Z",
-          endTime: "2026-08-01T11:00:00.000Z",
+          startTime: focusStart.toISOString(),
+          endTime: focusEnd.toISOString(),
         },
       ],
       slot,
@@ -41,22 +43,27 @@ describe("schedule conflict helpers", () => {
       { name: "Free User", email: "free@example.com" },
     ];
 
+    const busyStart = new Date(slot.start.getTime() - 15 * 60 * 1000);
+    const busyEnd = new Date(slot.end.getTime() + 15 * 60 * 1000);
+    const freeStart = new Date(slot.end.getTime() + 60 * 60 * 1000);
+    const freeEnd = new Date(slot.end.getTime() + 120 * 60 * 1000);
+
     const busy = findBusyParticipants(
       {
         google: {
           "busy@example.com": {
             busy: [
               {
-                start: "2026-08-24T10:15:00.000Z",
-                end: "2026-08-24T11:00:00.000Z",
+                start: busyStart.toISOString(),
+                end: busyEnd.toISOString(),
               },
             ],
           },
           "free@example.com": {
             busy: [
               {
-                start: "2026-08-24T12:00:00.000Z",
-                end: "2026-08-24T13:00:00.000Z",
+                start: freeStart.toISOString(),
+                end: freeEnd.toISOString(),
               },
             ],
           },

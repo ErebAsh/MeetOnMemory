@@ -77,6 +77,8 @@ const RbacPermissionExplorer = () => {
     return Object.keys(permissions);
   }, [permissions]);
 
+  const activeResource = simulatorResource || resourceKeys[0] || "";
+
   useEffect(() => {
     if (resourceKeys.length > 0 && !simulatorResource) {
       setSimulatorResource(resourceKeys[0]);
@@ -84,9 +86,11 @@ const RbacPermissionExplorer = () => {
   }, [resourceKeys, simulatorResource]);
 
   const availableSimulatorActions = useMemo(() => {
-    if (!simulatorResource || !permissions[simulatorResource]) return [];
-    return Object.keys(permissions[simulatorResource]);
-  }, [permissions, simulatorResource]);
+    if (!activeResource || !permissions[activeResource]) return [];
+    return Object.keys(permissions[activeResource]);
+  }, [permissions, activeResource]);
+
+  const activeAction = simulatorAction || availableSimulatorActions[0] || "";
 
   useEffect(() => {
     if (availableSimulatorActions.length > 0) {
@@ -121,20 +125,16 @@ const RbacPermissionExplorer = () => {
   }, [resourceKeys, searchQuery, permissions]);
 
   const simulationResult = useMemo(() => {
-    if (
-      !simulatorResource ||
-      !simulatorAction ||
-      !permissions[simulatorResource]
-    ) {
+    if (!activeResource || !activeAction || !permissions[activeResource]) {
       return null;
     }
-    const allowedRoles = permissions[simulatorResource][simulatorAction] || [];
+    const allowedRoles = permissions[activeResource][activeAction] || [];
     const isAllowed = allowedRoles.includes(auditSimulatorRole);
     return {
       allowed: isAllowed,
       allowedRoles,
     };
-  }, [permissions, auditSimulatorRole, simulatorResource, simulatorAction]);
+  }, [permissions, auditSimulatorRole, activeResource, activeAction]);
 
   if (loading) {
     return (

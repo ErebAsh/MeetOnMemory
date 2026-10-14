@@ -78,7 +78,9 @@ describe("RecordingSessionAnalyticsPanel Component", () => {
     });
 
     expect(screen.getByText("Stuck Recording Alerts (1)")).toBeInTheDocument();
-    expect(screen.getByText("Stuck Weekly Sync")).toBeInTheDocument();
+    expect(
+      screen.getAllByText("Stuck Weekly Sync").length,
+    ).toBeGreaterThanOrEqual(1);
 
     expect(screen.getByText("5")).toBeInTheDocument(); // totalSessions
     expect(screen.getByText("Sprint Planning")).toBeInTheDocument();

@@ -81,12 +81,12 @@ describe("TopicAnalyticsDashboard (#2425)", () => {
     renderComponent();
 
     await waitFor(() => {
-      expect(
-        screen.getByText("Topic Trends & Semantic Velocity"),
-      ).toBeInTheDocument();
+      expect(screen.getByText("Kubernetes Migration")).toBeInTheDocument();
     });
 
-    expect(screen.getByText("Kubernetes Migration")).toBeInTheDocument();
+    expect(
+      screen.getByText("Topic Trends & Semantic Velocity"),
+    ).toBeInTheDocument();
     expect(screen.getAllByText("Accelerating").length).toBeGreaterThan(0);
     expect(screen.getByText("Q4 Budget")).toBeInTheDocument();
     expect(screen.getAllByText("Decelerating").length).toBeGreaterThan(0);

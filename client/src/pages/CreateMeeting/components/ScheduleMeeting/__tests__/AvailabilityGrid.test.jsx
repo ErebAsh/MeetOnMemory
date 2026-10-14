@@ -20,6 +20,11 @@ const participants = [
 describe("ScheduleMeeting AvailabilityGrid (#2054)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    const busyStart = new Date("2026-09-01");
+    busyStart.setHours(10, 0, 0, 0);
+    const busyEnd = new Date("2026-09-01");
+    busyEnd.setHours(10, 30, 0, 0);
+
     calendarAvailabilityApi.getConnectionStatus.mockResolvedValue({
       success: true,
       integrations: [{ provider: "google", syncStatus: "connected" }],
@@ -31,8 +36,8 @@ describe("ScheduleMeeting AvailabilityGrid (#2054)", () => {
           "alice@example.com": {
             busy: [
               {
-                start: "2026-09-01T10:00:00.000Z",
-                end: "2026-09-01T10:30:00.000Z",
+                start: busyStart.toISOString(),
+                end: busyEnd.toISOString(),
               },
             ],
           },
@@ -68,6 +73,10 @@ describe("ScheduleMeeting AvailabilityGrid (#2054)", () => {
         selectedDate="2026-09-01"
         onSlotSelect={vi.fn()}
       />,
+    );
+
+    await waitFor(() =>
+      expect(calendarAvailabilityApi.getFreeBusy).toHaveBeenCalled(),
     );
 
     await waitFor(() =>

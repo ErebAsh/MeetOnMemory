@@ -59,6 +59,7 @@ const mockTranscript = [
 describe("MultiLanguageTranscript Component (#1880)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
 
     apiClient.get.mockImplementation((url) => {
       if (url === "/api/translation/languages") {

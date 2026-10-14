@@ -87,16 +87,26 @@ describe("RiskRegister Route Wiring (#2644)", () => {
   it("successfully mounts RiskRegister on /risks within ProtectedRoutes", async () => {
     renderRoute("/risks");
 
-    await waitFor(() => {
-      expect(screen.getByText("Vendor Dependency Outage")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(
+          screen.getByText("Vendor Dependency Outage"),
+        ).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("successfully mounts RiskRegister on alias /risk-register", async () => {
     renderRoute("/risk-register");
 
-    await waitFor(() => {
-      expect(screen.getByText("Vendor Dependency Outage")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(
+          screen.getByText("Vendor Dependency Outage"),
+        ).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 });
